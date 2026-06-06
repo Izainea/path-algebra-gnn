@@ -22,6 +22,7 @@ __all__ = [
     "layers",
     "models",
     "ideal_bridge",
+    "transforms",
     "diagnostic",
     "data",
     "train",

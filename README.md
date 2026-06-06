@@ -22,8 +22,10 @@ dim(e_i · (kQ/I)_g · e_j)  ≤  dim(e_i · kQ_g · e_j) = (A^g)_{ij}
 Fewer, de-duplicated messages ⇒ less compression ⇒ relieved over-squashing —
 the *algebraic* alternative to rewiring (SDRF), coarsening, or pooling.
 
-- **Strong claim (primary):** `QuotientMessagePassing` sustains accuracy on
-  NeighborsMatch where GCN/GAT/GIN collapse, and helps on LRGB-Peptides.
+- **Strong claim (primary):** `WalkNet` over effective kQ/I operators
+  (`quotient`) sustains accuracy on NeighborsMatch where GCN/GAT/GIN and the
+  architecture-matched raw-operator ablation (`walkraw`) collapse, and helps on
+  LRGB-Peptides. The `quotient` vs `walkraw` gap isolates the kQ/I contribution.
 - **Diagnostic claim (fallback):** `dim(e_i·(kQ/I)^g·e_j)` and walk-entropy
   `H_g(i,j)` predict *where* a GNN fails (see `src/oversquash/diagnostic.py`,
   which wraps the already-implemented `aiq.gnn.over_squashing_diagnostic`).
@@ -62,9 +64,10 @@ mitigation_overquashing/
 ├── configs/
 │   └── neighborsmatch.yaml  # radius sweep + model/training hyperparameters
 ├── src/oversquash/
-│   ├── ideal_bridge.py      # PyG graph -> aiq Quiver -> ideal I -> QuotientPlan
-│   ├── layers.py            # QuotientMessagePassing (the kQ/I-aware layer)
-│   ├── models.py            # GCN / GAT / GIN baselines + QuotientNet
+│   ├── ideal_bridge.py      # PyG graph -> aiq Quiver -> ideal I; raw A^g + effective kQ/I walk operators
+│   ├── layers.py            # QuotientWalkConv (multi-hop, kQ/I-aware aggregation)
+│   ├── transforms.py        # AttachWalkOperators + block-diagonal batch collate
+│   ├── models.py            # GCN / GAT / GIN baselines + WalkNet (quotient / walkraw)
 │   ├── data.py              # NeighborsMatch generator + LRGB Peptides loader
 │   ├── diagnostic.py        # fallback: bottleneck prediction via kQ/I
 │   └── train.py             # train/eval loop + radius sweep
@@ -76,18 +79,29 @@ mitigation_overquashing/
 └── results/                 # figures + tables (gitignored; .gitkeep tracked)
 ```
 
-## Known limitations (work in progress — do not mistake for finished)
+## Design notes & limitations
 
-- **Batched edge classes.** `train.edge_classes_for_graph` builds the per-depth
-  class tensor for a *single* graph. PyG's `DataLoader` remaps node indices when
-  batching, so the quotient layer needs a collate that tiles + offsets the class
-  tensor per batch. Until that lands, run the quotient model with `batch_size`
-  = 1 graph topology per batch, or use the provided single-graph path. This is
-  the first thing to fix before the day-3 training runs.
-- **Walk→1-hop attribution.** The ideal is defined over full length-g walks; a
-  PyG layer is 1-hop. `edge_classes_for_graph` attributes a walk's class to the
-  last arrow into the target. Exact for the parallel-paths relation on trees;
-  a documented heuristic on general graphs (paper §3 discusses this).
+- **Multi-hop, not 1-hop.** An earlier 1-hop `MessagePassing` design merged a
+  node's in-edges by equivalence class, but under mean aggregation that merge is
+  *idempotent* (mean of copies = the original mean) and modeled nothing. The
+  multiplicity `n_g(i,j)` is a property of length-`g` **walks** — the `g`-fold
+  adjacency composition — so the layer (`QuotientWalkConv`) aggregates directly
+  over the precomputed range-`g` operator. This is the faithful reading of the
+  paper's claim. Verified: on a radius-3 tree the effective operator satisfies
+  `eff ≤ raw` everywhere and cuts total walk multiplicity ~30% (see notebook 00).
+- **Batching is solved.** Walk operators are precomputed per graph (cached by
+  topology) and assembled block-diagonally per batch by `collate_walk_operators`.
+  ⚠️ Use **`torch.utils.data.DataLoader`** with that `collate_fn`, NOT
+  `torch_geometric.loader.DataLoader` — the PyG loader overrides custom collate
+  functions with its own `Collater` and silently mangles the operators.
+- **Open empirical question.** The quotient *provably* lowers the multiplicity to
+  squash; whether that yields an *accuracy* gap over `walkraw`/baselines at larger
+  radius with proper training is what notebook 01 is for. Defaults in the config
+  are untuned starting points. Pivot rule: if no gap by the day-7 checkpoint, lead
+  with the diagnostic claim (notebook 03), which already works.
+- **Walk-operator scaling.** `walk_operators` enumerates walks via the path
+  algebra; for large/dense graphs (e.g. full LRGB molecules at high `max_length`)
+  this can be costly. Cache by topology and cap `max_length` per dataset.
 - LRGB requires `rdkit`; the `environment.yml` pulls `rdkit-pypi` via pip.
 
 ## Reproduce

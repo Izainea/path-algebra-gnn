@@ -18,7 +18,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch_geometric.nn import GCNConv, GATConv, GINConv, global_mean_pool
 
-from .layers import QuotientMessagePassing
+from .layers import QuotientWalkConv
 
 
 class _MLPReadout(nn.Module):
@@ -90,43 +90,60 @@ class GIN(nn.Module):
         return self.readout(x), x
 
 
-class QuotientNet(nn.Module):
-    """Our model: a stack of QuotientMessagePassing layers.
+class WalkNet(nn.Module):
+    """A stack of multi-hop QuotientWalkConv layers.
 
-    forward() accepts `edge_classes`: a list (length n_layers) of (E,) class-id
-    tensors, one per depth, from the QuotientPlan. If None, the layers fall back
-    to mean aggregation, so QuotientNet(edge_classes=None) is a clean ablation
-    against the same architecture without the kQ/I collapse.
+    Each layer g aggregates over the precomputed range-g walk operator. The
+    `operator` arg selects which family of operators the batch supplies:
+      - operator='eff' : the EFFECTIVE kQ/I matrices M_g (our model).
+      - operator='raw' : the RAW matrices A^g (the ablation that keeps the same
+                         architecture but does NOT identify equivalent paths).
+    The eff-vs-raw gap is exactly the kQ/I contribution, with everything else
+    held fixed — the cleanest possible isolation of the claim.
+
+    forward(x, edge_index, batch, walk_eff, walk_raw): walk_* are lists of
+    n_layers sparse (N, N) tensors from transforms.collate_walk_operators.
     """
 
-    def __init__(self, in_dim, hidden_dim, out_dim, n_layers, dropout=0.0):
+    def __init__(self, in_dim, hidden_dim, out_dim, n_layers, dropout=0.0,
+                 operator="eff"):
         super().__init__()
+        assert operator in ("eff", "raw")
+        self.operator = operator
         self.layers = nn.ModuleList()
-        self.layers.append(QuotientMessagePassing(in_dim, hidden_dim, depth=1))
+        self.layers.append(QuotientWalkConv(in_dim, hidden_dim, depth=1))
         for d in range(2, n_layers + 1):
-            self.layers.append(
-                QuotientMessagePassing(hidden_dim, hidden_dim, depth=d)
-            )
+            self.layers.append(QuotientWalkConv(hidden_dim, hidden_dim, depth=d))
         self.readout = _MLPReadout(hidden_dim, out_dim)
         self.dropout = dropout
 
-    def forward(self, x, edge_index, batch=None, edge_classes=None, **kw):
+    def forward(self, x, edge_index, batch=None,
+                walk_eff=None, walk_raw=None, **kw):
+        ops = walk_eff if self.operator == "eff" else walk_raw
         for i, layer in enumerate(self.layers):
-            ec = None if edge_classes is None else edge_classes[i]
-            x = F.relu(layer(x, edge_index, edge_class=ec))
+            op = None if ops is None or i >= len(ops) else ops[i]
+            x = F.relu(layer(x, op))
             x = F.dropout(x, p=self.dropout, training=self.training)
         return self.readout(x), x
 
 
 def build_model(name: str, in_dim, hidden_dim, out_dim, n_layers, **kw):
     name = name.lower()
-    table = {"gcn": GCN, "gat": GAT, "gin": GIN, "quotient": QuotientNet}
-    if name not in table:
-        raise ValueError(f"unknown model {name!r}; choose from {list(table)}")
-    # GAT takes an extra `heads` kwarg; others ignore unknown kwargs gracefully.
-    cls = table[name]
+    dropout = kw.get("dropout", 0.0)
     if name == "gat":
-        return cls(in_dim, hidden_dim, out_dim, n_layers,
-                   heads=kw.get("heads", 4), dropout=kw.get("dropout", 0.0))
-    return cls(in_dim, hidden_dim, out_dim, n_layers,
-               dropout=kw.get("dropout", 0.0))
+        return GAT(in_dim, hidden_dim, out_dim, n_layers,
+                   heads=kw.get("heads", 4), dropout=dropout)
+    if name in ("gcn", "gin"):
+        return {"gcn": GCN, "gin": GIN}[name](
+            in_dim, hidden_dim, out_dim, n_layers, dropout=dropout)
+    # 'quotient' = WalkNet over effective kQ/I operators (our model);
+    # 'walkraw'  = same architecture over raw A^g operators (ablation baseline).
+    if name in ("quotient", "walkeff"):
+        return WalkNet(in_dim, hidden_dim, out_dim, n_layers,
+                       dropout=dropout, operator="eff")
+    if name == "walkraw":
+        return WalkNet(in_dim, hidden_dim, out_dim, n_layers,
+                       dropout=dropout, operator="raw")
+    raise ValueError(
+        f"unknown model {name!r}; choose from "
+        "gcn, gat, gin, quotient, walkraw")

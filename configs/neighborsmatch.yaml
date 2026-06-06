@@ -23,8 +23,12 @@ train:
   batch_size: 1024
   patience: 20                   # early stopping on val accuracy
 
-# Models to compare. 'quotient' is our QuotientMessagePassing; the rest are baselines.
-models: [gcn, gat, gin, quotient]
+# Models to compare:
+#   gcn/gat/gin : standard PyG baselines
+#   walkraw     : multi-hop WalkNet over raw A^g operators (architecture-matched ablation)
+#   quotient    : multi-hop WalkNet over effective kQ/I operators (our model)
+# The walkraw-vs-quotient gap isolates the kQ/I contribution with all else fixed.
+models: [gcn, gat, gin, walkraw, quotient]
 
 quotient:
   # How the admissible ideal I is built from the computation graph.

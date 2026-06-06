@@ -184,6 +184,95 @@ def build_quotient_plan(
     return plan
 
 
+def walk_operators(edge_index: np.ndarray, num_nodes: int, max_length: int,
+                   relation_strategy: str = "parallel_paths"):
+    """Per-graph raw and effective walk operators for ranges g = 1..max_length.
+
+    Returns
+    -------
+    raw : list of (N, N) np.ndarray, raw[g-1][i, j] = (A^g)[i, j] = #walks i->j
+          of length g (the multiplicity a vanilla g-layer GNN must squash).
+    eff : list of (N, N) np.ndarray, eff[g-1][i, j] = dim(e_i·(kQ/I)_g·e_j),
+          the de-duplicated count after identifying equivalent paths via I.
+
+    By construction eff[g] <= raw[g] elementwise — the structural bound that
+    motivates the layer (ACT_en.tex, Prop. prop:efecto_ideal). The quotient
+    model aggregates with (row-normalized) eff; the ablation uses raw.
+    """
+    Quiver, PathAlgebra, Ideal, QuotientAlgebra, _ = _import_aiq()
+    quiver = build_quiver_from_edge_index(edge_index, num_nodes)
+    algebra = PathAlgebra(quiver)
+    if relation_strategy == "parallel_paths":
+        ideal = parallel_path_ideal(quiver, max_length)
+    else:
+        raise ValueError(f"unknown relation_strategy: {relation_strategy!r}")
+    quotient = QuotientAlgebra(algebra, ideal)
+
+    A = quiver.adjacency_matrix().astype(np.float64)
+    raw, eff = [], []
+    Ag = np.eye(num_nodes, dtype=np.float64)
+    for g in range(1, max_length + 1):
+        Ag = Ag @ A                                  # A^g
+        raw.append(Ag.copy())
+        eff.append(quotient.effective_walk_matrix(g))
+    return raw, eff
+
+
+def edge_class_matrix(edge_index: np.ndarray, num_nodes: int,
+                      n_layers: int,
+                      relation_strategy: str = "parallel_paths") -> np.ndarray:
+    """Per-graph (n_layers, E) matrix of class ids for the quotient layer.
+
+    Row g-1 holds, for each edge e=(u->v), the id of the length-g equivalence
+    class (under I) that e belongs to. `QuotientMessagePassing` merges messages
+    that share a (target-node, class) pair, so edges that close redundant
+    parallel walks into the same target get a *shared* id, and every other edge
+    gets a unique id (no merging).
+
+    Class ids are local to this graph and dense in [0, E + #merged_groups).
+    When graphs are batched, ids must be offset per graph — see
+    transforms.AttachEdgeClasses / QuotientData.__inc__, which handle that so
+    cross-graph classes never collide.
+
+    Attribution note: the ideal is defined over full length-g walks while a
+    layer is 1-hop. We attribute a walk's class to its *last arrow* into the
+    target. Exact for the parallel-paths relation on trees (each target's
+    in-edges close exactly one group); a documented heuristic on general graphs
+    where a target may terminate several distinct groups (paper §3).
+    """
+    plan = build_quotient_plan(edge_index, num_nodes, max_length=n_layers,
+                               relation_strategy=relation_strategy)
+    E = edge_index.shape[1]
+    dst = np.asarray(edge_index[1])
+    mat = np.zeros((n_layers, E), dtype=np.int64)
+
+    for g in range(1, n_layers + 1):
+        classes = np.arange(E, dtype=np.int64)  # default: each edge its own id
+        next_id = E
+        # Collect, per target node j, the groups of size >= 2 at this depth.
+        # An edge into j that participates in a non-trivial group is merged;
+        # we give each (j, group) its own shared id. Edges into j that are in
+        # no non-trivial group keep their unique default id.
+        targets_with_groups: dict = {}
+        for (i, j, gg), groups in plan.groups.items():
+            if gg != g:
+                continue
+            nontrivial = [c for c in groups if len(c) >= 2]
+            if nontrivial:
+                targets_with_groups.setdefault(j, 0)
+                targets_with_groups[j] += len(nontrivial)
+        for j, n_groups in targets_with_groups.items():
+            in_edges = np.where(dst == j)[0]
+            if in_edges.size == 0:
+                continue
+            # On trees every in-edge of j closes the single parallel-path group,
+            # so they all share one id. (General-graph refinement is future work.)
+            classes[in_edges] = next_id
+            next_id += 1
+        mat[g - 1] = classes
+    return mat
+
+
 def _equivalence_classes(walks, ideal, PathAlgebraElement) -> list[list[int]]:
     """Partition `walks` into classes that reduce to the same normal form mod I.
 
