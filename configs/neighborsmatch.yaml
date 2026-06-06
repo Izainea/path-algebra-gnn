@@ -1,0 +1,34 @@
+# NeighborsMatch experiment (Alon & Yahav, 2021) — problem-radius sweep.
+# Vanilla GNNs collapse as the radius grows; we test whether the kQ/I
+# quotient-aware layer sustains accuracy where they fail.
+
+experiment: neighborsmatch
+seed: 0
+device: cpu
+
+data:
+  radii: [2, 3, 4, 5, 6, 7, 8]   # problem radius = tree depth
+  train_fraction: 0.8
+  n_samples: 32000               # per radius (Alon-Yahav use full label permutations)
+
+model:
+  hidden_dim: 32
+  n_layers: null                 # null => set to radius + 1 (must reach the source)
+  dropout: 0.0
+
+train:
+  epochs: 200
+  lr: 0.001
+  weight_decay: 0.0
+  batch_size: 1024
+  patience: 20                   # early stopping on val accuracy
+
+# Models to compare. 'quotient' is our QuotientMessagePassing; the rest are baselines.
+models: [gcn, gat, gin, quotient]
+
+quotient:
+  # How the admissible ideal I is built from the computation graph.
+  # 'parallel_paths': identify same-source/same-target walks of equal length
+  #                   (the relation alpha_1*beta ≡ alpha_2*beta from ACT_en.tex).
+  relation_strategy: parallel_paths
+  max_path_length: null          # null => follow n_layers

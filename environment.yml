@@ -1,0 +1,47 @@
+name: oversquash
+# Conda environment for the over-squashing mitigation experiments (CIARP 2026).
+#
+# Rationale: PyTorch Geometric's extension chain (torch-scatter / torch-sparse)
+# is most reliably resolved through conda-forge + the official PyG wheels, and
+# the system default Python (3.14) has no PyTorch wheels yet — so we pin 3.11.
+#
+# Create:   conda env create -f environment.yml
+# Activate: conda activate oversquash
+# Then:     pip install -e .            # installs this package (oversquash)
+#           pip install -e "../quivers_analysis"   # editable aiq-quivers w/ local fixes
+#
+# CPU-only by design: NeighborsMatch and a small LRGB-Peptides run fit on CPU.
+# For CUDA, replace `cpuonly`/`pytorch` with the matching `pytorch-cuda=XX.X`
+# line from https://pytorch.org and use the cu* PyG wheel index.
+channels:
+  - pyg
+  - pytorch
+  - conda-forge
+dependencies:
+  - python=3.11
+  - pip
+  # --- scientific core (shared with aiq-quivers) ---
+  - numpy
+  - scipy
+  - networkx
+  - sympy
+  - pandas
+  - matplotlib
+  - seaborn
+  # --- deep learning ---
+  - pytorch>=2.2
+  - cpuonly
+  - pyg>=2.5            # torch_geometric (pulls torch-scatter/torch-sparse from the pyg channel)
+  # --- notebooks / tooling ---
+  - jupyterlab
+  - ipykernel
+  - tqdm
+  - pyyaml
+  - pytest
+  - pip:
+      # aiq-quivers: install the LOCAL editable copy (has the 2026-06 fixes),
+      # not the PyPI release. Done as a manual step after env creation so the
+      # relative path is explicit (see README). Left commented to avoid a
+      # hard-coded path failing `conda env create`.
+      # - -e ../quivers_analysis
+      - rdkit-pypi  # needed by LRGB Peptides featurization (molecular graphs)

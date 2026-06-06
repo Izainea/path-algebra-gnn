@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "oversquash"
+version = "0.1.0"
+description = "Algebraic (kQ/I) mitigation of over-squashing in GNNs — CIARP 2026 experiments"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+    { name = "Carlos Isaac Zainea Maya" },
+    { name = "Agustín Moreno Cañadas" },
+]
+keywords = ["graph neural networks", "over-squashing", "path algebra", "quiver", "message passing"]
+
+# Heavy deps (torch, torch_geometric) are provided by the conda env, NOT pip-resolved
+# here, to avoid clobbering the conda-installed PyG extension chain.
+dependencies = [
+    "numpy",
+    "pandas",
+    "matplotlib",
+    "networkx",
+    "pyyaml",
+    "tqdm",
+    # aiq-quivers is installed editable from ../quivers_analysis (see README).
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "jupyterlab", "ipykernel"]
+
+[tool.setuptools.packages.find]
+where = ["src"]

@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Environments
+.venv/
+venv/
+env/
+
+# Data & artifacts (downloaded / generated — not versioned)
+data/
+results/figures/*.png
+results/figures/*.pdf
+results/tables/*.csv
+results/runs/
+*.ckpt
+*.pt
+wandb/
+
+# Keep the folder structure (placeholders tracked, contents ignored)
+!data/.gitkeep
+!results/figures/.gitkeep
+!results/tables/.gitkeep
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
