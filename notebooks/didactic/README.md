@@ -12,15 +12,22 @@ Léelos en orden.
 
 ---
 
-## The five notebooks / Los cinco cuadernos
+## The notebooks / Los cuadernos
 
 | # | 🇬🇧 English | 🇪🇸 Español |
 |---|-----------|-----------|
+| **D0** | Playground — tiny graphs you can edit | Patio de juegos — grafos pequeños editables |
 | **D1** | What is over-squashing, and why does it hurt? | ¿Qué es el over-squashing y por qué duele? |
 | **D2** | Quivers and counting paths (the algebra `kQ`) | Quivers y conteo de caminos (el álgebra `kQ`) |
 | **D3** | Paths are messages: redundancy = compression | Los caminos son mensajes: redundancia = compresión |
 | **D4** | The walk operator **is** attention | El operador de walk **es** atención |
 | **D5** | Putting it together: the network that solves it | Juntándolo todo: la red que lo resuelve |
+
+🇬🇧 Start at **D0** to get a feel for path-counting on toy graphs, then read D1→D5 in order. Each conceptual
+step also has a diagram (in `img/`) embedded in the notebook.
+
+🇪🇸 Empieza en **D0** para tomarle el pulso al conteo de caminos en grafos de juguete, luego lee D1→D5 en
+orden. Cada paso conceptual tiene también un diagrama (en `img/`) incrustado en el cuaderno.
 
 ## The one-sentence idea / La idea en una frase
 
