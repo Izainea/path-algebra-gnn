@@ -1,0 +1,31 @@
+# Bottleneck-chain over-squashing experiment.
+# Depth d = number of interchangeable bottleneck layers between sources and
+# target. raw multiplicity ~ K*M^d (vanilla squashes all of it); effective kQ/I
+# multiplicity ~ K. The deeper d, the more vanilla should collapse while the
+# quotient model holds.
+
+experiment: bottleneck-oversquash
+seed: 0
+device: cpu
+
+data:
+  radii: [1, 2, 3, 4]      # bottleneck depths (named 'radii' for drop-in compat)
+  n_samples: 4000
+  train_fraction: 0.8
+  # K sources / M interchangeable nodes per layer are set in the notebook via a
+  # functools.partial over bottleneck_dataset (defaults K=5, M=4).
+
+model:
+  hidden_dim: 16           # deliberately narrow: a tight vector exposes squashing
+  n_layers: null           # null => depth + 1 (must reach the sources)
+  dropout: 0.0
+
+train:
+  epochs: 120
+  lr: 0.005
+  weight_decay: 0.0
+  batch_size: 128
+  patience: 20
+
+# gcn/gat/gin baselines, walkraw (raw A^g, architecture-matched), quotient (kQ/I)
+models: [gcn, gat, gin, walkraw, quotient]

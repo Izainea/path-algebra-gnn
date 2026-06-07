@@ -22,6 +22,9 @@ results/runs/
 *.ckpt
 *.pt
 wandb/
+mlruns/
+mlartifacts/
+*.db
 
 # Keep the folder structure (placeholders tracked, contents ignored)
 !data/.gitkeep

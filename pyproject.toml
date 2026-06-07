@@ -24,6 +24,7 @@ dependencies = [
     "networkx",
     "pyyaml",
     "tqdm",
+    "mlflow",  # experiment tracking (SQLite backend)
     # aiq-quivers is installed editable from ../quivers_analysis (see README).
 ]
 

@@ -20,10 +20,13 @@ __version__ = "0.1.0"
 
 __all__ = [
     "layers",
+    "attention",
     "models",
     "ideal_bridge",
     "transforms",
     "diagnostic",
     "data",
+    "data_bottleneck",
     "train",
+    "mlflow_runner",
 ]

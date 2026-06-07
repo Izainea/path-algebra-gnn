@@ -113,14 +113,22 @@ def parallel_path_ideal(quiver, max_length: int):
     """Build the admissible ideal that identifies same-(source,target,length)
     walks — the canonical 'functionally equivalent paths' relation.
 
-    For every (i, j) and length 2..max_length with ≥2 walks, we add relations
-    p_1 - p_k for each subsequent walk p_k, identifying them all with the first.
+    For every (i, j) and length 2..max_length with ≥2 walks, we add a relation
+    per non-base walk that rewrites it INTO the base walk, so the whole bundle
+    collapses to a single representative (dim drops from #walks to 1).
+
+    Crucially, the relation is written {other: +1, base: -1}, NOT {base, other}:
+    aiq.path_algebra.Ideal takes the FIRST term as the rewrite leader, so we make
+    `other` the leader (other -> base). Writing it the other way makes `base` the
+    leader and, with several relations sharing that leader, the reduction is
+    non-confluent and only collapses #walks -> #walks-1 (a real bug we hit). The
+    explicit form guarantees every parallel walk reduces to `base`, giving
+    dim(e_i·(kQ/I)_g·e_j) = 1 when all g-walks i->j are equivalent.
     Returns an `aiq.path_algebra.Ideal`.
     """
     _, PathAlgebra, Ideal, _, PathAlgebraElement = _import_aiq()
     algebra = PathAlgebra(quiver)
     generators = []
-    n = len(quiver.Q0)
     for i in quiver.Q0:
         for j in quiver.Q0:
             for g in range(2, max_length + 1):
@@ -129,8 +137,8 @@ def parallel_path_ideal(quiver, max_length: int):
                     continue
                 base = walks[0]
                 for other in walks[1:]:
-                    # relation: base - other  (∈ R_Q^2, hence admissible)
-                    rel = PathAlgebraElement({base: 1.0, other: -1.0})
+                    # leader = `other` (first term) -> rewrites to `base`.
+                    rel = PathAlgebraElement({other: 1.0, base: -1.0})
                     generators.append(rel)
     return Ideal(algebra, generators)
 

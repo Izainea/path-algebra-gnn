@@ -27,17 +27,25 @@ from torch_geometric.data import Data, Batch
 from .ideal_bridge import walk_operators
 
 
-def _row_normalize_sparse(M: np.ndarray) -> torch.Tensor:
-    """Row-normalize a dense (N, N) matrix and return a torch sparse COO tensor
-    with entry [j, i] = W[j, i] = M[i, j] / row_sum_j, i.e. transposed so that
-    `sparse.mm(W, H)` aggregates source features into targets (target = row j).
+def _to_sparse_operator(M: np.ndarray, scale: float) -> torch.Tensor:
+    """Turn a dense (N, N) walk-count matrix M (M[i, j] = walks i->j) into a
+    sparse aggregation operator W with W[j, i] = M[i, j] / scale, transposed so
+    `sparse.mm(W, H)` sends source features into targets (target = row j).
+
+    CRITICAL — we do NOT row-normalize. Row (per-target) normalization makes the
+    weights into a convex combination over sources, which **erases the
+    multiplicity gap**: on a symmetric bottleneck, normalized-raw and
+    normalized-effective both become uniform 1/K and are byte-identical, so the
+    quotient layer would be a no-op (a bug we hit and verified). Instead we scale
+    BOTH the raw and effective operators by a single shared constant `scale`
+    (the max raw column-sum of the graph), so the eff/raw ratio survives: a
+    target fed by M^d redundant raw walks gets a weight M^d larger than under the
+    de-duplicated effective operator. That surviving amplification is exactly the
+    over-squashing pressure the quotient relieves.
     """
     N = M.shape[0]
-    # target j receives from sources i with weight M[i, j]; normalize over i.
-    col_sums = M.sum(axis=0, keepdims=True)            # sum over i for each j
-    col_sums[col_sums == 0] = 1.0
-    W = (M / col_sums)                                  # W[i, j], columns sum to 1
-    Wt = W.T                                            # Wt[j, i] -> rows = targets
+    W = M / (scale if scale > 0 else 1.0)
+    Wt = W.T                                            # rows = targets
     idx = np.nonzero(Wt)
     if idx[0].size == 0:
         return torch.sparse_coo_tensor(
@@ -67,10 +75,16 @@ class AttachWalkOperators:
         if key not in self._cache:
             raw, eff = walk_operators(ei, num_nodes, self.n_layers,
                                       self.relation_strategy)
-            self._cache[key] = (
-                [_row_normalize_sparse(M) for M in eff],
-                [_row_normalize_sparse(M) for M in raw],
-            )
+            # One shared per-(graph, depth) scale for BOTH raw and eff so the
+            # multiplicity ratio survives (see _to_sparse_operator). We use the
+            # max raw column-sum at each depth (the worst squashing at that range)
+            # to keep magnitudes ~O(1) while preserving eff/raw differences.
+            eff_ops, raw_ops = [], []
+            for Rg, Eg in zip(raw, eff):
+                scale = float(Rg.sum(axis=0).max())
+                eff_ops.append(_to_sparse_operator(Eg, scale))
+                raw_ops.append(_to_sparse_operator(Rg, scale))
+            self._cache[key] = (eff_ops, raw_ops)
         eff_ops, raw_ops = self._cache[key]
         # store as plain python lists; the custom collate assembles batches.
         data.walk_eff = eff_ops
