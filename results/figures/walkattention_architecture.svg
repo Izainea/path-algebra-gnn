@@ -1,0 +1,206 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="860" viewBox="0 0 1180 860" font-family="'Segoe UI', Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arrow" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L7,3 L0,6 Z" fill="#334155"/>
+    </marker>
+    <marker id="arrowL" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L7,3 L0,6 Z" fill="#94a3b8"/>
+    </marker>
+    <linearGradient id="gAttn" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#eef2ff"/><stop offset="1" stop-color="#e0e7ff"/>
+    </linearGradient>
+    <linearGradient id="gMask" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ecfdf5"/><stop offset="1" stop-color="#d1fae5"/>
+    </linearGradient>
+    <style>
+      .title{font-size:23px;font-weight:700;fill:#0f172a}
+      .sub{font-size:13px;fill:#475569}
+      .lbl{font-size:13px;font-weight:600;fill:#1e293b}
+      .sm{font-size:11.5px;fill:#475569}
+      .tag{font-size:11px;font-weight:600;fill:#3730a3}
+      .mono{font-family:'Consolas','Courier New',monospace;font-size:11.5px;fill:#334155}
+      .win{font-size:12px;font-weight:700;fill:#047857}
+    </style>
+  </defs>
+
+  <rect width="1180" height="860" fill="#ffffff"/>
+  <text x="40" y="42" class="title">WalkAttention — sparse multi-hop attention over the path-algebra support</text>
+  <text x="40" y="66" class="sub">A node attends to all nodes reachable by length-g walks (the quiver path algebra defines WHO; attention learns HOW MUCH). Verified: 1.000 ± 0.000 (5 seeds, bottleneck retrieval).</text>
+
+  <!-- ===================== LEFT: full model stack ===================== -->
+  <text x="40" y="108" class="lbl">Model: WalkAttentionNet  (n_layers = depth+1 = 4,  hidden = 16,  heads = 4,  classes K = 5)</text>
+
+  <!-- input -->
+  <rect x="70" y="128" width="250" height="40" rx="8" fill="#f1f5f9" stroke="#cbd5e1"/>
+  <text x="195" y="148" text-anchor="middle" class="lbl">node features  x</text>
+  <text x="195" y="162" text-anchor="middle" class="sm">(N, in_dim)  ·  [is_src, is_tgt, key(K), payload]</text>
+
+  <!-- layer blocks -->
+  <g>
+    <!-- L1 -->
+    <rect x="70" y="196" width="250" height="56" rx="8" fill="url(#gAttn)" stroke="#a5b4fc"/>
+    <text x="195" y="216" text-anchor="middle" class="lbl">WalkAttention 1  ·  mask A¹</text>
+    <text x="195" y="232" text-anchor="middle" class="sm">in 6 → 4 heads × 16 = 64</text>
+    <text x="195" y="246" text-anchor="middle" class="sm">→ LayerNorm → ELU → dropout</text>
+    <!-- L2 -->
+    <rect x="70" y="268" width="250" height="56" rx="8" fill="url(#gAttn)" stroke="#a5b4fc"/>
+    <text x="195" y="288" text-anchor="middle" class="lbl">WalkAttention 2  ·  mask A²</text>
+    <text x="195" y="304" text-anchor="middle" class="sm">64 → 64 (concat)</text>
+    <text x="195" y="318" text-anchor="middle" class="sm">→ LayerNorm → ELU → dropout</text>
+    <!-- L3 -->
+    <rect x="70" y="340" width="250" height="56" rx="8" fill="url(#gAttn)" stroke="#a5b4fc"/>
+    <text x="195" y="360" text-anchor="middle" class="lbl">WalkAttention 3  ·  mask A³</text>
+    <text x="195" y="376" text-anchor="middle" class="sm">64 → 64 (concat)</text>
+    <text x="195" y="390" text-anchor="middle" class="sm">→ LayerNorm → ELU → dropout</text>
+    <!-- L4 -->
+    <rect x="70" y="412" width="250" height="56" rx="8" fill="url(#gAttn)" stroke="#818cf8"/>
+    <text x="195" y="432" text-anchor="middle" class="lbl">WalkAttention 4  ·  mask A⁴</text>
+    <text x="195" y="448" text-anchor="middle" class="sm">64 → 16 (average heads)</text>
+    <text x="195" y="462" text-anchor="middle" class="sm">→ LayerNorm → ELU → dropout</text>
+  </g>
+
+  <!-- readout -->
+  <rect x="70" y="484" width="250" height="50" rx="8" fill="#fef9c3" stroke="#fde047"/>
+  <text x="195" y="504" text-anchor="middle" class="lbl">MLP readout</text>
+  <text x="195" y="520" text-anchor="middle" class="sm">16 → ReLU → K = 5  (logits at target node)</text>
+
+  <!-- output -->
+  <rect x="70" y="550" width="250" height="36" rx="8" fill="#f1f5f9" stroke="#cbd5e1"/>
+  <text x="195" y="572" text-anchor="middle" class="lbl">argmax → retrieved source key</text>
+
+  <!-- vertical arrows -->
+  <g stroke="#334155" stroke-width="1.6" marker-end="url(#arrow)">
+    <line x1="195" y1="168" x2="195" y2="194"/>
+    <line x1="195" y1="252" x2="195" y2="266"/>
+    <line x1="195" y1="324" x2="195" y2="338"/>
+    <line x1="195" y1="396" x2="195" y2="410"/>
+    <line x1="195" y1="468" x2="195" y2="482"/>
+    <line x1="195" y1="534" x2="195" y2="548"/>
+  </g>
+
+  <!-- masks come from the algebra (right-pointing dashed into each layer) -->
+  <g stroke="#10b981" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#arrow)">
+    <line x1="360" y1="224" x2="322" y2="224"/>
+    <line x1="360" y1="296" x2="322" y2="296"/>
+    <line x1="360" y1="368" x2="322" y2="368"/>
+    <line x1="360" y1="440" x2="322" y2="440"/>
+  </g>
+  <rect x="360" y="196" width="150" height="272" rx="10" fill="url(#gMask)" stroke="#6ee7b7"/>
+  <text x="435" y="222" text-anchor="middle" class="lbl">path algebra</text>
+  <text x="435" y="240" text-anchor="middle" class="lbl">kQ</text>
+  <text x="435" y="266" text-anchor="middle" class="sm">walk-reachability</text>
+  <text x="435" y="282" text-anchor="middle" class="sm">masks per range g</text>
+  <text x="435" y="306" text-anchor="middle" class="mono">Aᵍ[j,i] = 1</text>
+  <text x="435" y="322" text-anchor="middle" class="mono">iff walk i→j</text>
+  <text x="435" y="338" text-anchor="middle" class="mono">of length g</text>
+  <text x="435" y="364" text-anchor="middle" class="sm">sparse: ≈2% of</text>
+  <text x="435" y="380" text-anchor="middle" class="sm">all-pairs at g=4</text>
+  <text x="435" y="408" text-anchor="middle" class="tag">defines the</text>
+  <text x="435" y="424" text-anchor="middle" class="tag">attention SUPPORT</text>
+  <text x="435" y="448" text-anchor="middle" class="sm">(not a collapse)</text>
+
+  <!-- ===================== RIGHT: one layer internals ===================== -->
+  <text x="560" y="108" class="lbl">Inside one WalkAttention layer  (sparse, computed only on reachable pairs)</text>
+  <rect x="560" y="120" width="580" height="360" rx="12" fill="#fafafa" stroke="#e2e8f0"/>
+
+  <!-- x_in -->
+  <rect x="582" y="150" width="120" height="38" rx="7" fill="#f1f5f9" stroke="#cbd5e1"/>
+  <text x="642" y="174" text-anchor="middle" class="lbl">x  (N, d)</text>
+
+  <!-- Q K V -->
+  <g>
+    <rect x="582" y="222" width="78" height="40" rx="7" fill="#e0e7ff" stroke="#a5b4fc"/>
+    <text x="621" y="247" text-anchor="middle" class="lbl">Q = xWq</text>
+    <rect x="672" y="222" width="78" height="40" rx="7" fill="#e0e7ff" stroke="#a5b4fc"/>
+    <text x="711" y="247" text-anchor="middle" class="lbl">K = xWk</text>
+    <rect x="762" y="222" width="78" height="40" rx="7" fill="#e0e7ff" stroke="#a5b4fc"/>
+    <text x="801" y="247" text-anchor="middle" class="lbl">V = xWv</text>
+  </g>
+  <text x="711" y="280" text-anchor="middle" class="sm">each: Linear d → heads·C   (H=4, C=16), no bias</text>
+
+  <g stroke="#334155" stroke-width="1.5" marker-end="url(#arrow)">
+    <line x1="642" y1="188" x2="621" y2="220"/>
+    <line x1="642" y1="188" x2="711" y2="220"/>
+    <line x1="642" y1="188" x2="801" y2="220"/>
+  </g>
+
+  <!-- pairs from mask -->
+  <rect x="876" y="150" width="244" height="112" rx="9" fill="url(#gMask)" stroke="#6ee7b7"/>
+  <text x="998" y="172" text-anchor="middle" class="lbl">reachable pairs (tgt j, src i)</text>
+  <text x="998" y="190" text-anchor="middle" class="mono">from mask Aᵍ.indices()</text>
+  <text x="998" y="212" text-anchor="middle" class="sm">only ~2% nonzero entries —</text>
+  <text x="998" y="228" text-anchor="middle" class="sm">O(#reachable), never N×N</text>
+  <text x="998" y="250" text-anchor="middle" class="sm">(dense version hung; this is sparse)</text>
+
+  <!-- logits -->
+  <rect x="640" y="306" width="200" height="44" rx="7" fill="#eef2ff" stroke="#a5b4fc"/>
+  <text x="740" y="326" text-anchor="middle" class="lbl">logit = (Q_j · K_i) · C^-½</text>
+  <text x="740" y="342" text-anchor="middle" class="sm">per pair, per head   (E, H)</text>
+
+  <g stroke="#334155" stroke-width="1.5" marker-end="url(#arrow)">
+    <line x1="621" y1="262" x2="700" y2="304"/>
+    <line x1="711" y1="262" x2="730" y2="304"/>
+    <line x1="876" y1="240" x2="842" y2="316"/>
+  </g>
+
+  <!-- softmax -->
+  <rect x="640" y="368" width="200" height="44" rx="7" fill="#eef2ff" stroke="#a5b4fc"/>
+  <text x="740" y="388" text-anchor="middle" class="lbl">α = softmax_j (logit)</text>
+  <text x="740" y="404" text-anchor="middle" class="sm">segmented over each target's sources</text>
+
+  <!-- aggregate -->
+  <rect x="640" y="430" width="200" height="40" rx="7" fill="#eef2ff" stroke="#818cf8"/>
+  <text x="740" y="450" text-anchor="middle" class="lbl">hⱼ = Σᵢ αⱼᵢ · V_i</text>
+  <text x="740" y="464" text-anchor="middle" class="sm">scatter-add into targets</text>
+
+  <g stroke="#334155" stroke-width="1.5" marker-end="url(#arrow)">
+    <line x1="740" y1="350" x2="740" y2="366"/>
+    <line x1="740" y1="412" x2="740" y2="428"/>
+  </g>
+
+  <!-- V feeds aggregate -->
+  <path d="M801,262 C 870,300 880,420 842,448" fill="none" stroke="#94a3b8" stroke-width="1.4" stroke-dasharray="4 3" marker-end="url(#arrowL)"/>
+  <text x="892" y="372" class="sm">V_i</text>
+
+  <!-- residual root -->
+  <rect x="582" y="430" width="40" height="40" rx="7" fill="#fde68a" stroke="#f59e0b"/>
+  <text x="602" y="455" text-anchor="middle" class="lbl">+</text>
+  <path d="M642,188 C 560,300 560,440 580,450" fill="none" stroke="#f59e0b" stroke-width="1.4" stroke-dasharray="4 3" marker-end="url(#arrowL)"/>
+  <text x="540" y="330" class="sm" transform="rotate(-90 540 330)">root (skip)  x·Wr</text>
+  <line x1="640" y1="450" x2="624" y2="450" stroke="#334155" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- ===================== BOTTOM: comparison ===================== -->
+  <text x="40" y="628" class="lbl">Why it wins — three ways to move information to the target across the over-squashing bottleneck</text>
+
+  <!-- GAT -->
+  <rect x="40" y="648" width="360" height="178" rx="12" fill="#fef2f2" stroke="#fecaca"/>
+  <text x="60" y="674" class="lbl">GAT — 1-hop attention</text>
+  <text x="60" y="696" class="sm">learns weights, but only over direct edges.</text>
+  <text x="60" y="713" class="sm">Information must hop layer-by-layer through</text>
+  <text x="60" y="730" class="sm">the bottleneck → squashed into one vector.</text>
+  <text x="60" y="756" class="mono">support: 1-hop neighbors</text>
+  <text x="60" y="774" class="mono">weights: learned</text>
+  <text x="60" y="804" class="sm" fill="#b91c1c" font-weight="700">collapses: 0.26 – 0.44</text>
+
+  <!-- walkraw -->
+  <rect x="416" y="648" width="360" height="178" rx="12" fill="#fffbeb" stroke="#fde68a"/>
+  <text x="436" y="674" class="lbl">walkraw — fixed multi-hop weights</text>
+  <text x="436" y="696" class="sm">aggregates over the SAME reachable pairs,</text>
+  <text x="436" y="713" class="sm">but weight = raw walk count (A^g). Reaches</text>
+  <text x="436" y="730" class="sm">the target, yet weights every source equally</text>
+  <text x="436" y="747" class="sm">→ cannot SELECT which one matters.</text>
+  <text x="436" y="772" class="mono">support: walk-reachable (algebra)</text>
+  <text x="436" y="790" class="mono">weights: fixed = multiplicity</text>
+  <text x="436" y="818" class="sm" fill="#b45309" font-weight="700">partial: 0.50 – 0.62</text>
+
+  <!-- walkattention -->
+  <rect x="792" y="648" width="348" height="178" rx="12" fill="#ecfdf5" stroke="#6ee7b7"/>
+  <text x="812" y="674" class="lbl">WalkAttention  (ours)</text>
+  <text x="812" y="696" class="sm">attends over the same walk-reachable</text>
+  <text x="812" y="713" class="sm">support, but LEARNS query–key weights —</text>
+  <text x="812" y="730" class="sm">mitigates squashing AND selects the</text>
+  <text x="812" y="747" class="sm">relevant source.</text>
+  <text x="812" y="772" class="mono">support: walk-reachable (algebra)</text>
+  <text x="812" y="790" class="mono">weights: learned</text>
+  <text x="812" y="818" class="win">solves it: 1.000 ± 0.000</text>
+</svg>

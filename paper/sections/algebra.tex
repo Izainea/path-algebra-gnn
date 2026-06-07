@@ -1,0 +1,215 @@
+% =====================================================================
+\section{The Path Algebra of a Quiver}\label{sec:algebra}
+% =====================================================================
+
+This section is self-contained. We build, from first principles, the algebraic
+objects that the model in Section~\ref{sec:model} relies on: quivers, paths, the
+path algebra, its grading by length, and the \emph{walk operators} that encode
+multi-hop reachability. No prior background in representation theory is assumed;
+standard references are \cite{schiffler2014quiver,assem2006elements}.
+
+% ---------------------------------------------------------------------
+\subsection{Quivers and paths}
+% ---------------------------------------------------------------------
+
+\begin{definition}[Quiver]
+A \emph{quiver} is a quadruple $Q=(Q_0,Q_1,s,t)$ where $Q_0$ is a finite set of
+\emph{vertices}, $Q_1$ is a finite set of \emph{arrows}, and
+$s,t\colon Q_1\to Q_0$ assign to each arrow $\alpha$ its \emph{source}
+$s(\alpha)$ and \emph{target} $t(\alpha)$. We write $\alpha\colon i\to j$ when
+$s(\alpha)=i$ and $t(\alpha)=j$.
+\end{definition}
+
+A quiver is thus a directed graph in which multiple arrows between the same
+ordered pair of vertices are allowed (a \emph{multigraph}). For pattern
+recognition this is exactly the data of a directed relational structure: vertices
+are entities and arrows are directed relations, with parallel arrows recording
+multiplicity. We write $n=|Q_0|$ and identify $Q_0$ with $\{1,\dots,n\}$.
+
+\begin{definition}[Path]
+A \emph{path of length} $g\ge 1$ in $Q$ is a sequence of arrows
+$p=\alpha_g\cdots\alpha_2\alpha_1$ such that $t(\alpha_r)=s(\alpha_{r+1})$ for
+$1\le r<g$; that is, the arrows compose head-to-tail. Its source is
+$s(p)=s(\alpha_1)$ and its target is $t(p)=t(\alpha_g)$. For each vertex $i$ we
+also admit a \emph{trivial path} $e_i$ of length $0$ with $s(e_i)=t(e_i)=i$.
+\end{definition}
+
+We read paths right-to-left, as for function composition. A path is a directed
+\emph{walk}: vertices and arrows may repeat. The number of distinct walks of a
+given length between two vertices is the quantity that drives over-squashing, and
+the path algebra makes it algebraically explicit.
+
+% ---------------------------------------------------------------------
+\subsection{The path algebra and its grading}
+% ---------------------------------------------------------------------
+
+Let $\kk$ be a field (in practice $\kk=\RR$).
+
+\begin{definition}[Path algebra]
+The \emph{path algebra} $\kQ$ is the $\kk$-vector space with basis the set of all
+paths of $Q$ (including the trivial paths $e_i$), endowed with the bilinear
+multiplication given on basis paths by concatenation:
+\[
+  q\cdot p \;=\;
+  \begin{cases}
+    q\,p & \text{if } s(q)=t(p),\\[2pt]
+    0 & \text{otherwise,}
+  \end{cases}
+\]
+and extended linearly. The trivial paths satisfy $e_{t(p)}\,p=p=p\,e_{s(p)}$ and
+$e_ie_j=\delta_{ij}e_i$, so $\{e_i\}_{i\in Q_0}$ is a complete set of orthogonal
+idempotents and $1=\sum_{i}e_i$ is the unit.
+\end{definition}
+
+The multiplication respects path length: concatenating a path of length $g$ with
+one of length $h$ yields a path of length $g+h$ (or zero). Hence $\kQ$ is a
+\emph{graded} algebra,
+\[
+  \kQ \;=\; \bigoplus_{g\ge 0}\kQ_g,
+  \qquad \kQ_g\cdot \kQ_h \subseteq \kQ_{g+h},
+\]
+where $\kQ_g$ is the subspace spanned by the paths of length exactly $g$. In
+particular $\kQ_0=\bigoplus_i \kk e_i$ and $\kQ_1$ is spanned by the arrows.
+
+The idempotents $e_i$ let us isolate the paths between a fixed pair of vertices.
+For $i,j\in Q_0$ and $g\ge 0$, the subspace
+\[
+  e_j\cdot \kQ_g\cdot e_i \;\subseteq\; \kQ
+\]
+is spanned exactly by the paths of length $g$ from $i$ to $j$. Its dimension is
+therefore the \emph{number of directed walks} of length $g$ from $i$ to $j$. The
+following elementary proposition makes the link to linear algebra precise and is
+the computational backbone of the model.
+
+\begin{proposition}[Graded multiplicity equals walk count]\label{prop:count}
+Let $\Adj\in\NN^{n\times n}$ be the adjacency matrix of $Q$, $\Adj_{ij}=\#\{\alpha
+\in Q_1: \alpha\colon i\to j\}$. Then for all $g\ge 0$ and all $i,j\in Q_0$,
+\[
+  \dim_{\kk}\bigl(e_j\cdot \kQ_g\cdot e_i\bigr)
+  \;=\; (\Adj^{\,g})_{ij}.
+\]
+\end{proposition}
+
+\begin{proof}
+By induction on $g$. For $g=0$, $e_j\kQ_0 e_i=\delta_{ij}\,\kk e_i$, of dimension
+$\delta_{ij}=(\Adj^0)_{ij}=(\mathrm{Id})_{ij}$. For $g=1$, a basis of
+$e_j\kQ_1 e_i$ is the set of arrows $i\to j$, of cardinality $\Adj_{ij}$.
+Assume the claim for $g-1$. Every path of length $g$ from $i$ to $j$ factors
+uniquely as $\alpha\cdot p$, where $p$ is a path of length $g-1$ from $i$ to some
+intermediate vertex $r$ and $\alpha\colon r\to j$ is an arrow. The number of such
+factorisations is $\sum_{r}\Adj_{rj}\,(\Adj^{\,g-1})_{ir}=(\Adj^{\,g})_{ij}$,
+which proves the claim. \qed
+\end{proof}
+
+We call the integer $n_g(i,j):=(\Adj^{\,g})_{ij}=\dim_\kk(e_j\kQ_g e_i)$ the
+\emph{walk multiplicity} from $i$ to $j$ at range $g$. It is exactly the number
+of length-$g$ messages that a message-passing GNN forces through node $j$ from
+node $i$ after $g$ layers, and hence the source of over-squashing.
+
+% ---------------------------------------------------------------------
+\subsection{An explicit example}
+% ---------------------------------------------------------------------
+
+\begin{example}[A diamond quiver]\label{ex:diamond}
+Let $Q$ have vertices $\{1,2,3,4\}$ and arrows
+$\alpha_1\colon 1\to2$, $\alpha_2\colon 1\to3$, $\beta_1\colon 2\to4$,
+$\beta_2\colon 3\to4$ (Figure~\ref{fig:diamond}). Its adjacency matrix and the
+square are
+\[
+  \Adj=\begin{pmatrix}0&1&1&0\\0&0&0&1\\0&0&0&1\\0&0&0&0\end{pmatrix},
+  \qquad
+  \Adj^2=\begin{pmatrix}0&0&0&2\\0&0&0&0\\0&0&0&0\\0&0&0&0\end{pmatrix}.
+\]
+There are two length-$2$ walks from $1$ to $4$, namely
+$\beta_1\alpha_1$ and $\beta_2\alpha_2$, so
+$\dim(e_4\kQ_2 e_1)=(\Adj^2)_{14}=2$, in agreement with
+Proposition~\ref{prop:count}. These two walks are \emph{parallel}: same source,
+same target, same length. Whether they should be treated as one channel or two is
+a modelling decision we return to in Section~\ref{sec:exp}.
+\end{example}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[->,>={Stealth[round]},node distance=16mm and 18mm,
+  every node/.style={circle,draw,minimum size=7mm,inner sep=0pt,font=\small}]
+  \node (1) {1};
+  \node (2) [above right=of 1] {2};
+  \node (3) [below right=of 1] {3};
+  \node (4) [below right=of 2] {4};
+  \draw (1) -- node[draw=none,fill=none,above left,font=\scriptsize]{$\alpha_1$} (2);
+  \draw (1) -- node[draw=none,fill=none,below left,font=\scriptsize]{$\alpha_2$} (3);
+  \draw (2) -- node[draw=none,fill=none,above right,font=\scriptsize]{$\beta_1$} (4);
+  \draw (3) -- node[draw=none,fill=none,below right,font=\scriptsize]{$\beta_2$} (4);
+\end{tikzpicture}
+\caption{The diamond quiver of Example~\ref{ex:diamond}. The two length-$2$ walks
+$1\walk 4$ are parallel; $\dim(e_4\kQ_2 e_1)=2$.}
+\label{fig:diamond}
+\end{figure}
+
+% ---------------------------------------------------------------------
+\subsection{Walk operators}
+% ---------------------------------------------------------------------
+
+Proposition~\ref{prop:count} lets us turn the graded path algebra into a family of
+linear operators on node features, one per range $g$. These \emph{walk operators}
+are the bridge to the neural model.
+
+\begin{definition}[Walk operator]\label{def:walkop}
+For each range $g\ge 1$ define the matrix $W^{(g)}\in\RR^{n\times n}$ by
+\[
+  W^{(g)}_{j i}\;=\;\frac{(\Adj^{\,g})_{ij}}{\,Z_g\,},
+\]
+where $Z_g=\max_{j}\sum_i (\Adj^{\,g})_{ij}$ is a single normalising constant for
+the range. The \emph{walk-reachability support} at range $g$ is the index set
+\[
+  \mathcal{S}_g \;=\; \bigl\{(j,i): (\Adj^{\,g})_{ij}>0\bigr\}
+  \;=\;\bigl\{(j,i): \dim(e_j\kQ_g e_i)>0\bigr\}.
+\]
+\end{definition}
+
+Acting on a feature matrix $H\in\RR^{n\times d}$, the operator $W^{(g)}H$ sends to
+each node $j$ a weighted sum of the features of every node $i$ that reaches $j$ by
+a length-$g$ walk, the weight being proportional to the walk multiplicity
+$n_g(i,j)$. Two facts are worth stressing.
+
+\emph{(i) Global normalisation, not row normalisation.} We divide by a single
+constant $Z_g$ per range rather than normalising each row to sum to one. Row
+normalisation would map the multiplicities to a uniform distribution over the
+reachable sources and would erase the very multiplicity information that
+distinguishes $W^{(g)}$ from a plain reachability mask; the global constant keeps
+the relative multiplicities intact while bounding the magnitude.
+
+\emph{(ii) Sparsity.} The support $\mathcal{S}_g$ is exactly the nonzero pattern
+of $\Adj^{\,g}$. On the structured graphs of interest it is a small fraction of
+all $n^2$ pairs (see Section~\ref{sec:exp}), so $W^{(g)}$ can be stored and
+applied in $O(|\mathcal{S}_g|)$ rather than $O(n^2)$.
+
+The fixed-weight operator $W^{(g)}$ already mitigates over-squashing, because it
+lets node $j$ read from range-$g$ sources \emph{directly}, in one step, instead
+of forcing the signal through $g$ rounds of local message passing. Its
+limitation---which motivates Walk Attention---is that the weights are fixed by
+multiplicity and cannot \emph{select} which reachable source matters. We address
+this in Section~\ref{sec:model} by learning the weights over the same support.
+
+% ---------------------------------------------------------------------
+\subsection{The quotient: a relation among walks}
+% ---------------------------------------------------------------------
+
+Representation theory routinely passes from $\kQ$ to a quotient $\kQ/I$ by an
+\emph{admissible ideal} $I$, identifying paths that are declared equal. In the
+diamond of Example~\ref{ex:diamond}, the relation $\beta_1\alpha_1\equiv
+\beta_2\alpha_2$ generates an ideal $I$ for which
+$\dim\bigl(e_4(\kQ/I)_2 e_1\bigr)=1$: the two parallel walks collapse to a single
+class. More generally, $\dim\bigl(e_j(\kQ/I)_g e_i\bigr)\le n_g(i,j)$, so the
+quotient yields a structurally smaller multiplicity.
+
+It is tempting to use this quotient directly as an over-squashing remedy:
+replace the walk multiplicities $n_g(i,j)$ by the smaller quotient dimensions,
+thereby ``de-duplicating'' redundant paths before aggregation. We tested this and
+found it \emph{counterproductive} (Section~\ref{sec:exp}): collapsing parallel
+walks destroys multiplicity information that downstream tasks may require. The
+constructive role of the quotient, then, is not to compress the signal but to
+\emph{reshape the support}---e.g.\ to route distinct path classes to distinct
+attention heads---a direction we leave to future work. In the model that follows
+we use the path algebra only through the reachability support $\mathcal{S}_g$ and
+the (unquotiented) walk operators $W^{(g)}$.

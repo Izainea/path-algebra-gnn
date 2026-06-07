@@ -149,9 +149,14 @@ mitigation_overquashing/
 │   ├── 02_lrgb_peptides.ipynb       # real-data experiment
 │   ├── 03_diagnostic.ipynb          # fallback claim
 │   ├── 04_bottleneck_oversquashing.ipynb  # walk-operator vs kQ/I-collapse (collapse loses)
-│   └── 05_walk_attention.ipynb      # HEADLINE: learned path-masked attention wins (1.000)
+│   ├── 05_walk_attention.ipynb      # HEADLINE: learned path-masked attention wins (1.000)
+│   └── didactic/            # bilingual (EN/ES) step-by-step intro: D1→D5, runnable
 └── results/                 # figures + tables (gitignored; .gitkeep tracked)
 ```
+
+**New to the idea?** Start with the bilingual (English/Spanish) didactic series in
+[`notebooks/didactic/`](notebooks/didactic/) — five short, runnable notebooks that build the intuition from
+over-squashing (D1) to "the walk operator is attention" (D4) to a live three-model comparison (D5).
 
 ## Experiment tracking (MLflow)
 

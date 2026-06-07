@@ -1,0 +1,123 @@
+% =====================================================================
+\section{Walk Attention}\label{sec:model}
+% =====================================================================
+
+We now define the architecture. The guiding principle is the observation that the
+multi-hop walk operator of Section~\ref{sec:algebra} is structurally an
+\emph{attention}: it aggregates, for each target node, a weighted combination of
+the features of the nodes that reach it. Transformer self-attention
+\cite{vaswani2017attention} has the same shape but with all-pairs support and
+\emph{learned} weights; graph attention \cite{velickovic2017graph} restricts the
+support to one hop. Walk Attention keeps the learned weights of attention and
+takes the support from the path algebra: the multi-hop, sparse walk-reachability
+$\mathcal{S}_g$.
+
+% ---------------------------------------------------------------------
+\subsection{The Walk Attention layer}
+% ---------------------------------------------------------------------
+
+Fix a range $g$ with reachability support $\mathcal{S}_g$
+(Definition~\ref{def:walkop}). A Walk Attention layer with $H$ heads and head
+dimension $C$ transforms node features $x\in\RR^{n\times d_{\text{in}}}$ as
+follows. For each head $h$ it computes queries, keys and values by linear maps,
+\[
+  Q^h = x\,W^h_Q,\qquad K^h = x\,W^h_K,\qquad V^h = x\,W^h_V,
+  \qquad W^h_\bullet\in\RR^{d_{\text{in}}\times C},
+\]
+and then attends \emph{only over the reachable pairs}: for every
+$(j,i)\in\mathcal{S}_g$,
+\begin{align}
+  \ell^h_{ji} &= \frac{1}{\sqrt{C}}\,\langle Q^h_j,\,K^h_i\rangle, \label{eq:logit}\\
+  \alpha^h_{ji} &= \softmax_{\,i:\,(j,i)\in\mathcal{S}_g}\bigl(\ell^h_{ji}\bigr),
+    \label{eq:softmax}\\
+  z^h_j &= \sum_{i:\,(j,i)\in\mathcal{S}_g}\alpha^h_{ji}\,V^h_i. \label{eq:agg}
+\end{align}
+The softmax in \eqref{eq:softmax} is taken, for each target $j$, over exactly the
+sources $i$ that reach $j$ by a length-$g$ walk---a \emph{segmented} softmax over
+the support, never over all $n$ nodes. The head outputs are concatenated (or
+averaged in the final layer) and a residual ``root'' term is added:
+\[
+  \mathrm{WA}_g(x)_j \;=\; \bigl\Vert_{h=1}^{H} z^h_j \;+\; x_j W_{\!\text{root}}.
+\]
+Because \eqref{eq:logit}--\eqref{eq:agg} only ever touch the pairs in
+$\mathcal{S}_g$, the layer costs $O(|\mathcal{S}_g|\,H\,C)$ time and memory, not
+$O(n^2)$. The support is precomputed once per graph from
+Proposition~\ref{prop:count} (the nonzero pattern of $\Adj^{\,g}$).
+
+\begin{remark}[Why learned weights matter]
+The fixed-weight operator $W^{(g)}$ of Definition~\ref{def:walkop} is the special
+case in which $\alpha^h_{ji}$ is replaced by the constant $n_g(i,j)/Z_g$.
+It reaches every range-$g$ source but weights them by multiplicity alone, so it
+cannot \emph{select} which source carries the relevant signal. The learned
+attention \eqref{eq:logit}--\eqref{eq:softmax} restores this selectivity while
+keeping the same multi-hop support. Section~\ref{sec:exp} shows this distinction
+is decisive.
+\end{remark}
+
+% ---------------------------------------------------------------------
+\subsection{The network}
+% ---------------------------------------------------------------------
+
+A depth-$L$ Walk Attention network stacks one layer per range
+$g=1,\dots,L$. Layer $g$ uses the support $\mathcal{S}_g$ derived from
+$\Adj^{\,g}$, so successive layers read from progressively longer walks. Each
+layer is followed by layer normalisation, an \textsc{elu} nonlinearity and
+dropout; a final multilayer perceptron maps the node embedding to task outputs:
+\[
+  x^{(g)} \;=\; \mathrm{dropout}\Bigl(\mathrm{elu}\bigl(\mathrm{LN}\bigl(
+  \mathrm{WA}_g\bigl(x^{(g-1)}\bigr)\bigr)\bigr)\Bigr),\qquad
+  \hat y \;=\; \mathrm{MLP}\bigl(x^{(L)}\bigr).
+\]
+Layer normalisation is important in practice: without it the learned attention is
+high-variance across initialisations (it reaches the optimum on some seeds and
+not others); with it, together with a short learning-rate warmup and gradient
+clipping, training converges reliably (Section~\ref{sec:exp}).
+Algorithm~\ref{alg:wa} summarises one layer.
+
+\begin{algorithm}[t]
+\caption{Walk Attention layer at range $g$ (sparse).}\label{alg:wa}
+\begin{algorithmic}[1]
+\Require features $x\in\RR^{n\times d_{\text{in}}}$; support
+  $\mathcal{S}_g=\{(j,i):(\Adj^{\,g})_{ij}>0\}$
+\State $Q,K,V \gets xW_Q,\,xW_K,\,xW_V$ \Comment{per head; shapes $n\times HC$}
+\For{each $(j,i)\in\mathcal{S}_g$ and head $h$}
+  \State $\ell^h_{ji}\gets \langle Q^h_j,K^h_i\rangle/\sqrt{C}$
+\EndFor
+\State $\alpha^h_{ji}\gets$ segmented-$\softmax$ over $\{i:(j,i)\in\mathcal{S}_g\}$
+\State $z^h_j\gets \sum_i \alpha^h_{ji}V^h_i$
+  \Comment{scatter-add into targets}
+\State \Return $\bigl\Vert_h z^h \;+\; xW_{\!\text{root}}$
+\end{algorithmic}
+\end{algorithm}
+
+% ---------------------------------------------------------------------
+\subsection{Relation to message passing and Transformers}
+% ---------------------------------------------------------------------
+
+Table~\ref{tab:relation} situates Walk Attention among related operators by two
+axes: the \emph{support} of interaction and whether the weights are
+\emph{learned}. A one-hop graph-attention layer \cite{velickovic2017graph} learns
+weights but only over direct neighbours, so it must route long-range signal
+through $L$ stacked layers---precisely the regime where over-squashing bites. A
+full graph Transformer \cite{vaswani2017attention} learns weights over all pairs,
+paying $O(n^2)$ and discarding graph structure unless it is reinjected by
+positional encodings. The fixed-weight walk operator has the right multi-hop
+support but cannot select. Walk Attention occupies the remaining cell: multi-hop,
+structure-aware support \emph{and} learned, selective weights.
+
+\begin{table}[t]
+\centering
+\caption{Walk Attention against related aggregation operators.}
+\label{tab:relation}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Operator} & \textbf{Support} & \textbf{Weights} & \textbf{Cost} \\
+\midrule
+GCN / message passing       & 1-hop      & fixed (degree) & $O(|Q_1|)$ \\
+Graph attention (GAT)       & 1-hop      & learned        & $O(|Q_1|)$ \\
+Walk operator $W^{(g)}$     & walk-reachable & fixed (multiplicity) & $O(|\mathcal{S}_g|)$ \\
+Graph Transformer           & all pairs  & learned        & $O(n^2)$ \\
+\textbf{Walk Attention (ours)} & \textbf{walk-reachable} & \textbf{learned} & $O(|\mathcal{S}_g|)$ \\
+\bottomrule
+\end{tabular}
+\end{table}

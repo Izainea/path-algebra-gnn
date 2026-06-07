@@ -1,0 +1,175 @@
+\documentclass[runningheads]{llncs}
+
+% ===== Packages =====
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,fit,backgrounds}
+\usepackage{xcolor}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage[hidelinks]{hyperref}
+
+% ===== Math shortcuts =====
+\newcommand{\kk}{\Bbbk}                 % the base field
+\newcommand{\kQ}{\kk Q}                 % path algebra
+\newcommand{\NN}{\mathbb{N}}
+\newcommand{\RR}{\mathbb{R}}
+\newcommand{\Adj}{A}                    % adjacency matrix
+\newcommand{\walk}{\rightsquigarrow}
+\DeclareMathOperator{\softmax}{softmax}
+\DeclareMathOperator{\supp}{supp}
+
+\begin{document}
+
+\title{Walk Attention: Path Algebras of Quivers\\ as a Sparse Multi-Hop Attention\\ for Mitigating Over-Squashing in GNNs}
+\titlerunning{Walk Attention}
+
+\author{Carlos Isaac Zainea Maya\inst{1}\orcidID{0000-0000-0000-0000} \and
+Agust\'in Moreno Ca\~nadas\inst{1}}
+\authorrunning{C. I. Zainea Maya and A. Moreno Ca\~nadas}
+\institute{Universidad Nacional de Colombia, Departamento de Matem\'aticas,\\
+Bogot\'a, Colombia\\
+\email{\{cizaineam,amorenoca\}@unal.edu.co}}
+
+\maketitle
+
+\begin{abstract}
+Message-passing graph neural networks (GNNs) suffer from \emph{over-squashing}:
+when information must travel along many long paths into a node, it is compressed
+into a fixed-width vector and the signal is lost. We introduce \textbf{Walk
+Attention}, an architecture that addresses over-squashing through the
+\emph{path algebra} $\kQ$ of the directed graph (quiver) underlying the data.
+The graded components of $\kQ$ count directed walks of a given length between
+two vertices and thus give an exact, algebraic description of the multi-hop
+reachability structure of the network. We use this structure to define a sparse,
+multi-hop attention: a node attends directly to every vertex it can reach by a
+walk of length~$g$, with the path algebra supplying the attention \emph{support}
+and the network learning the attention \emph{weights}. We give a self-contained
+construction of quivers, their path algebras, and the walk operators, and we
+relate them to message passing and to Transformer attention. On a controlled
+family of bottleneck graphs with tunable over-squashing, Walk Attention reaches
+$1.000 \pm 0.000$ accuracy over five seeds at problem depths where a one-hop
+graph-attention network collapses to chance ($0.26$--$0.44$) and a
+fixed-weight multi-hop aggregator reaches only $0.50$--$0.62$. We additionally
+report a negative result that motivates the design: using the path-algebra
+\emph{quotient} to \emph{collapse} equivalent walks discards the multiplicity
+that the task needs and fails. The path algebra is therefore valuable not as a
+quotient that compresses information, but as the object that \emph{defines the
+attention support}.
+
+\keywords{Graph neural networks \and Over-squashing \and Path algebra \and
+Quiver \and Attention \and Message passing.}
+\end{abstract}
+
+% =====================================================================
+\section{Introduction}
+% =====================================================================
+
+Graph neural networks (GNNs) built on the message-passing paradigm
+\cite{gilmer2017neural} update each node by aggregating messages from its
+immediate neighbours and iterating this local rule across layers. After $k$
+layers, information from nodes $k$ hops away reaches a target node. While simple
+and effective, this scheme has a well-documented failure mode:
+\emph{over-squashing} \cite{alon2021bottleneck}. When the number of paths that
+funnel information into a node grows---typically exponentially with
+distance---the messages carried by all of those paths must be compressed into a
+single fixed-width vector. The receiver cannot disentangle them, and long-range
+signal is lost. Over-squashing is the principal obstacle to learning tasks whose
+labels depend on distant or globally-distributed information.
+
+Existing remedies act on the graph or the aggregation: \emph{rewiring} adds or
+reweights edges to widen bottlenecks \cite{topping2022understanding}, graph
+\emph{coarsening} and \emph{pooling} reduce the graph while trying to preserve
+structure, and curvature-based analyses explain \emph{where} squashing occurs
+\cite{digiovanni2023oversquashing}. A complementary line of work replaces local
+aggregation by global \emph{attention} as in Transformers
+\cite{vaswani2017attention}, at the cost of an all-pairs interaction that
+ignores graph structure.
+
+In this paper we take a different route, grounded in the representation theory of
+quivers. A \emph{quiver} is a directed graph, possibly with multiple arrows
+\cite{schiffler2014quiver,assem2006elements}, and its \emph{path algebra} $\kQ$
+has the directed walks of the quiver as a basis, with concatenation as
+multiplication. The graded piece $e_i \cdot \kQ_g \cdot e_j$ of this algebra has
+a basis consisting of the directed walks of length~$g$ from vertex~$i$ to
+vertex~$j$; its dimension equals $(\Adj^g)_{ij}$, the corresponding entry of the
+$g$-th power of the adjacency matrix. The path algebra therefore provides an
+\emph{exact, algebraic description of multi-hop reachability and multiplicity}.
+
+Our central observation is that this algebraic structure is precisely what is
+needed to define a principled, sparse, multi-hop attention. We let each node
+attend directly to every vertex reachable from it by a walk of length~$g$: the
+path algebra supplies the \emph{support} of the attention (which pairs may
+interact at range~$g$), and the network learns the \emph{weights} (how much).
+Because the walk-reachability support is sparse---typically a small fraction of
+all node pairs---this is far cheaper than full self-attention, while still acting
+at a distance and thereby bypassing the iterative bottleneck that causes
+over-squashing. We call the resulting architecture \textbf{Walk Attention}.
+
+\paragraph{Contributions.}
+\begin{enumerate}
+  \item We give a \emph{self-contained} construction (Section~\ref{sec:algebra})
+  of quivers, path algebras, graded components, and the associated \emph{walk
+  operators}, aimed at a pattern-recognition audience and independent of prior
+  exposure to representation theory.
+  \item We define \textbf{Walk Attention} (Section~\ref{sec:model}): a learned
+  multi-hop attention whose support is the path-algebra walk-reachability
+  structure, and we relate it to message passing and to Transformer attention.
+  \item On a controlled bottleneck family with tunable over-squashing
+  (Section~\ref{sec:exp}), Walk Attention attains $1.000\pm0.000$ accuracy over
+  five seeds where one-hop graph attention collapses to chance and a fixed-weight
+  multi-hop aggregator only partially succeeds.
+  \item We report a \emph{negative} result that sharpens the design: collapsing
+  equivalent walks via the path-algebra \emph{quotient} discards needed
+  multiplicity and fails. The quotient's role is to \emph{shape} the support, not
+  to compress the signal.
+\end{enumerate}
+
+% =====================================================================
+\section{Related Work}\label{sec:related}
+% =====================================================================
+
+\paragraph{Over-squashing.}
+Alon and Yahav \cite{alon2021bottleneck} identified over-squashing and proposed
+the \textsc{NeighborsMatch} probe, on which standard GNNs degrade sharply with
+the problem radius. Topping et al.\ \cite{topping2022understanding} connected
+over-squashing to negative graph curvature and proposed stochastic discrete
+Ricci flow (SDRF) rewiring; Di Giovanni et al.\
+\cite{digiovanni2023oversquashing} gave a sensitivity analysis relating
+squashing to width, depth, and topology. These works either modify the graph or
+characterise the phenomenon. We instead change the aggregation operator,
+attending at a distance over an algebraically-defined support.
+
+\paragraph{Attention and graph Transformers.}
+Graph attention networks \cite{velickovic2017graph} learn one-hop attention
+weights; full graph Transformers apply Transformer self-attention
+\cite{vaswani2017attention} over all node pairs, recovering long range at
+quadratic cost and with positional/structural encodings to reinject topology.
+Walk Attention sits between these: it is attention, but its support is the sparse
+multi-hop walk-reachability of the quiver rather than one hop or all pairs.
+
+\paragraph{Path and walk structure.}
+Path-counting and powers of the adjacency matrix are classical, and the path
+algebra of a quiver is a standard object in representation theory
+\cite{schiffler2014quiver,assem2006elements}. Brauer-configuration algebras and
+related path-algebraic constructions have recently been applied to combinatorial
+and applied problems by Moreno Ca\~nadas and collaborators
+\cite{moreno2021brauer,moreno2024integer}. To our knowledge, the use of the
+graded path algebra to define the \emph{support} of a learned multi-hop graph
+attention is new.
+
+\input{sections/algebra}
+\input{sections/model}
+\input{sections/experiments}
+\input{sections/conclusion}
+
+% =====================================================================
+\bibliographystyle{splncs04}
+\bibliography{walk_attention}
+% =====================================================================
+
+\end{document}
