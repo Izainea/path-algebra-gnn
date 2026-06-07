@@ -39,6 +39,90 @@ from torch_geometric.nn import MessagePassing
 from torch_geometric.utils import softmax
 
 
+class WalkAttention(nn.Module):
+    """Learned multi-hop attention whose SUPPORT is the walk-reachability mask.
+
+    This is the synthesis the negative results point to (and the user's insight):
+    the multi-hop walk operator that mitigates over-squashing is structurally an
+    *attention* — like Transformer self-attention, but with the support given by
+    the path algebra (which pairs are connected by length-g walks) instead of
+    all-pairs, and crucially with **learned** weights instead of fixed
+    multiplicity.
+
+      - walkraw weights every walk-reachable source EQUALLY (by multiplicity): it
+        gets the signal through the bottleneck but cannot *select* which source
+        matters.
+      - WalkAttention attends over the SAME range-g reachable pairs but learns
+        query-key weights, so it can both mitigate over-squashing AND select.
+      - kQ/I's role here is constructive/structural: it defines the reachability
+        support (and could further split path-classes into separate heads). It is
+        NOT a destructive collapse — that is what failed.
+
+    The mask is sparse (e.g. ~2% of dense at the bottleneck's deepest range), so
+    this is far cheaper than full self-attention while staying global-in-reach.
+
+    forward(x, walk_mask):
+        walk_mask : (N, N) sparse or dense 0/1 tensor, [j, i] = 1 if a length-g
+                    walk i -> j exists. Provided per depth by the transform.
+                    Attention is computed over the nonzero entries only.
+    """
+
+    def __init__(self, in_channels: int, out_channels: int, n_heads: int = 4,
+                 concat: bool = True, dropout: float = 0.0):
+        super().__init__()
+        self.in_channels = in_channels
+        self.out_channels = out_channels
+        self.n_heads = n_heads
+        self.concat = concat
+        self.dropout = dropout
+        self.q = nn.Linear(in_channels, n_heads * out_channels, bias=False)
+        self.k = nn.Linear(in_channels, n_heads * out_channels, bias=False)
+        self.v = nn.Linear(in_channels, n_heads * out_channels, bias=False)
+        self.root = nn.Linear(in_channels,
+                              (n_heads * out_channels) if concat else out_channels)
+        self.scale = out_channels ** -0.5
+        self.reset_parameters()
+
+    def reset_parameters(self):
+        for m in (self.q, self.k, self.v, self.root):
+            m.reset_parameters()
+
+    def forward(self, x, walk_mask):
+        """walk_mask : sparse (N, N) with entry [j, i] != 0 iff a length-g walk
+        i -> j exists. We attend ONLY over those nonzero (target j, source i)
+        pairs — O(#reachable) not O(N^2) — via a segmented softmax over each
+        target's incoming sources, exactly like a sparse graph-attention layer.
+        Batched block-diagonal masks stay cheap because only the ~2% nonzero
+        entries are ever materialized.
+        """
+        from torch_geometric.utils import softmax as pyg_softmax
+        N, H, C = x.size(0), self.n_heads, self.out_channels
+        q = self.q(x).view(N, H, C)
+        k = self.k(x).view(N, H, C)
+        v = self.v(x).view(N, H, C)
+
+        if walk_mask is None or walk_mask._nnz() == 0:
+            out = torch.zeros(N, (H * C) if self.concat else C,
+                              device=x.device, dtype=x.dtype)
+            return out + self.root(x)
+
+        wm = walk_mask.coalesce()
+        tgt, src = wm.indices()[0], wm.indices()[1]          # (E,), (E,)
+        # per-pair attention logits: q_target . k_source  (E, H)
+        logit = (q[tgt] * k[src]).sum(-1) * self.scale       # (E, H)
+        alpha = pyg_softmax(logit, tgt, num_nodes=N)         # softmax over sources per target
+        alpha = F.dropout(alpha, p=self.dropout, training=self.training)
+        msg = v[src] * alpha.unsqueeze(-1)                   # (E, H, C)
+        agg = torch.zeros(N, H, C, device=x.device, dtype=x.dtype)
+        agg.index_add_(0, tgt, msg)                          # scatter-add into targets
+        out = agg.reshape(N, H * C) if self.concat else agg.mean(dim=1)
+        return out + self.root(x)
+
+    def __repr__(self):  # pragma: no cover
+        return (f"{self.__class__.__name__}({self.in_channels}->"
+                f"{self.out_channels}, heads={self.n_heads}, masked_by=walks)")
+
+
 class QuotientAttention(MessagePassing):
     """Single-layer attention whose heads are tied by path-equivalence class.
 

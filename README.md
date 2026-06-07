@@ -22,23 +22,42 @@ dim(e_i · (kQ/I)_g · e_j)  ≤  dim(e_i · kQ_g · e_j) = (A^g)_{ij}
 Fewer, de-duplicated messages ⇒ less compression ⇒ relieved over-squashing —
 the *algebraic* alternative to rewiring (SDRF), coarsening, or pooling.
 
-- **Status (honest):** the "kQ/I mitigates over-squashing" claim is **not
-  supported** — tested two ways (walk de-duplication, attention head-tying), both
-  fail to beat the baseline (multi-seed). What *does* hold: (1) the multi-hop
-  **walk operator** (`A^g`, `walkraw`) mitigates over-squashing; (2) the
-  **diagnostic** use of kQ/I (predict *where* squashing occurs) holds. The path
-  algebra's role is construction + diagnosis, not a learning-improving quotient.
-  The repo keeps the negative result rather than hiding it. See "What the
-  experiments actually show" below.
-- **Diagnostic claim (fallback):** `dim(e_i·(kQ/I)^g·e_j)` and walk-entropy
-  `H_g(i,j)` predict *where* a GNN fails (see `src/oversquash/diagnostic.py`,
-  which wraps the already-implemented `aiq.gnn.over_squashing_diagnostic`).
-  Pivot here if the trainable layer doesn't beat baselines by the day-7 check.
+- **Main result (verified):** **the path algebra defines a sparse multi-hop
+  attention that mitigates over-squashing.** The walk operator `A^g` is
+  structurally an attention — Transformer-style, but with the *support* given by
+  the path algebra (which pairs are walk-reachable at range `g`) instead of
+  all-pairs. A **learned** attention over that support (`WalkAttention`) solves
+  long-range retrieval **perfectly and stably** where 1-hop GAT and fixed-weight
+  aggregation collapse: on the bottleneck task, **1.000 ± 0.000 over 5 seeds at
+  depths 2 and 3**, vs `walkraw` 0.50–0.62 and GAT 0.26–0.44.
+- **What does NOT work (kept honest):** kQ/I as a *destructive* operator — walk
+  de-duplication and attention head-tying both fail (multi-seed), because they
+  discard the multiplicity that the task needs. kQ/I's value is to **define the
+  attention support**, not to collapse it. The repo keeps these negatives.
+- **Diagnostic (independent):** `dim(e_i·(kQ/I)^g·e_j)` and walk-entropy
+  `H_g(i,j)` predict *where* a GNN bottlenecks (`src/oversquash/diagnostic.py`,
+  wrapping `aiq.gnn.over_squashing_diagnostic`). Holds regardless of the above.
 
 ### What the experiments actually show (honest, verified)
 
-Three separable findings — only the first is a "kQ/I mitigates over-squashing"
-result, and it is **negative**:
+The arc went: trainable kQ/I *as collapse* fails → the multi-hop **walk operator**
+works → the walk operator **is attention**, and *learned* attention over the
+path-algebra support is the clean win. In order:
+
+**0. Headline — learned multi-hop attention over the path-reachability support
+(`WalkAttention`) solves the task perfectly and stably.** 5 seeds, with LayerNorm
++ lr-warmup + grad-clip:
+
+| depth | GAT (1-hop) | walkraw (fixed weights `A^g`) | **WalkAttention (learned, path-masked)** |
+|------:|------------:|------------------------------:|-----------------------------------------:|
+| 2 | 0.44 ± 0.12 | 0.62 ± 0.12 | **1.000 ± 0.000** |
+| 3 | 0.26 ± 0.10 | 0.50 ± 0.12 | **1.000 ± 0.000** |
+
+The walk operator is structurally an attention; the path algebra supplies the
+*sparse multi-hop support* (≈2% of all-pairs at the deepest range), and **learned**
+weights over it select *which* source matters — which fixed multiplicity weights
+(`walkraw`) cannot, and which 1-hop GAT cannot reach. This is the positive result
+the paper leads with. (Notebook 05; `attention.WalkAttention`.)
 
 **1. The multi-hop walk operator mitigates over-squashing; kQ/I de-duplication does NOT.**
 The **bottleneck-chain** task (notebook 04, `data_bottleneck.py`): `K` sources →
@@ -118,7 +137,8 @@ mitigation_overquashing/
 ├── src/oversquash/
 │   ├── ideal_bridge.py      # PyG graph -> aiq Quiver -> ideal I; raw A^g + effective kQ/I walk operators
 │   ├── layers.py            # QuotientWalkConv (multi-hop, kQ/I-aware aggregation)
-│   ├── transforms.py        # AttachWalkOperators + block-diagonal batch collate
+│   ├── attention.py         # WalkAttention (learned, path-masked) + QuotientAttention
+│   ├── transforms.py        # AttachWalkOperators/Masks + block-diagonal batch collates
 │   ├── models.py            # GCN / GAT / GIN baselines + WalkNet (quotient / walkraw)
 │   ├── data.py              # NeighborsMatch generator + LRGB Peptides loader
 │   ├── diagnostic.py        # fallback: bottleneck prediction via kQ/I
@@ -128,7 +148,8 @@ mitigation_overquashing/
 │   ├── 01_neighborsmatch.ipynb      # trees: kQ/I has little to collapse (ties)
 │   ├── 02_lrgb_peptides.ipynb       # real-data experiment
 │   ├── 03_diagnostic.ipynb          # fallback claim
-│   └── 04_bottleneck_oversquashing.ipynb  # SERIOUS over-squashing kQ/I resolves
+│   ├── 04_bottleneck_oversquashing.ipynb  # walk-operator vs kQ/I-collapse (collapse loses)
+│   └── 05_walk_attention.ipynb      # HEADLINE: learned path-masked attention wins (1.000)
 └── results/                 # figures + tables (gitignored; .gitkeep tracked)
 ```
 

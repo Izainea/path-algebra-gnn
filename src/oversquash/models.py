@@ -19,7 +19,7 @@ import torch.nn.functional as F
 from torch_geometric.nn import GCNConv, GATConv, GINConv, global_mean_pool
 
 from .layers import QuotientWalkConv
-from .attention import QuotientAttention
+from .attention import QuotientAttention, WalkAttention
 
 
 class _MLPReadout(nn.Module):
@@ -164,6 +164,46 @@ class QuotientAttentionNet(nn.Module):
         return self.readout(x), x
 
 
+class WalkAttentionNet(nn.Module):
+    """Stack of WalkAttention layers: learned multi-hop attention masked by
+    walk-reachability. Reads `walk_masks` (list of n_layers sparse (N,N) 0/1
+    tensors) from the batch. This is the 'walk-operator IS attention' model —
+    same support as walkraw, but learned weights instead of fixed multiplicity.
+    """
+
+    def __init__(self, in_dim, hidden_dim, out_dim, n_layers, n_heads=4,
+                 dropout=0.0):
+        super().__init__()
+        self.layers = nn.ModuleList()
+        self.norms = nn.ModuleList()           # LayerNorm per layer (stabilizes)
+        widths = []
+        self.layers.append(
+            WalkAttention(in_dim, hidden_dim, n_heads=n_heads, concat=True,
+                          dropout=dropout))
+        widths.append(hidden_dim * n_heads)
+        for _ in range(n_layers - 2):
+            self.layers.append(
+                WalkAttention(hidden_dim * n_heads, hidden_dim, n_heads=n_heads,
+                              concat=True, dropout=dropout))
+            widths.append(hidden_dim * n_heads)
+        if n_layers >= 2:
+            self.layers.append(
+                WalkAttention(hidden_dim * n_heads, hidden_dim, n_heads=n_heads,
+                              concat=False, dropout=dropout))
+            widths.append(hidden_dim)
+        for w in widths:
+            self.norms.append(nn.LayerNorm(w))
+        self.readout = _MLPReadout(hidden_dim, out_dim)
+        self.dropout = dropout
+
+    def forward(self, x, edge_index, batch=None, walk_masks=None, **kw):
+        for i, layer in enumerate(self.layers):
+            mask = None if walk_masks is None or i >= len(walk_masks) else walk_masks[i]
+            x = self.norms[i](F.elu(layer(x, mask)))   # post-norm for stability
+            x = F.dropout(x, p=self.dropout, training=self.training)
+        return self.readout(x), x
+
+
 def build_model(name: str, in_dim, hidden_dim, out_dim, n_layers, **kw):
     name = name.lower()
     dropout = kw.get("dropout", 0.0)
@@ -184,6 +224,9 @@ def build_model(name: str, in_dim, hidden_dim, out_dim, n_layers, **kw):
     if name in ("qattn", "quotient_attention"):
         return QuotientAttentionNet(in_dim, hidden_dim, out_dim, n_layers,
                                     n_heads=kw.get("heads", 4), dropout=dropout)
+    if name in ("walkattn", "walk_attention"):
+        return WalkAttentionNet(in_dim, hidden_dim, out_dim, n_layers,
+                                n_heads=kw.get("heads", 4), dropout=dropout)
     raise ValueError(
         f"unknown model {name!r}; choose from "
-        "gcn, gat, gin, quotient, walkraw, qattn")
+        "gcn, gat, gin, quotient, walkraw, qattn, walkattn")
