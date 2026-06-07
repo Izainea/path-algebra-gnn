@@ -24,7 +24,7 @@ import numpy as np
 import torch
 from torch_geometric.data import Data, Batch
 
-from .ideal_bridge import walk_operators
+from .ideal_bridge import walk_operators, edge_class_matrix
 
 
 def _to_sparse_operator(M: np.ndarray, scale: float) -> torch.Tensor:
@@ -108,6 +108,54 @@ def _block_diag_sparse(ops: list, offsets: list, total: int) -> torch.Tensor:
     indices = torch.cat(all_idx, dim=1)
     values = torch.cat(all_val)
     return torch.sparse_coo_tensor(indices, values, (total, total)).coalesce()
+
+
+class AttachEdgeClassMatrix:
+    """Transform for QuotientAttention: attach `edge_class_per_depth` (n_layers,E)
+    long matrix and `num_edge_classes` to each Data. Cached by topology.
+
+    The matrix is the kQ/I equivalence-class id of each edge at each depth. When
+    batched by `collate_edge_classes`, ids are offset per graph so classes never
+    collide across graphs (the attention layer hashes class -> head with class%H).
+    """
+
+    def __init__(self, n_layers: int, relation_strategy: str = "parallel_paths"):
+        self.n_layers = n_layers
+        self.relation_strategy = relation_strategy
+        self._cache: dict = {}
+
+    def __call__(self, data: Data) -> Data:
+        ei = data.edge_index.cpu().numpy()
+        num_nodes = int(data.num_nodes)
+        key = (num_nodes, tuple(map(tuple, ei.T.tolist())))
+        if key not in self._cache:
+            self._cache[key] = edge_class_matrix(
+                ei, num_nodes, self.n_layers, self.relation_strategy)
+        mat = self._cache[key]
+        data.edge_class_per_depth = torch.from_numpy(mat).long()
+        data.num_edge_classes = int(mat.max()) + 1 if mat.size else 0
+        data.num_nodes_int = num_nodes
+        return data
+
+
+def collate_edge_classes(data_list: list):
+    """DataLoader collate_fn for QuotientAttention: PyG batching PLUS per-graph
+    offset of `edge_class_per_depth` so class ids are globally unique."""
+    from torch_geometric.data import Batch
+    n_layers = data_list[0].edge_class_per_depth.size(0)
+    offset = 0
+    cols = []
+    stash = []
+    for d in data_list:
+        stash.append(d.edge_class_per_depth)
+        cols.append(d.edge_class_per_depth + offset)   # offset rows uniformly
+        offset += int(d.num_edge_classes)
+        d.edge_class_per_depth = None                  # hide from default batching
+    batch = Batch.from_data_list(data_list)
+    for d, m in zip(data_list, stash):
+        d.edge_class_per_depth = m                     # restore
+    batch.edge_class_per_depth = torch.cat(cols, dim=1)  # (n_layers, E_total)
+    return batch
 
 
 def collate_walk_operators(data_list: list):

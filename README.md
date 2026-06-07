@@ -22,12 +22,14 @@ dim(e_i · (kQ/I)_g · e_j)  ≤  dim(e_i · kQ_g · e_j) = (A^g)_{ij}
 Fewer, de-duplicated messages ⇒ less compression ⇒ relieved over-squashing —
 the *algebraic* alternative to rewiring (SDRF), coarsening, or pooling.
 
-- **Status (honest):** the original "kQ/I mitigates over-squashing" claim is
-  **not supported** by the experiments — see "What the experiments actually show"
-  below. What *does* hold: (1) the multi-hop **walk operator** mitigates
-  over-squashing (the raw `A^g` variant, `walkraw`); (2) kQ/I is being re-tested
-  as a **multi-head attention prior** (`QuotientAttention`); (3) the **diagnostic**
-  use of kQ/I holds. The repo keeps the negative result rather than hiding it.
+- **Status (honest):** the "kQ/I mitigates over-squashing" claim is **not
+  supported** — tested two ways (walk de-duplication, attention head-tying), both
+  fail to beat the baseline (multi-seed). What *does* hold: (1) the multi-hop
+  **walk operator** (`A^g`, `walkraw`) mitigates over-squashing; (2) the
+  **diagnostic** use of kQ/I (predict *where* squashing occurs) holds. The path
+  algebra's role is construction + diagnosis, not a learning-improving quotient.
+  The repo keeps the negative result rather than hiding it. See "What the
+  experiments actually show" below.
 - **Diagnostic claim (fallback):** `dim(e_i·(kQ/I)^g·e_j)` and walk-entropy
   `H_g(i,j)` predict *where* a GNN fails (see `src/oversquash/diagnostic.py`,
   which wraps the already-implemented `aiq.gnn.over_squashing_diagnostic`).
@@ -58,11 +60,22 @@ single-seed table that appeared to favor `quotient` was an artifact of per-row
 operator normalization (it made `walk_eff == walk_raw`); fixed, with a
 regression test.
 
-**2. kQ/I as a multi-head attention prior** (`attention.py`, `QuotientAttention`):
-heads tied by path-equivalence class, the way ACT_en.tex Def 5.2 frames it
-("head pruning as ideal quotient"). Expected to help only where parallel paths
-are *redundant noise* (`noise_redundancy_dataset`), so weight-sharing is the
-right bias. **Under evaluation.**
+**2. kQ/I as a multi-head attention prior also does NOT beat the baseline.**
+`QuotientAttention` (`attention.py`) ties heads by path-equivalence class, per
+ACT_en.tex Def 5.2 ("head pruning as ideal quotient"). On the noise-redundancy
+task (parallel paths = noisy copies of one signal), it *ties or slightly trails*
+plain multi-head GAT and is less stable (3 seeds):
+
+| depth | GAT (free heads) | qattn (kQ/I-tied) |
+|------:|-----------------:|------------------:|
+| 2 | **0.993 ± 0.003** | 0.978 ± 0.007 |
+| 3 | **0.988 ± 0.004** | 0.912 ± 0.124 |
+
+(Both near-ceiling — the noisy-copy redundancy was easy enough to average that no
+real over-squashing pressure remained for the prior to exploit.) Two fair,
+well-motivated operationalizations of kQ/I (de-duplication and head-tying) both
+fail to improve learning. We report this rather than keep hunting for a task
+where it wins.
 
 **3. Diagnostic** (notebook 03): `dim(e_i·(kQ/I)^g·e_j)` and walk-entropy predict
 *where* over-squashing happens. Independent of the trainable claims; holds up.

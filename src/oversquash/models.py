@@ -19,6 +19,7 @@ import torch.nn.functional as F
 from torch_geometric.nn import GCNConv, GATConv, GINConv, global_mean_pool
 
 from .layers import QuotientWalkConv
+from .attention import QuotientAttention
 
 
 class _MLPReadout(nn.Module):
@@ -127,6 +128,42 @@ class WalkNet(nn.Module):
         return self.readout(x), x
 
 
+class QuotientAttentionNet(nn.Module):
+    """Stack of QuotientAttention layers: multi-head attention whose heads are
+    tied by kQ/I path-equivalence class. Reads `edge_class_per_depth` (n_layers,E)
+    from the batch (attached by transforms.AttachEdgeClassMatrix). The fair
+    baseline is a plain multi-head `GAT` with the same `n_heads`; the difference
+    is solely whether heads are kQ/I-tied (this) or free (GAT).
+    """
+
+    def __init__(self, in_dim, hidden_dim, out_dim, n_layers, n_heads=4,
+                 dropout=0.0):
+        super().__init__()
+        self.layers = nn.ModuleList()
+        self.layers.append(
+            QuotientAttention(in_dim, hidden_dim, n_heads=n_heads, concat=True,
+                              dropout=dropout))
+        for _ in range(n_layers - 2):
+            self.layers.append(
+                QuotientAttention(hidden_dim * n_heads, hidden_dim,
+                                  n_heads=n_heads, concat=True, dropout=dropout))
+        if n_layers >= 2:
+            self.layers.append(
+                QuotientAttention(hidden_dim * n_heads, hidden_dim,
+                                  n_heads=n_heads, concat=False, dropout=dropout))
+        self.readout = _MLPReadout(hidden_dim, out_dim)
+        self.dropout = dropout
+
+    def forward(self, x, edge_index, batch=None, edge_class_per_depth=None, **kw):
+        for i, layer in enumerate(self.layers):
+            ec = None
+            if edge_class_per_depth is not None and i < edge_class_per_depth.size(0):
+                ec = edge_class_per_depth[i]
+            x = F.elu(layer(x, edge_index, edge_class=ec))
+            x = F.dropout(x, p=self.dropout, training=self.training)
+        return self.readout(x), x
+
+
 def build_model(name: str, in_dim, hidden_dim, out_dim, n_layers, **kw):
     name = name.lower()
     dropout = kw.get("dropout", 0.0)
@@ -144,6 +181,9 @@ def build_model(name: str, in_dim, hidden_dim, out_dim, n_layers, **kw):
     if name == "walkraw":
         return WalkNet(in_dim, hidden_dim, out_dim, n_layers,
                        dropout=dropout, operator="raw")
+    if name in ("qattn", "quotient_attention"):
+        return QuotientAttentionNet(in_dim, hidden_dim, out_dim, n_layers,
+                                    n_heads=kw.get("heads", 4), dropout=dropout)
     raise ValueError(
         f"unknown model {name!r}; choose from "
-        "gcn, gat, gin, quotient, walkraw")
+        "gcn, gat, gin, quotient, walkraw, qattn")
