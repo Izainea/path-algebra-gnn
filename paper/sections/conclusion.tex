@@ -1,0 +1,44 @@
+% =====================================================================
+\section{Conclusion and Future Work}\label{sec:conclusion}
+% =====================================================================
+
+We introduced \textbf{Walk Attention}, an architecture that mitigates
+over-squashing in graph neural networks by attending over a multi-hop support
+supplied by the path algebra of the underlying quiver. The graded path algebra
+gives, through Proposition~\ref{prop:count}, an exact account of which node pairs
+are connected by length-$g$ walks and with what multiplicity; we use this to
+define a sparse attention whose support is algebraically determined and whose
+weights are learned. On a tunable bottleneck benchmark, Walk Attention solved a
+long-range retrieval task exactly ($1.000\pm0.000$ over five seeds) where a
+one-hop attention network collapsed to chance and a fixed-weight multi-hop
+aggregator only partially succeeded. A complementary negative result showed that
+using the path-algebra \emph{quotient} to compress equivalent walks is
+counterproductive when path multiplicity carries signal; the algebra's value is
+to shape the attention support, not to discard information.
+
+The construction is deliberately elementary and self-contained, so that it can
+serve as an entry point connecting quiver representation theory to graph
+representation learning. Several directions follow naturally.
+
+\begin{itemize}
+  \item \textbf{Real-world long-range benchmarks.} Beyond the controlled
+  bottleneck family, evaluating Walk Attention on molecular and other long-range
+  graph benchmarks, and comparing against rewiring \cite{topping2022understanding}
+  and graph-Transformer baselines, is the immediate next step.
+  \item \textbf{Quotient-shaped supports.} The quotient $\kQ/I$, rather than
+  compressing the signal, can \emph{partition} walks into equivalence classes;
+  routing distinct classes to distinct attention heads would let the algebra
+  structure the heads themselves. Identifying which relations $I$ are useful, and
+  learning them from data, is an appealing problem.
+  \item \textbf{Scaling the support.} For dense graphs the range-$g$ support can
+  itself grow large; truncating, sampling, or learning a sparser admissible
+  support are natural ways to control cost while preserving long range.
+\end{itemize}
+
+\subsubsection*{Reproducibility.}
+All graph generators, the path-algebra walk operators, the Walk Attention layer,
+the baselines, and the experiment-tracking logs are released. The path-algebra
+computations build on an open-source quiver/path-algebra library; the present
+work is, to our knowledge, the first published application of that algebraic
+machinery to graph neural networks, and we have therefore kept the algebraic
+construction explicit throughout.
