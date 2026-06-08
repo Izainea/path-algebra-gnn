@@ -98,16 +98,21 @@ alternative remedy: replace the walk multiplicities $n_g(i,j)$ by the smaller
 quotient dimensions $\dim(e_j(\kQ/I)_g e_i)$, de-duplicating equivalent walks
 before aggregation. We implemented this (the fixed-weight operator built from the
 quotient dimensions) and compared it to the unquotiented walk operator on the
-same task. As Table~\ref{tab:quotient} shows, \textbf{the quotient operator
-underperforms the raw one}: collapsing parallel walks discards the source
-multiplicity that the retrieval task needs. In this regime redundant paths are
-\emph{signal}, not noise, and removing them removes information.
+same task, in a separate controlled ablation that changes \emph{only} the
+operator (quotient vs.\ raw) and holds everything else fixed. As
+Table~\ref{tab:quotient} shows, \textbf{the quotient operator underperforms the
+raw one}: collapsing parallel walks discards the source multiplicity that the
+retrieval task needs. In this regime redundant paths are \emph{signal}, not
+noise, and removing them removes information.
 
 \begin{table}[t]
 \centering
 \caption{De-duplicating walks via the quotient $\kQ/I$ \emph{hurts}: target
-accuracy (mean over 3 seeds), bottleneck retrieval. The quotient operator is
-consistently below the unquotiented walk operator.}
+accuracy (mean over 3 seeds), bottleneck retrieval. This is a separate ablation
+(3 seeds, without the stabilisers of Table~\ref{tab:main}) that isolates the
+operator change, so the walk-operator column is not directly comparable to
+Table~\ref{tab:main}; what matters here is the within-row gap: the quotient
+operator is consistently below the unquotiented one.}
 \label{tab:quotient}
 \begin{tabular}{lcc}
 \toprule

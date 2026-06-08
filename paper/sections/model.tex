@@ -43,6 +43,48 @@ Because \eqref{eq:logit}--\eqref{eq:agg} only ever touch the pairs in
 $\mathcal{S}_g$, the layer costs $O(|\mathcal{S}_g|\,H\,C)$ time and memory, not
 $O(n^2)$. The support is precomputed once per graph from
 Proposition~\ref{prop:count} (the nonzero pattern of $\Adj^{\,g}$).
+Figure~\ref{fig:layer} summarises the data flow.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[
+  >={Stealth[round]}, node distance=6mm,
+  box/.style={draw,rounded corners=2pt,minimum height=7mm,inner sep=3pt,font=\small,fill=blue!4},
+  alg/.style={draw,rounded corners=2pt,minimum height=7mm,inner sep=3pt,font=\small,fill=green!6},
+  op/.style={font=\small},
+  lbl/.style={font=\scriptsize,gray}]
+  \node[box] (x) {$x$};
+  \node[box,right=8mm of x] (q) {$Q=xW_Q$};
+  \node[box,below=2mm of q] (k) {$K=xW_K$};
+  \node[box,below=2mm of k] (v) {$V=xW_V$};
+  \node[alg,right=10mm of k] (att)
+    {$\displaystyle \alpha_{ji}=\softmax_{i:(j,i)\in\mathcal{S}_g}\!\frac{\langle Q_j,K_i\rangle}{\sqrt C}$};
+  \node[box,right=10mm of att] (agg) {$z_j=\sum_i \alpha_{ji}V_i$};
+  \node[box,right=8mm of agg] (out) {$\mathrm{WA}_g(x)$};
+  % support callout
+  \node[alg,below=8mm of att,fill=green!10] (supp)
+    {support $\mathcal{S}_g=\{(j,i):(\Adj^{\,g})_{ij}>0\}$};
+  \draw[->] (x) -- (q.west);
+  \draw[->] (x) |- (k.west);
+  \draw[->] (x) |- (v.west);
+  \draw[->] (q.east) -- (att.north west);
+  \draw[->] (k.east) -- (att.west);
+  \draw[->] (att.east) -- (agg.west);
+  \draw[->] (v.east) -- ([yshift=-2mm]agg.west);
+  \draw[->] (agg) -- (out);
+  \draw[->,green!50!black] (supp.north) -- (att.south)
+    node[midway,right,lbl,text=green!50!black] {restricts pairs};
+  \draw[->,rounded corners] (x.north) -- ++(0,6mm) -| (out.north)
+    node[pos=0.25,above,lbl] {root (residual)};
+\end{tikzpicture}
+\caption{One Walk Attention layer at range $g$. Queries, keys and values are
+linear maps of the node features; attention is computed \emph{only} over the
+walk-reachable pairs $\mathcal{S}_g$ supplied by the path algebra (the nonzero
+pattern of $\Adj^{\,g}$), then aggregated and added to a residual root term. The
+green support box is what distinguishes Walk Attention from dense ($\mathcal{S}_g
+=$ all pairs) and one-hop ($\mathcal{S}_g = $ edges) attention.}
+\label{fig:layer}
+\end{figure}
 
 \begin{remark}[Why learned weights matter]
 The fixed-weight operator $W^{(g)}$ of Definition~\ref{def:walkop} is the special
