@@ -150,13 +150,15 @@ mitigation_overquashing/
 │   ├── 03_diagnostic.ipynb          # fallback claim
 │   ├── 04_bottleneck_oversquashing.ipynb  # walk-operator vs kQ/I-collapse (collapse loses)
 │   ├── 05_walk_attention.ipynb      # HEADLINE: learned path-masked attention wins (1.000)
-│   └── didactic/            # bilingual (EN/ES) step-by-step intro: D1→D5, runnable
+│   ├── en/                  # tutorial series in English (P0→P5, ≥3 figures each)
+│   └── es/                  # serie de tutoriales en español (P0→P5, ≥3 figuras c/u)
 └── results/                 # figures + tables (gitignored; .gitkeep tracked)
 ```
 
-**New to the idea?** Start with the bilingual (English/Spanish) didactic series in
-[`notebooks/didactic/`](notebooks/didactic/) — five short, runnable notebooks that build the intuition from
-over-squashing (D1) to "the walk operator is attention" (D4) to a live three-model comparison (D5).
+**New to the idea?** Start with the runnable tutorial series — [`notebooks/en/`](notebooks/en/) (English) or
+[`notebooks/es/`](notebooks/es/) (Spanish). Six short notebooks (P0→P5), each with at least three figures,
+building the intuition from over-squashing (P1) to "the walk operator is attention" (P4) to a live three-model
+comparison (P5). Both series share the verified plotting helpers in `oversquash.viz`, so the figures match.
 
 ## Experiment tracking (MLflow)
 
