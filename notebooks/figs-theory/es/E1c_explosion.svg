@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="820" height="420" viewBox="0 0 820 420" font-family="'Segoe UI',Helvetica,Arial,sans-serif">
+  <defs>
+    <marker id="arB" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#334155"/></marker>
+    <marker id="arR" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#dc2626"/></marker>
+    <style>.t{font-size:21px;font-weight:700;fill:#0f172a}.s{font-size:13px;fill:#475569}.lbl{font-size:14px;font-weight:600;fill:#1e293b}.nd{font-size:13px;font-weight:700;fill:#fff}.math{font-family:'Cambria Math','Times New Roman',serif;font-style:italic}.cnt{font-size:13px;font-weight:700;fill:#1d4ed8}.cap{font-size:13px;font-weight:700;fill:#dc2626}</style>
+  </defs>
+  <rect width="820" height="420" fill="#ffffff"/>
+  <text x="34" y="40" class="t">El número de recorridos explota con la distancia</text>
+
+  <!-- baseline axis -->
+  <line x1="70" y1="320" x2="770" y2="320" stroke="#334155" stroke-width="2" marker-end="url(#arB)"/>
+  <text x="772" y="338" class="lbl">profundidad <tspan class="math">d</tspan></text>
+
+  <!-- depth tick labels -->
+  <text x="150" y="345" class="lbl" text-anchor="middle">d = 1</text>
+  <text x="320" y="345" class="lbl" text-anchor="middle">d = 2</text>
+  <text x="490" y="345" class="lbl" text-anchor="middle">d = 3</text>
+  <text x="660" y="345" class="lbl" text-anchor="middle">d = 4</text>
+
+  <!-- ===== d=1 : 9 squares (3 cols x 3 rows) ===== -->
+  <g fill="#bfdbfe" stroke="#3b82f6" stroke-width="1">
+    <rect x="138" y="306" width="9" height="9" rx="2"/><rect x="149" y="306" width="9" height="9" rx="2"/><rect x="160" y="306" width="9" height="9" rx="2"/>
+    <rect x="138" y="295" width="9" height="9" rx="2"/><rect x="149" y="295" width="9" height="9" rx="2"/><rect x="160" y="295" width="9" height="9" rx="2"/>
+    <rect x="138" y="284" width="9" height="9" rx="2"/><rect x="149" y="284" width="9" height="9" rx="2"/><rect x="160" y="284" width="9" height="9" rx="2"/>
+  </g>
+  <text x="153" y="276" class="cnt" text-anchor="middle">9</text>
+  <text x="153" y="372" class="s" text-anchor="middle"><tspan class="math">K·M</tspan><tspan baseline-shift="super" font-size="11">1</tspan></text>
+
+  <!-- ===== d=2 : 27 squares (3 cols x 9 rows) ===== -->
+  <g fill="#bfdbfe" stroke="#3b82f6" stroke-width="1">
+    <rect x="308" y="306" width="9" height="9" rx="2"/><rect x="319" y="306" width="9" height="9" rx="2"/><rect x="330" y="306" width="9" height="9" rx="2"/>
+    <rect x="308" y="295" width="9" height="9" rx="2"/><rect x="319" y="295" width="9" height="9" rx="2"/><rect x="330" y="295" width="9" height="9" rx="2"/>
+    <rect x="308" y="284" width="9" height="9" rx="2"/><rect x="319" y="284" width="9" height="9" rx="2"/><rect x="330" y="284" width="9" height="9" rx="2"/>
+    <rect x="308" y="273" width="9" height="9" rx="2"/><rect x="319" y="273" width="9" height="9" rx="2"/><rect x="330" y="273" width="9" height="9" rx="2"/>
+    <rect x="308" y="262" width="9" height="9" rx="2"/><rect x="319" y="262" width="9" height="9" rx="2"/><rect x="330" y="262" width="9" height="9" rx="2"/>
+    <rect x="308" y="251" width="9" height="9" rx="2"/><rect x="319" y="251" width="9" height="9" rx="2"/><rect x="330" y="251" width="9" height="9" rx="2"/>
+    <rect x="308" y="240" width="9" height="9" rx="2"/><rect x="319" y="240" width="9" height="9" rx="2"/><rect x="330" y="240" width="9" height="9" rx="2"/>
+    <rect x="308" y="229" width="9" height="9" rx="2"/><rect x="319" y="229" width="9" height="9" rx="2"/><rect x="330" y="229" width="9" height="9" rx="2"/>
+    <rect x="308" y="218" width="9" height="9" rx="2"/><rect x="319" y="218" width="9" height="9" rx="2"/><rect x="330" y="218" width="9" height="9" rx="2"/>
+  </g>
+  <text x="323" y="210" class="cnt" text-anchor="middle">27</text>
+  <text x="323" y="372" class="s" text-anchor="middle"><tspan class="math">K·M</tspan><tspan baseline-shift="super" font-size="11">2</tspan></text>
+
+  <!-- ===== d=3 : 81 stylized stack (drawn as a tall filled block + count) ===== -->
+  <rect x="476" y="148" width="33" height="167" rx="3" fill="#bfdbfe" stroke="#3b82f6" stroke-width="1.5"/>
+  <g stroke="#3b82f6" stroke-width="0.7" opacity="0.85">
+    <line x1="476" y1="159" x2="509" y2="159"/><line x1="476" y1="170" x2="509" y2="170"/><line x1="476" y1="181" x2="509" y2="181"/>
+    <line x1="476" y1="192" x2="509" y2="192"/><line x1="476" y1="203" x2="509" y2="203"/><line x1="476" y1="214" x2="509" y2="214"/>
+    <line x1="476" y1="225" x2="509" y2="225"/><line x1="476" y1="236" x2="509" y2="236"/><line x1="476" y1="247" x2="509" y2="247"/>
+    <line x1="476" y1="258" x2="509" y2="258"/><line x1="476" y1="269" x2="509" y2="269"/><line x1="476" y1="280" x2="509" y2="280"/>
+    <line x1="476" y1="291" x2="509" y2="291"/><line x1="476" y1="302" x2="509" y2="302"/>
+    <line x1="487" y1="148" x2="487" y2="315"/><line x1="498" y1="148" x2="498" y2="315"/>
+  </g>
+  <text x="492" y="140" class="cnt" text-anchor="middle">81</text>
+  <text x="492" y="372" class="s" text-anchor="middle"><tspan class="math">K·M</tspan><tspan baseline-shift="super" font-size="11">3</tspan></text>
+
+  <!-- ===== d=4 : 243 stylized very tall block ===== -->
+  <rect x="643" y="78" width="33" height="237" rx="3" fill="#3b82f6" stroke="#1d4ed8" stroke-width="1.5"/>
+  <g stroke="#bfdbfe" stroke-width="0.7" opacity="0.9">
+    <line x1="643" y1="89" x2="676" y2="89"/><line x1="643" y1="100" x2="676" y2="100"/><line x1="643" y1="111" x2="676" y2="111"/>
+    <line x1="643" y1="122" x2="676" y2="122"/><line x1="643" y1="133" x2="676" y2="133"/><line x1="643" y1="144" x2="676" y2="144"/>
+    <line x1="643" y1="155" x2="676" y2="155"/><line x1="643" y1="166" x2="676" y2="166"/><line x1="643" y1="177" x2="676" y2="177"/>
+    <line x1="643" y1="188" x2="676" y2="188"/><line x1="643" y1="199" x2="676" y2="199"/><line x1="643" y1="210" x2="676" y2="210"/>
+    <line x1="643" y1="221" x2="676" y2="221"/><line x1="643" y1="232" x2="676" y2="232"/><line x1="643" y1="243" x2="676" y2="243"/>
+    <line x1="643" y1="254" x2="676" y2="254"/><line x1="643" y1="265" x2="676" y2="265"/><line x1="643" y1="276" x2="676" y2="276"/>
+    <line x1="643" y1="287" x2="676" y2="287"/><line x1="643" y1="298" x2="676" y2="298"/>
+    <line x1="654" y1="78" x2="654" y2="315"/><line x1="665" y1="78" x2="665" y2="315"/>
+  </g>
+  <text x="659" y="70" class="cnt" text-anchor="middle">243</text>
+  <text x="659" y="372" class="s" text-anchor="middle"><tspan class="math">K·M</tspan><tspan baseline-shift="super" font-size="11">4</tspan></text>
+
+  <!-- ===== fixed vector capacity line ===== -->
+  <line x1="70" y1="296" x2="770" y2="296" stroke="#dc2626" stroke-width="2" stroke-dasharray="7 4"/>
+  <rect x="70" y="280" width="158" height="20" rx="6" fill="#fef2f2" stroke="#fecaca"/>
+  <text x="79" y="294" class="cap">capacidad del vector (fija)</text>
+
+  <!-- bottom statement strip -->
+  <rect x="34" y="388" width="752" height="22" rx="8" fill="#eff6ff" stroke="#bfdbfe"/>
+  <text x="410" y="403" class="s" text-anchor="middle">Los mensajes que llegan al objetivo crecen como <tspan class="math" font-weight="700" fill="#1d4ed8">K·M</tspan><tspan baseline-shift="super" font-size="11" font-weight="700" fill="#1d4ed8">d</tspan> (exponencial), mientras la capacidad del vector permanece constante.</text>
+</svg>

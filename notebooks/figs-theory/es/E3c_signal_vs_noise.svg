@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="820" height="430" viewBox="0 0 820 430" font-family="'Segoe UI',Helvetica,Arial,sans-serif">
+  <defs>
+    <marker id="arG" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#10b981"/></marker>
+    <marker id="arR" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#dc2626"/></marker>
+    <marker id="arK" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#475569"/></marker>
+    <style>.t{font-size:21px;font-weight:700;fill:#0f172a}.s{font-size:13px;fill:#475569}.lbl{font-size:14px;font-weight:600;fill:#1e293b}.nd{font-size:13px;font-weight:700;fill:#fff}.math{font-family:'Cambria Math','Times New Roman',serif;font-style:italic}.gd{font-size:15px;font-weight:700;fill:#059669}.bd{font-size:15px;font-weight:700;fill:#dc2626}</style>
+  </defs>
+  <rect width="820" height="430" fill="#ffffff"/>
+  <text x="34" y="40" class="t">Cuándo fusionar ayuda vs perjudica</text>
+
+  <!-- LEFT column: redundant = noise (good) -->
+  <rect x="34" y="64" width="360" height="248" rx="10" fill="#ecfdf5" stroke="#6ee7b7"/>
+  <text x="54" y="90" class="gd">✓ redundante = ruido</text>
+  <text x="54" y="110" class="s">caminos paralelos llevan contenido IDÉNTICO</text>
+
+  <!-- left quiver: source -> target with 3 'A' arrows -->
+  <circle cx="96" cy="178" r="18" fill="#3b82f6"/>
+  <text x="96" y="183" text-anchor="middle" class="nd">i</text>
+  <circle cx="300" cy="178" r="18" fill="#34d399"/>
+  <text x="300" y="183" text-anchor="middle" class="nd">j</text>
+  <path d="M116,168 C170,138 226,138 280,166" fill="none" stroke="#10b981" stroke-width="2" marker-end="url(#arG)"/>
+  <path d="M116,178 L280,178" fill="none" stroke="#10b981" stroke-width="2" marker-end="url(#arG)"/>
+  <path d="M116,188 C170,218 226,218 280,190" fill="none" stroke="#10b981" stroke-width="2" marker-end="url(#arG)"/>
+  <text x="198" y="139" text-anchor="middle" class="math" font-size="15" fill="#059669">A</text>
+  <text x="198" y="172" text-anchor="middle" class="math" font-size="15" fill="#059669">A</text>
+  <text x="198" y="232" text-anchor="middle" class="math" font-size="15" fill="#059669">A</text>
+
+  <!-- merge result left -->
+  <text x="214" y="268" text-anchor="middle" class="s"><tspan class="math">kQ</tspan>/I  ⇝  un camino <tspan class="math">A</tspan></text>
+  <text x="214" y="294" text-anchor="middle" class="gd" font-size="13">fusionar no pierde nada — bien</text>
+
+  <!-- RIGHT column: redundant = signal (bad) -->
+  <rect x="426" y="64" width="360" height="248" rx="10" fill="#fef2f2" stroke="#fecaca"/>
+  <text x="446" y="90" class="bd">✗ redundante = señal</text>
+  <text x="446" y="110" class="s">caminos paralelos llevan contenido DISTINTO</text>
+
+  <circle cx="488" cy="178" r="18" fill="#3b82f6"/>
+  <text x="488" y="183" text-anchor="middle" class="nd">i</text>
+  <circle cx="692" cy="178" r="18" fill="#34d399"/>
+  <text x="692" y="183" text-anchor="middle" class="nd">j</text>
+  <path d="M508,168 C562,138 618,138 672,166" fill="none" stroke="#dc2626" stroke-width="2" marker-end="url(#arR)"/>
+  <path d="M508,178 L672,178" fill="none" stroke="#dc2626" stroke-width="2" marker-end="url(#arR)"/>
+  <path d="M508,188 C562,218 618,218 672,190" fill="none" stroke="#dc2626" stroke-width="2" marker-end="url(#arR)"/>
+  <text x="590" y="139" text-anchor="middle" class="math" font-size="15" fill="#dc2626">A</text>
+  <text x="590" y="172" text-anchor="middle" class="math" font-size="15" fill="#dc2626">B</text>
+  <text x="590" y="232" text-anchor="middle" class="math" font-size="15" fill="#dc2626">C</text>
+
+  <text x="606" y="268" text-anchor="middle" class="s"><tspan class="math">kQ</tspan>/I  ⇝  un camino  (<tspan class="math">A</tspan>≡<tspan class="math">B</tspan>≡<tspan class="math">C</tspan>)</text>
+  <text x="606" y="294" text-anchor="middle" class="bd" font-size="13">fusionar destruye A, B, C — mal</text>
+
+  <!-- bottom strip -->
+  <rect x="34" y="330" width="752" height="76" rx="10" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="410" y="358" text-anchor="middle" class="lbl"><tspan class="math">kQ</tspan>/I colapsa caminos paralelos. Eso ayuda solo cuando son verdaderamente redundantes.</text>
+  <text x="410" y="384" text-anchor="middle" class="s">En nuestra tarea de recuperación la multiplicidad ES señal, así que colapsar perjudica (ver experimentos).</text>
+</svg>

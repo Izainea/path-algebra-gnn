@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="820" height="420" viewBox="0 0 820 420" font-family="'Segoe UI',Helvetica,Arial,sans-serif">
+  <defs>
+    <style>.t{font-size:21px;font-weight:700;fill:#0f172a}.s{font-size:13px;fill:#475569}.lbl{font-size:14px;font-weight:600;fill:#1e293b}.nd{font-size:13px;font-weight:700;fill:#fff}.math{font-family:'Cambria Math','Times New Roman',serif;font-style:italic}.val{font-size:16px;font-weight:700}.cap{font-size:12px;font-weight:600;fill:#334155}</style>
+  </defs>
+  <rect width="820" height="420" fill="#ffffff"/>
+  <text x="34" y="40" class="t">El resultado, de un vistazo</text>
+  <text x="34" y="64" class="s">Precisión de recuperación a profundidad 3 — ¿puede un nodo recuperar información a 3 saltos de distancia?</text>
+
+  <!-- plot frame -->
+  <rect x="60" y="92" width="700" height="248" rx="10" fill="#f8fafc" stroke="#e2e8f0"/>
+
+  <!-- y axis baseline -->
+  <line x1="150" y1="312" x2="740" y2="312" stroke="#cbd5e1" stroke-width="1.5"/>
+  <text x="118" y="316" class="s" text-anchor="end">0.0</text>
+  <text x="118" y="218" class="s" text-anchor="end">0.5</text>
+  <text x="118" y="124" class="s" text-anchor="end">1.0</text>
+  <line x1="150" y1="312" x2="150" y2="120" stroke="#cbd5e1" stroke-width="1.5"/>
+
+  <!-- chance line at 0.20 -> y = 312 - 0.20*188 = 274.4 -->
+  <line x1="150" y1="274.4" x2="740" y2="274.4" stroke="#64748b" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="734" y="269" class="s" text-anchor="end">azar = 0.20</text>
+
+  <!-- GAT bar: 0.26 -> h = 0.26*188 = 48.9, top y = 263 -->
+  <rect x="210" y="263.1" width="120" height="48.9" rx="6" fill="#fef2f2" stroke="#fecaca"/>
+  <rect x="210" y="263.1" width="120" height="48.9" rx="6" fill="#dc2626" opacity="0.85"/>
+  <text x="270" y="251" class="val" fill="#dc2626" text-anchor="middle">0.26</text>
+  <text x="270" y="332" class="cap" text-anchor="middle">GAT</text>
+
+  <!-- Walk operator bar: 0.50 -> h = 94, top y = 218 -->
+  <rect x="390" y="218" width="120" height="94" rx="6" fill="#fffbeb" stroke="#fde68a"/>
+  <rect x="390" y="218" width="120" height="94" rx="6" fill="#f59e0b" opacity="0.9"/>
+  <text x="450" y="206" class="val" fill="#b45309" text-anchor="middle">0.50</text>
+  <text x="450" y="332" class="cap" text-anchor="middle">Operador de recorrido</text>
+
+  <!-- Walk Attention bar: 1.000 -> h = 188, top y = 124 -->
+  <rect x="570" y="124" width="120" height="188" rx="6" fill="#ecfdf5" stroke="#6ee7b7"/>
+  <rect x="570" y="124" width="120" height="188" rx="6" fill="#10b981"/>
+  <text x="630" y="112" class="val" fill="#047857" text-anchor="middle">1.000</text>
+  <text x="630" y="332" class="cap" text-anchor="middle">Atención por recorridos</text>
+
+  <!-- bottom strip -->
+  <rect x="60" y="356" width="700" height="48" rx="8" fill="#ecfdf5" stroke="#6ee7b7"/>
+  <text x="78" y="376" class="lbl">5 semillas, desviación estándar 0 para Atención por recorridos.</text>
+  <text x="78" y="395" class="s">El álgebra de caminos define una atención multi-salto dispersa que mitiga el over-squashing.</text>
+</svg>

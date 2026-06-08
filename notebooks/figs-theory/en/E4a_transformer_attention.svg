@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="820" height="420" viewBox="0 0 820 420" font-family="'Segoe UI',Helvetica,Arial,sans-serif">
+  <defs>
+    <marker id="arA1" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#3b82f6"/></marker>
+    <marker id="arA2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#10b981"/></marker>
+    <style>.t{font-size:21px;font-weight:700;fill:#0f172a}.s{font-size:13px;fill:#475569}.lbl{font-size:14px;font-weight:600;fill:#1e293b}.nd{font-size:13px;font-weight:700;fill:#fff}.math{font-family:'Cambria Math','Times New Roman',serif;font-style:italic}.key{font-size:16px;font-weight:700;fill:#10b981}.eqbox{fill:#ecfdf5;stroke:#6ee7b7}</style>
+  </defs>
+  <rect width="820" height="420" fill="#ffffff"/>
+  <text x="34" y="40" class="t">Transformer attention: a weighted sum</text>
+
+  <!-- Left: source tokens attending to target -->
+  <text x="60" y="78" class="lbl">Sources <tspan class="math">i</tspan> (blue)</text>
+  <text x="420" y="78" class="lbl" text-anchor="middle">Target <tspan class="math">j</tspan> (green)</text>
+
+  <!-- source nodes -->
+  <circle cx="80" cy="120" r="20" fill="#3b82f6"/><text x="80" y="125" text-anchor="middle" class="nd">i₁</text>
+  <circle cx="80" cy="180" r="20" fill="#3b82f6"/><text x="80" y="185" text-anchor="middle" class="nd">i₂</text>
+  <circle cx="80" cy="240" r="20" fill="#3b82f6"/><text x="80" y="245" text-anchor="middle" class="nd">i₃</text>
+  <circle cx="80" cy="300" r="20" fill="#3b82f6"/><text x="80" y="305" text-anchor="middle" class="nd">i₄</text>
+
+  <!-- target node -->
+  <circle cx="420" cy="210" r="26" fill="#10b981"/><text x="420" y="215" text-anchor="middle" class="nd">j</text>
+
+  <!-- arrows: thickness = attention weight, i2 focused -->
+  <line x1="100" y1="120" x2="396" y2="200" stroke="#3b82f6" stroke-width="2"  marker-end="url(#arA1)"/>
+  <line x1="100" y1="180" x2="394" y2="206" stroke="#3b82f6" stroke-width="11" marker-end="url(#arA1)"/>
+  <line x1="100" y1="240" x2="394" y2="214" stroke="#3b82f6" stroke-width="3.5" marker-end="url(#arA1)"/>
+  <line x1="100" y1="300" x2="396" y2="222" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#arA1)"/>
+
+  <!-- weight labels -->
+  <text x="250" y="148" class="s"><tspan class="math">α</tspan><tspan baseline-shift="sub" font-size="11">j1</tspan> = 0.10</text>
+  <text x="250" y="178" class="key"><tspan class="math">α</tspan><tspan baseline-shift="sub" font-size="12">j2</tspan> = 0.62</text>
+  <text x="250" y="232" class="s"><tspan class="math">α</tspan><tspan baseline-shift="sub" font-size="11">j3</tspan> = 0.20</text>
+  <text x="250" y="262" class="s"><tspan class="math">α</tspan><tspan baseline-shift="sub" font-size="11">j4</tspan> = 0.08</text>
+
+  <text x="60" y="358" class="s">thickness ∝ <tspan class="math">α</tspan><tspan baseline-shift="sub" font-size="11">ji</tspan>  —  one source dominates (focused attention)</text>
+
+  <!-- Right: formula boxes -->
+  <rect x="500" y="92" width="290" height="64" rx="10" class="eqbox" stroke-width="1.5"/>
+  <text x="645" y="120" text-anchor="middle" class="math" font-size="20" fill="#065f46">h<tspan baseline-shift="sub" font-size="13">j</tspan> = Σ<tspan baseline-shift="sub" font-size="13" font-style="normal">i</tspan> α<tspan baseline-shift="sub" font-size="13">ji</tspan> v<tspan baseline-shift="sub" font-size="13">i</tspan></text>
+  <text x="645" y="143" text-anchor="middle" class="s">aggregate values, weighted by attention</text>
+
+  <rect x="500" y="172" width="290" height="64" rx="10" class="eqbox" stroke-width="1.5"/>
+  <text x="645" y="200" text-anchor="middle" class="math" font-size="17" fill="#065f46">α<tspan baseline-shift="sub" font-size="12">ji</tspan> = softmax<tspan baseline-shift="sub" font-size="12" font-style="normal">i</tspan>(q<tspan baseline-shift="sub" font-size="12">j</tspan> · k<tspan baseline-shift="sub" font-size="12">i</tspan>)</text>
+  <text x="645" y="223" text-anchor="middle" class="s">scores from query–key similarity</text>
+
+  <rect x="500" y="252" width="290" height="50" rx="10" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1.5"/>
+  <text x="645" y="274" text-anchor="middle" class="lbl">support: <tspan fill="#3b82f6">ALL pairs</tspan></text>
+  <text x="645" y="292" text-anchor="middle" class="lbl">weights: <tspan fill="#10b981">LEARNED</tspan></text>
+
+  <!-- Bottom strip -->
+  <rect x="34" y="372" width="752" height="34" rx="8" fill="#ecfdf5" stroke="#6ee7b7" stroke-width="1.5"/>
+  <text x="410" y="394" text-anchor="middle" class="s">Attention is a learned weighted sum over sources. <tspan font-weight="700" fill="#065f46">Walk Attention</tspan> keeps this but restricts WHO to the walk-reachable pairs.</text>
+</svg>

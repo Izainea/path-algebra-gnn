@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="820" height="420" viewBox="0 0 820 420" font-family="'Segoe UI',Helvetica,Arial,sans-serif">
+  <defs>
+    <style>
+      .t{font-size:21px;font-weight:700;fill:#0f172a}
+      .s{font-size:13px;fill:#475569}
+      .lbl{font-size:14px;font-weight:600;fill:#1e293b}
+      .math{font-family:'Cambria Math','Times New Roman',serif;font-style:italic}
+      .deg{font-size:15px;font-weight:700;fill:#7c3aed}
+      .gbox{fill:#faf5ff;stroke:#d8b4fe}
+    </style>
+  </defs>
+  <rect width="820" height="420" fill="#ffffff"/>
+  <text x="34" y="40" class="t">El álgebra de caminos está graduada por longitud</text>
+  <text x="34" y="66" class="lbl math">kQ = kQ₀ ⊕ kQ₁ ⊕ kQ₂ ⊕ kQ₃ ⊕ ⋯</text>
+
+  <g>
+    <rect x="40" y="92" width="740" height="58" rx="8" class="gbox"/>
+    <text x="56" y="118" class="deg math">kQ₀</text>
+    <text x="56" y="138" class="s">longitud 0</text>
+    <text x="150" y="126" class="s math">base: e₁, e₂, e₃, e₄  (los caminos triviales / idempotentes)</text>
+
+    <rect x="40" y="158" width="740" height="58" rx="8" class="gbox"/>
+    <text x="56" y="184" class="deg math">kQ₁</text>
+    <text x="56" y="204" class="s">longitud 1</text>
+    <text x="150" y="192" class="s math">base: las flechas  α₁, α₂, β₁, β₂</text>
+
+    <rect x="40" y="224" width="740" height="58" rx="8" class="gbox"/>
+    <text x="56" y="250" class="deg math">kQ₂</text>
+    <text x="56" y="270" class="s">longitud 2</text>
+    <text x="150" y="258" class="s math">base: los caminos de longitud 2  β₁α₁, β₂α₂  (aquí, 2 de ellos)</text>
+  </g>
+
+  <rect x="40" y="298" width="740" height="98" rx="10" fill="#eff6ff" stroke="#bfdbfe"/>
+  <text x="56" y="326" class="lbl">Multiplicación = concatenación, y suma los grados:</text>
+  <text x="56" y="358" class="math" font-size="16" fill="#2563eb" font-weight="700">β₁ · α₁ = β₁α₁     (kQ₁ · kQ₁ ⊆ kQ₂)</text>
+  <text x="56" y="384" class="s">dos flechas se componen cabeza-con-cola en un camino de longitud 2. En general  kQ_g · kQ_h ⊆ kQ_(g+h).</text>
+</svg>

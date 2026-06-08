@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="820" height="420" viewBox="0 0 820 420" font-family="'Segoe UI',Helvetica,Arial,sans-serif">
+  <defs>
+    <marker id="arR" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#dc2626"/></marker>
+    <style>.t{font-size:21px;font-weight:700;fill:#0f172a}.s{font-size:13px;fill:#475569}.lbl{font-size:14px;font-weight:600;fill:#1e293b}.nd{font-size:13px;font-weight:700;fill:#fff}.math{font-family:'Cambria Math','Times New Roman',serif;font-style:italic}.cap{font-size:12px;fill:#dc2626;font-weight:700}.dep{font-size:13px;font-weight:600;fill:#334155}</style>
+  </defs>
+  <rect width="820" height="420" fill="#ffffff"/>
+  <text x="34" y="40" class="t">A fixed-width vector overflows</text>
+  <text x="34" y="64" class="s">Each box is a vector of <tspan font-weight="700">identical fixed capacity</tspan>. Fill = number of messages arriving at that depth.</text>
+
+  <!-- capacity dashed line across all boxes -->
+  <line x1="120" y1="110" x2="720" y2="110" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <text x="726" y="114" class="cap">capacity</text>
+
+  <!-- box geometry: top y=110, bottom y=300, height=190, width=110 -->
+
+  <!-- depth 1 : x=140 -->
+  <rect x="140" y="110" width="110" height="190" rx="8" fill="none" stroke="#334155" stroke-width="2"/>
+  <rect x="142" y="262" width="106" height="36" rx="6" fill="#3b82f6"/>
+  <text x="195" y="320" class="dep" text-anchor="middle">depth 1</text>
+  <text x="195" y="337" class="s" text-anchor="middle">3 messages</text>
+
+  <!-- depth 2 : x=290 -->
+  <rect x="290" y="110" width="110" height="190" rx="8" fill="none" stroke="#334155" stroke-width="2"/>
+  <rect x="292" y="172" width="106" height="126" rx="6" fill="#3b82f6"/>
+  <text x="345" y="320" class="dep" text-anchor="middle">depth 2</text>
+  <text x="345" y="337" class="s" text-anchor="middle">8 messages</text>
+
+  <!-- depth 3 : x=440  RED to the brim -->
+  <rect x="440" y="110" width="110" height="190" rx="8" fill="none" stroke="#334155" stroke-width="2"/>
+  <rect x="442" y="112" width="106" height="186" rx="6" fill="#fecaca" stroke="#dc2626" stroke-width="1.5"/>
+  <path d="M495,98 L495,70" stroke="#dc2626" stroke-width="2.5" marker-end="url(#arR)"/>
+  <text x="495" y="62" class="cap" text-anchor="middle">12 lost!</text>
+  <text x="495" y="320" class="dep" text-anchor="middle">depth 3</text>
+  <text x="495" y="337" class="s" text-anchor="middle">at the brim</text>
+
+  <!-- depth 4 : x=590  RED overflowing -->
+  <rect x="590" y="110" width="110" height="190" rx="8" fill="none" stroke="#334155" stroke-width="2"/>
+  <rect x="592" y="112" width="106" height="186" rx="6" fill="#fca5a5" stroke="#dc2626" stroke-width="1.5"/>
+  <!-- overflow spilling above the box -->
+  <rect x="600" y="78" width="90" height="26" rx="5" fill="#dc2626"/>
+  <text x="645" y="96" class="nd" text-anchor="middle">overflow</text>
+  <path d="M645,76 L645,56" stroke="#dc2626" stroke-width="2.5" marker-end="url(#arR)"/>
+  <text x="645" y="48" class="cap" text-anchor="middle">52 lost!</text>
+  <text x="645" y="320" class="dep" text-anchor="middle">depth 4</text>
+  <text x="645" y="337" class="s" text-anchor="middle">overflowing</text>
+
+  <!-- bottom strip -->
+  <rect x="34" y="358" width="752" height="46" rx="10" fill="#fef2f2" stroke="#fecaca"/>
+  <text x="50" y="380" class="s">The vector size is <tspan font-weight="700">fixed</tspan>; the messages grow as <tspan class="math">K·M</tspan><tspan class="math" baseline-shift="super" font-size="10">d</tspan>. Past capacity, signal is lost.</text>
+  <text x="50" y="397" class="cap" font-size="14">THIS is over-squashing.</text>
+</svg>
