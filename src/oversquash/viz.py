@@ -194,3 +194,146 @@ def plot_model_bars(names, accs, title="", ylabel="accuracy", chance=None,
     ax.set_ylim(0, 1.12); ax.set_ylabel(ylabel); ax.set_title(title)
     plt.tight_layout(); plt.show()
     return fig
+
+
+# ======================================================================
+# DIDACTIC diagrams — these teach a concept, not just display data.
+# ======================================================================
+from matplotlib.patches import Rectangle, FancyArrowPatch  # noqa: E402
+
+
+def explain_overflow(steps, capacity=8, title="", panel_fmt="depth {d}\n{m} messages",
+                     lost_fmt="{n} lost!"):
+    """A fixed-size vector (a box of height `capacity`) filling up and OVERFLOWING
+    as the number of messages grows. The single clearest picture of over-squashing.
+    `steps` = list of (label_d, n_messages)."""
+    n = len(steps)
+    fig, axes = plt.subplots(1, n, figsize=(2.7 * n, 3.4))
+    if n == 1:
+        axes = [axes]
+    for ax, (d, m) in zip(axes, steps):
+        ax.add_patch(Rectangle((0, 0), 1, capacity, fill=False, lw=2, ec='#334155'))
+        fill = min(m, capacity)
+        over = m > capacity
+        ax.add_patch(Rectangle((0, 0), 1, fill, fc=('#dc2626' if over else '#60a5fa'),
+                               alpha=0.75))
+        if over:
+            ax.annotate('', xy=(0.5, capacity + 1.8), xytext=(0.5, capacity),
+                        arrowprops=dict(arrowstyle='-|>', color='#dc2626', lw=2.2))
+            ax.text(0.5, capacity + 2.4, lost_fmt.format(n=m - capacity), ha='center',
+                    color='#dc2626', fontsize=9, fontweight='bold')
+        ax.set_xlim(-0.6, 1.6); ax.set_ylim(0, capacity + 4)
+        ax.set_title(panel_fmt.format(d=d, m=m), fontsize=10); ax.axis('off')
+    fig.suptitle(title, y=1.02, fontsize=12)
+    plt.tight_layout(); plt.show()
+    return fig
+
+
+def explain_message_hops(edges, pos, path, n_nodes, src, dst, title="",
+                         step_fmt="layer {s}"):
+    """Show a message traveling one hop per layer: the highlighted path grows
+    panel by panel. Makes 'g layers reach g hops' concrete."""
+    G = nx.DiGraph(); G.add_nodes_from(range(n_nodes)); G.add_edges_from(edges)
+    L = len(path)
+    fig, axes = plt.subplots(1, L + 1, figsize=(3.2 * (L + 1), 3))
+    for step, ax in enumerate(axes):
+        active = set(path[:step])
+        ec = ['#dc2626' if e in active else '#d1d5db' for e in G.edges()]
+        ew = [3.2 if e in active else 1.0 for e in G.edges()]
+        reached = src if step == 0 else path[step - 1][1]
+        nc = ['#34d399' if i == dst else '#fb923c' if i == reached
+              else '#60a5fa' if i == src else '#e5e7eb' for i in range(n_nodes)]
+        nx.draw(G, pos, ax=ax, edge_color=ec, width=ew, node_color=nc,
+                with_labels=True, node_size=520, arrowsize=14, font_size=9)
+        ax.set_title(step_fmt.format(s=step) + f' · at node {reached}', fontsize=10)
+    fig.suptitle(title, y=1.03, fontsize=12)
+    plt.tight_layout(); plt.show()
+    return fig
+
+
+def explain_paths_highlighted(edges, pos, paths, n_nodes, src, dst, title="",
+                              path_fmt="path {i}"):
+    """Draw each src->dst path of a fixed length in its own panel, highlighted —
+    so 'n_g = number of paths' is something you can literally count."""
+    P = len(paths)
+    fig, axes = plt.subplots(1, P, figsize=(3.0 * P, 3))
+    if P == 1:
+        axes = [axes]
+    G = nx.DiGraph(); G.add_nodes_from(range(n_nodes)); G.add_edges_from(edges)
+    palette = ['#dc2626', '#7c3aed', '#0891b2', '#ca8a04', '#db2777']
+    for i, ax in enumerate(axes):
+        pe = set(paths[i]); col = palette[i % len(palette)]
+        ec = [col if e in pe else '#e5e7eb' for e in G.edges()]
+        ew = [3.2 if e in pe else 1.0 for e in G.edges()]
+        nc = ['#34d399' if n == dst else '#60a5fa' if n == src else '#e5e7eb'
+              for n in range(n_nodes)]
+        nx.draw(G, pos, ax=ax, edge_color=ec, width=ew, node_color=nc,
+                with_labels=True, node_size=520, arrowsize=14, font_size=9)
+        ax.set_title(path_fmt.format(i=i + 1), fontsize=10, color=col)
+    fig.suptitle(title, y=1.03, fontsize=12)
+    plt.tight_layout(); plt.show()
+    return fig
+
+
+def explain_attention_on_graph(edges, pos, weight_sets, n_nodes, src_nodes, dst,
+                               titles, suptitle=""):
+    """Draw attention as ARROW THICKNESS into a target, side by side: e.g. fixed
+    (all equal) vs learned (focused). `weight_sets` = list of {edge: weight}."""
+    G = nx.DiGraph(); G.add_nodes_from(range(n_nodes)); G.add_edges_from(edges)
+    n = len(weight_sets)
+    fig, axes = plt.subplots(1, n, figsize=(4.2 * n, 3.4))
+    if n == 1:
+        axes = [axes]
+    for ax, ws, ti in zip(axes, weight_sets, titles):
+        mx = max(ws.values()) or 1
+        ew = [0.5 + 6.0 * ws.get(e, 0) / mx for e in G.edges()]
+        nc = ['#34d399' if i == dst else '#60a5fa' if i in src_nodes else '#e5e7eb'
+              for i in range(n_nodes)]
+        nx.draw(G, pos, ax=ax, edge_color='#10b981', width=ew, node_color=nc,
+                with_labels=True, node_size=560, arrowsize=12, font_size=9)
+        ax.set_title(ti, fontsize=11)
+    fig.suptitle(suptitle, y=1.03, fontsize=12)
+    plt.tight_layout(); plt.show()
+    return fig
+
+
+def explain_architectures(specs, suptitle=""):
+    """Draw N model 'reach' diagrams side by side. Each spec:
+    {title, edges, pos, n_nodes, src, dst, reach_edges (highlighted), color}.
+    Used in P5 to contrast GAT (1-hop) vs walkraw/WalkAttention (multi-hop)."""
+    n = len(specs)
+    fig, axes = plt.subplots(1, n, figsize=(3.6 * n, 3.3))
+    if n == 1:
+        axes = [axes]
+    for ax, sp in zip(axes, specs):
+        G = nx.DiGraph(); G.add_nodes_from(range(sp['n_nodes'])); G.add_edges_from(sp['edges'])
+        reach = set(sp.get('reach_edges', []))
+        col = sp.get('color', '#dc2626')
+        ec = [col if e in reach else '#e5e7eb' for e in G.edges()]
+        ew = [3.0 if e in reach else 1.0 for e in G.edges()]
+        nc = ['#34d399' if i == sp['dst'] else '#60a5fa' if i == sp['src'] else '#e5e7eb'
+              for i in range(sp['n_nodes'])]
+        nx.draw(G, sp['pos'], ax=ax, edge_color=ec, width=ew, node_color=nc,
+                with_labels=True, node_size=480, arrowsize=12, font_size=8)
+        ax.set_title(sp['title'], fontsize=10)
+    fig.suptitle(suptitle, y=1.03, fontsize=12)
+    plt.tight_layout(); plt.show()
+    return fig
+
+
+def explain_message_stack(counts, labels, capacity=10, title="",
+                          xlabel="", ylabel="messages in the target vector"):
+    """Bar chart where each bar is a STACK of unit 'messages', with a capacity
+    line — shows raw counts piling past what the vector can hold, and how kQ/I
+    (or attention) keeps it manageable. `counts` = list, `labels` = x labels."""
+    fig, ax = plt.subplots(figsize=(6, 3.6))
+    x = np.arange(len(counts))
+    bars = ax.bar(x, counts, color=['#60a5fa' if c <= capacity else '#dc2626' for c in counts],
+                  edgecolor='#334155')
+    ax.axhline(capacity, ls='--', color='#334155', lw=1.5, label=f'vector capacity ({capacity})')
+    for xi, c in zip(x, counts):
+        ax.text(xi, c + 0.3, str(int(c)), ha='center', fontsize=9, fontweight='bold')
+    ax.set_xticks(x); ax.set_xticklabels(labels)
+    ax.set_xlabel(xlabel); ax.set_ylabel(ylabel); ax.set_title(title); ax.legend()
+    plt.tight_layout(); plt.show()
+    return fig
