@@ -1,0 +1,4 @@
+model,val_ap,test_ap,minutes
+gcn,0.5187,0.4842,4.2
+gat,0.5661,0.5269,6.1
+walkattn,0.5545,0.5218,16.3

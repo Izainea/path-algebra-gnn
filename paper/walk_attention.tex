@@ -54,12 +54,15 @@ relate them to message passing and to Transformer attention. On a controlled
 family of bottleneck graphs with tunable over-squashing, Walk Attention reaches
 $1.000 \pm 0.000$ accuracy over five seeds at problem depths where a one-hop
 graph-attention network collapses to chance ($0.26$--$0.44$) and a
-fixed-weight multi-hop aggregator reaches only $0.50$--$0.62$. We additionally
-report a negative result that motivates the design: using the path-algebra
-\emph{quotient} to \emph{collapse} equivalent walks discards the multiplicity
-that the task needs and fails. The path algebra is therefore valuable not as a
-quotient that compresses information, but as the object that \emph{defines the
-attention support}.
+fixed-weight multi-hop aggregator reaches only $0.50$--$0.62$; on the real-world
+Peptides-func benchmark it is competitive with strong baselines while remaining
+sparse and stable. Its advantage is thus regime-dependent: decisive when
+over-squashing is severe, and a tie when it is mild. We additionally report a
+negative result that motivates the design: using the path-algebra \emph{quotient}
+to \emph{collapse} equivalent walks discards the multiplicity that the task needs
+and fails. The path algebra is therefore valuable not as a quotient that
+compresses information, but as the object that \emph{defines the attention
+support}.
 
 \keywords{Graph neural networks \and Over-squashing \and Path algebra \and
 Quiver \and Attention \and Message passing.}
@@ -122,7 +125,9 @@ over-squashing. We call the resulting architecture \textbf{Walk Attention}.
   \item On a controlled bottleneck family with tunable over-squashing
   (Section~\ref{sec:exp}), Walk Attention attains $1.000\pm0.000$ accuracy over
   five seeds where one-hop graph attention collapses to chance and a fixed-weight
-  multi-hop aggregator only partially succeeds.
+  multi-hop aggregator only partially succeeds; on the real Peptides-func
+  benchmark it is competitive with strong baselines, so its advantage is
+  regime-dependent (decisive under severe over-squashing, a tie when it is mild).
   \item We report a \emph{negative} result that sharpens the design: collapsing
   equivalent walks via the path-algebra \emph{quotient} discards needed
   multiplicity and fails. The quotient's role is to \emph{shape} the support, not

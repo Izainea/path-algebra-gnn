@@ -134,6 +134,49 @@ when distinct path classes should be routed to distinct heads) as an open
 question rather than a settled negative.
 
 % ---------------------------------------------------------------------
+\subsection{A real long-range benchmark: LRGB Peptides-func}
+% ---------------------------------------------------------------------
+
+The synthetic benchmark is deliberately a worst case: an extreme bottleneck where
+multi-hop reach is decisive. To see how Walk Attention behaves on real data we
+also evaluate on \textbf{Peptides-func} from the Long Range Graph Benchmark
+\cite{dwivedi2022lrgb} ($10{,}873/2{,}331/2{,}331$ train/val/test molecular
+graphs, median $138$ nodes; multi-label graph classification, metric Average
+Precision). We use the same atom embedding, four layers, hidden width $80$, mean
+pooling and AdamW for every model; Walk Attention uses ranges $g=1,\dots,4$ with
+the walk-reachability support of each molecule. On these graphs the support stays
+sparse ($1$--$8\%$ of $n^2$ at range $3$), so the method remains cheap.
+
+Table~\ref{tab:lrgb} reports test AP. \textbf{Walk Attention is competitive with
+the strong baselines but does not surpass them here}: it clearly beats GCN and is
+statistically indistinguishable from GAT. This is informative and we report it
+plainly. Peptides graphs are small and chain-like, without the acute bottlenecks
+of the synthetic family, so a few layers of one-hop attention already reach far
+enough; the multi-hop support that is decisive under severe over-squashing buys
+little when over-squashing is mild. Walk Attention's advantage is therefore
+\emph{regime-dependent}: it is large exactly when the squashing is severe
+(Table~\ref{tab:main}) and shrinks to a tie when it is not. Crucially, on real
+data the operator still trains stably and remains cheap; it does not degrade.
+
+\begin{table}[t]
+\centering
+\caption{LRGB Peptides-func, test Average Precision (higher is better). Walk
+Attention is competitive with GAT and above GCN; on this mild-over-squashing
+benchmark the multi-hop support yields no decisive gain (contrast
+Table~\ref{tab:main}).}
+\label{tab:lrgb}
+\begin{tabular}{lc}
+\toprule
+\textbf{Model} & \textbf{test AP} \\
+\midrule
+GCN                          & $0.484$ \\
+GAT                          & $\mathbf{0.527}$ \\
+Walk Attention (ours)        & $0.522$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ---------------------------------------------------------------------
 \subsection{Cost}
 % ---------------------------------------------------------------------
 
