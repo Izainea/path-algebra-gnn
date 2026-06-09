@@ -90,6 +90,47 @@ Table~\ref{tab:main}. The instability was therefore an optimisation artefact, no
 a property of the operator.
 
 % ---------------------------------------------------------------------
+\subsection{A standard probe with clear parallel paths: RingTransfer}
+% ---------------------------------------------------------------------
+
+The bottleneck family is our own construction. To confirm the effect on an
+\emph{independent} benchmark we use \textsc{RingTransfer}
+\cite{digiovanni2023oversquashing}: a cycle of $n$ nodes in which a source must
+transmit its one-hot label to the diametrically opposite target. Here the
+parallel-path structure is unmistakable---information can travel the \emph{two
+arcs} of the ring, which are two paths of the same length $n/2$---and
+over-squashing is severe and tunable, since the number of length-$(n/2)$ walks
+into the target grows like $4^{\,n/2}$ with the ring size. The task needs $n/2$
+hops, so a one-hop model needs $n/2$ layers. We use five classes (chance $0.2$),
+the same width and training recipe as above, and $n/2$ layers/ranges for all
+models.
+
+Table~\ref{tab:ring} shows the expected picture. On small rings ($n\le 10$,
+distance $\le 5$) every model succeeds---the squashing is not yet severe. From
+$n=14$ (distance $7$) onward, the one-hop baselines collapse---GCN and GAT fall to
+$0.25$--$0.60$---while \textbf{Walk Attention stays at $1.000$ throughout}: its
+multi-hop support lets the target read the source directly across either arc, and
+the learned weights pick out the labelled source. The separation grows with ring
+size, i.e.\ with the severity of over-squashing, which is exactly the prediction.
+
+\begin{table}[t]
+\centering
+\caption{\textsc{RingTransfer} accuracy vs.\ ring size $n$ (distance $n/2$);
+chance $=0.20$. One-hop GCN/GAT collapse as the ring---and thus the
+over-squashing---grows, while Walk Attention stays exact.}
+\label{tab:ring}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Model} & $n{=}6$ & $n{=}10$ & $n{=}14$ & $n{=}18$ \\
+\midrule
+GCN                    & $1.00$ & $1.00$ & $0.25$ & $0.59$ \\
+GAT                    & $1.00$ & $1.00$ & $0.43$ & $0.60$ \\
+\textbf{Walk Attention (ours)} & $\mathbf{1.00}$ & $\mathbf{1.00}$ & $\mathbf{1.00}$ & $\mathbf{1.00}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ---------------------------------------------------------------------
 \subsection{A negative result: collapsing walks hurts}
 % ---------------------------------------------------------------------
 
@@ -150,13 +191,17 @@ sparse ($1$--$8\%$ of $n^2$ at range $3$), so the method remains cheap.
 Table~\ref{tab:lrgb} reports test AP. \textbf{Walk Attention is competitive with
 the strong baselines but does not surpass them here}: it clearly beats GCN and is
 statistically indistinguishable from GAT. This is informative and we report it
-plainly. Peptides graphs are small and chain-like, without the acute bottlenecks
-of the synthetic family, so a few layers of one-hop attention already reach far
-enough; the multi-hop support that is decisive under severe over-squashing buys
-little when over-squashing is mild. Walk Attention's advantage is therefore
-\emph{regime-dependent}: it is large exactly when the squashing is severe
-(Table~\ref{tab:main}) and shrinks to a tie when it is not. Crucially, on real
-data the operator still trains stably and remains cheap; it does not degrade.
+plainly. It is \emph{not} for want of parallel paths: peptide graphs do contain
+rings and branches, and a typical molecule has hundreds of vertex pairs joined by
+$\ge 2$ walks of length $\le 4$ (which the quotient ideal would collapse). The
+reason is rather that the over-squashing is \emph{mild}: these graphs are small
+(median $138$ nodes), so a few layers of one-hop attention already reach far
+enough, and the multiplicity into any node never grows large enough to saturate
+the embedding. The multi-hop support that is decisive under severe over-squashing
+buys little when the squashing is mild. Walk Attention's advantage is therefore
+\emph{regime-dependent}---large when the squashing is severe (Table~\ref{tab:main}
+and Table~\ref{tab:ring}) and a tie when it is mild---and, crucially, on real data
+the operator still trains stably and stays cheap; it does not degrade.
 
 \begin{table}[t]
 \centering

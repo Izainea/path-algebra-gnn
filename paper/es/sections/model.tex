@@ -1,0 +1,166 @@
+% =====================================================================
+\section{Atención por Caminos}\label{sec:model}
+% =====================================================================
+
+Definimos ahora la arquitectura. El principio rector es la observación de que el
+operador de caminos multi-salto de la Sección~\ref{sec:algebra} es estructuralmente una
+\emph{atención}: agrega, para cada nodo objetivo, una combinación ponderada de
+las características de los nodos que lo alcanzan. La autoatención del Transformer
+\cite{vaswani2017attention} tiene la misma forma pero con soporte sobre todos los pares y
+pesos \emph{aprendidos}; la atención sobre grafos \cite{velickovic2017graph} restringe el
+soporte a un salto. La Atención por Caminos conserva los pesos aprendidos de la atención y
+toma el soporte del álgebra de caminos: la alcanzabilidad por caminos multi-salto y dispersa
+$\mathcal{S}_g$.
+
+% ---------------------------------------------------------------------
+\subsection{La capa de Atención por Caminos}
+% ---------------------------------------------------------------------
+
+Fijemos un rango $g$ con soporte de alcanzabilidad $\mathcal{S}_g$
+(Definición~\ref{def:walkop}). Una capa de Atención por Caminos con $H$ cabezas y dimensión
+de cabeza $C$ transforma las características de los nodos $x\in\RR^{n\times d_{\text{in}}}$ del
+modo siguiente. Para cada cabeza $h$ calcula queries, keys y values mediante aplicaciones
+lineales,
+\[
+  Q^h = x\,W^h_Q,\qquad K^h = x\,W^h_K,\qquad V^h = x\,W^h_V,
+  \qquad W^h_\bullet\in\RR^{d_{\text{in}}\times C},
+\]
+y luego atiende \emph{sólo sobre los pares alcanzables}: para todo
+$(j,i)\in\mathcal{S}_g$,
+\begin{align}
+  \ell^h_{ji} &= \frac{1}{\sqrt{C}}\,\langle Q^h_j,\,K^h_i\rangle, \label{eq:logit}\\
+  \alpha^h_{ji} &= \softmax_{\,i:\,(j,i)\in\mathcal{S}_g}\bigl(\ell^h_{ji}\bigr),
+    \label{eq:softmax}\\
+  z^h_j &= \sum_{i:\,(j,i)\in\mathcal{S}_g}\alpha^h_{ji}\,V^h_i. \label{eq:agg}
+\end{align}
+El softmax en \eqref{eq:softmax} se toma, para cada objetivo $j$, exactamente sobre las
+fuentes $i$ que alcanzan a $j$ mediante un camino de longitud $g$---un softmax
+\emph{segmentado} sobre el soporte, nunca sobre los $n$ nodos. Las salidas de las cabezas se
+concatenan (o se promedian en la capa final) y se añade un término ``raíz'' residual:
+\[
+  \mathrm{WA}_g(x)_j \;=\; \bigl\Vert_{h=1}^{H} z^h_j \;+\; x_j W_{\!\text{root}}.
+\]
+Como \eqref{eq:logit}--\eqref{eq:agg} sólo tocan los pares de
+$\mathcal{S}_g$, la capa cuesta $O(|\mathcal{S}_g|\,H\,C)$ en tiempo y memoria, no
+$O(n^2)$. El soporte se precalcula una vez por grafo a partir de la
+Proposición~\ref{prop:count} (el patrón de no ceros de $\Adj^{\,g}$).
+La Figura~\ref{fig:layer} resume el flujo de datos.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[
+  >={Stealth[round]}, node distance=6mm,
+  box/.style={draw,rounded corners=2pt,minimum height=7mm,inner sep=3pt,font=\small,fill=blue!4},
+  alg/.style={draw,rounded corners=2pt,minimum height=7mm,inner sep=3pt,font=\small,fill=green!6},
+  op/.style={font=\small},
+  lbl/.style={font=\scriptsize,gray}]
+  \node[box] (x) {$x$};
+  \node[box,right=8mm of x] (q) {$Q=xW_Q$};
+  \node[box,below=2mm of q] (k) {$K=xW_K$};
+  \node[box,below=2mm of k] (v) {$V=xW_V$};
+  \node[alg,right=10mm of k] (att)
+    {$\displaystyle \alpha_{ji}=\softmax_{i:(j,i)\in\mathcal{S}_g}\!\frac{\langle Q_j,K_i\rangle}{\sqrt C}$};
+  \node[box,right=10mm of att] (agg) {$z_j=\sum_i \alpha_{ji}V_i$};
+  \node[box,right=8mm of agg] (out) {$\mathrm{WA}_g(x)$};
+  % support callout
+  \node[alg,below=8mm of att,fill=green!10] (supp)
+    {soporte $\mathcal{S}_g=\{(j,i):(\Adj^{\,g})_{ij}>0\}$};
+  \draw[->] (x) -- (q.west);
+  \draw[->] (x) |- (k.west);
+  \draw[->] (x) |- (v.west);
+  \draw[->] (q.east) -- (att.north west);
+  \draw[->] (k.east) -- (att.west);
+  \draw[->] (att.east) -- (agg.west);
+  \draw[->] (v.east) -- ([yshift=-2mm]agg.west);
+  \draw[->] (agg) -- (out);
+  \draw[->,green!50!black] (supp.north) -- (att.south)
+    node[midway,right,lbl,text=green!50!black] {restringe los pares};
+  \draw[->,rounded corners] (x.north) -- ++(0,6mm) -| (out.north)
+    node[pos=0.25,above,lbl] {raíz (residual)};
+\end{tikzpicture}
+\caption{Una capa de Atención por Caminos en el rango $g$. Las queries, keys y values son
+aplicaciones lineales de las características de los nodos; la atención se calcula \emph{sólo}
+sobre los pares alcanzables por caminos $\mathcal{S}_g$ que proporciona el álgebra de caminos
+(el patrón de no ceros de $\Adj^{\,g}$), y luego se agregan y se suman a un término raíz
+residual. La caja verde de soporte es lo que distingue a la Atención por Caminos de la
+atención densa ($\mathcal{S}_g = $ todos los pares) y de un salto ($\mathcal{S}_g = $ aristas).}
+\label{fig:layer}
+\end{figure}
+
+\begin{remark}[Por qué importan los pesos aprendidos]
+El operador de pesos fijos $W^{(g)}$ de la Definición~\ref{def:walkop} es el caso
+particular en el que $\alpha^h_{ji}$ se reemplaza por la constante $n_g(i,j)/Z_g$.
+Alcanza toda fuente de rango $g$ pero las pondera sólo por multiplicidad, de modo que
+no puede \emph{seleccionar} qué fuente porta la señal relevante. La atención aprendida
+\eqref{eq:logit}--\eqref{eq:softmax} restaura esta selectividad mientras
+conserva el mismo soporte multi-salto. La Sección~\ref{sec:exp} muestra que esta distinción
+es decisiva.
+\end{remark}
+
+% ---------------------------------------------------------------------
+\subsection{La red}
+% ---------------------------------------------------------------------
+
+Una red de Atención por Caminos de profundidad $L$ apila una capa por rango
+$g=1,\dots,L$. La capa $g$ usa el soporte $\mathcal{S}_g$ derivado de
+$\Adj^{\,g}$, de modo que las capas sucesivas leen caminos progresivamente más largos. Cada
+capa va seguida de una normalización de capa, una no linealidad \textsc{elu} y
+dropout; un perceptrón multicapa final aplica la incrustación de nodos a las salidas de la tarea:
+\[
+  x^{(g)} \;=\; \mathrm{dropout}\Bigl(\mathrm{elu}\bigl(\mathrm{LN}\bigl(
+  \mathrm{WA}_g\bigl(x^{(g-1)}\bigr)\bigr)\bigr)\Bigr),\qquad
+  \hat y \;=\; \mathrm{MLP}\bigl(x^{(L)}\bigr).
+\]
+La normalización de capa es importante en la práctica: sin ella la atención aprendida tiene
+alta varianza entre inicializaciones (alcanza el óptimo en algunas semillas y
+en otras no); con ella, junto con un breve warmup de la tasa de aprendizaje y recorte de
+gradiente, el entrenamiento converge de forma fiable (Sección~\ref{sec:exp}).
+El Algoritmo~\ref{alg:wa} resume una capa.
+
+\begin{algorithm}[t]
+\caption{Capa de Atención por Caminos en el rango $g$ (dispersa).}\label{alg:wa}
+\begin{algorithmic}[1]
+\Require características $x\in\RR^{n\times d_{\text{in}}}$; soporte
+  $\mathcal{S}_g=\{(j,i):(\Adj^{\,g})_{ij}>0\}$
+\State $Q,K,V \gets xW_Q,\,xW_K,\,xW_V$ \Comment{por cabeza; formas $n\times HC$}
+\For{each $(j,i)\in\mathcal{S}_g$ and head $h$}
+  \State $\ell^h_{ji}\gets \langle Q^h_j,K^h_i\rangle/\sqrt{C}$
+\EndFor
+\State $\alpha^h_{ji}\gets$ $\softmax$ segmentado sobre $\{i:(j,i)\in\mathcal{S}_g\}$
+\State $z^h_j\gets \sum_i \alpha^h_{ji}V^h_i$
+  \Comment{scatter-add hacia los objetivos}
+\State \Return $\bigl\Vert_h z^h \;+\; xW_{\!\text{root}}$
+\end{algorithmic}
+\end{algorithm}
+
+% ---------------------------------------------------------------------
+\subsection{Relación con el paso de mensajes y los Transformers}
+% ---------------------------------------------------------------------
+
+La Tabla~\ref{tab:relation} sitúa la Atención por Caminos entre los operadores relacionados según dos
+ejes: el \emph{soporte} de interacción y si los pesos son
+\emph{aprendidos}. Una capa de atención sobre grafos de un salto \cite{velickovic2017graph} aprende
+pesos pero sólo sobre los vecinos directos, de modo que debe encaminar la señal de largo alcance
+a través de $L$ capas apiladas---precisamente el régimen donde el over-squashing muerde. Un
+Transformer de grafo completo \cite{vaswani2017attention} aprende pesos sobre todos los pares,
+pagando $O(n^2)$ y descartando la estructura del grafo a menos que se reinyecte mediante
+codificaciones posicionales. El operador de caminos de pesos fijos tiene el soporte multi-salto
+adecuado pero no puede seleccionar. La Atención por Caminos ocupa la celda restante: soporte
+multi-salto y consciente de la estructura \emph{y} pesos aprendidos y selectivos.
+
+\begin{table}[t]
+\centering
+\caption{La Atención por Caminos frente a operadores de agregación relacionados.}
+\label{tab:relation}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Operador} & \textbf{Soporte} & \textbf{Pesos} & \textbf{Costo} \\
+\midrule
+GCN / paso de mensajes       & 1 salto      & fijos (grado) & $O(|Q_1|)$ \\
+Atención sobre grafos (GAT)       & 1 salto      & aprendidos        & $O(|Q_1|)$ \\
+Operador de caminos $W^{(g)}$     & alcanzable por caminos & fijos (multiplicidad) & $O(|\mathcal{S}_g|)$ \\
+Transformer de grafo           & todos los pares  & aprendidos        & $O(n^2)$ \\
+\textbf{Atención por Caminos (nuestra)} & \textbf{alcanzable por caminos} & \textbf{aprendidos} & $O(|\mathcal{S}_g|)$ \\
+\bottomrule
+\end{tabular}
+\end{table}

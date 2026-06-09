@@ -27,6 +27,8 @@ __all__ = [
     "diagnostic",
     "data",
     "data_bottleneck",
+    "data_ring",
+    "lrgb",
     "train",
     "mlflow_runner",
     "viz",

@@ -54,10 +54,12 @@ relate them to message passing and to Transformer attention. On a controlled
 family of bottleneck graphs with tunable over-squashing, Walk Attention reaches
 $1.000 \pm 0.000$ accuracy over five seeds at problem depths where a one-hop
 graph-attention network collapses to chance ($0.26$--$0.44$) and a
-fixed-weight multi-hop aggregator reaches only $0.50$--$0.62$; on the real-world
-Peptides-func benchmark it is competitive with strong baselines while remaining
-sparse and stable. Its advantage is thus regime-dependent: decisive when
-over-squashing is severe, and a tie when it is mild. We additionally report a
+fixed-weight multi-hop aggregator reaches only $0.50$--$0.62$; on the standard
+\textsc{RingTransfer} probe it stays exact ($1.00$) as the ring grows while
+one-hop baselines fall apart, and on the real-world Peptides-func benchmark it is
+competitive with strong baselines while remaining sparse and stable. Its
+advantage is thus regime-dependent: decisive when over-squashing is severe, and a
+tie when it is mild. We additionally report a
 negative result that motivates the design: using the path-algebra \emph{quotient}
 to \emph{collapse} equivalent walks discards the multiplicity that the task needs
 and fails. The path algebra is therefore valuable not as a quotient that

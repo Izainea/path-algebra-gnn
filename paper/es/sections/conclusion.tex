@@ -1,0 +1,52 @@
+% =====================================================================
+\section{Conclusión y Trabajo Futuro}\label{sec:conclusion}
+% =====================================================================
+
+Introdujimos \textbf{Walk Attention}, una arquitectura que mitiga el
+over-squashing en redes neuronales de grafos atendiendo sobre un soporte
+multi-salto proporcionado por el álgebra de caminos del quiver subyacente. El
+álgebra de caminos graduada da, a través de la Proposición~\ref{prop:count}, una
+descripción exacta de qué pares de nodos están conectados por caminos de
+longitud-$g$ y con qué multiplicidad; usamos esto para definir una atención
+dispersa cuyo soporte está determinado algebraicamente y cuyos pesos son
+aprendidos. Sobre un benchmark de cuello de botella ajustable, Walk Attention
+resolvió exactamente una tarea de recuperación de largo alcance ($1.000\pm0.000$
+sobre cinco semillas) donde una red de atención de un salto colapsó al azar y un
+agregador multi-salto de pesos fijos solo tuvo éxito parcialmente; sobre el
+benchmark real Peptides-func fue competitivo con líneas base fuertes mientras
+permanecía disperso y estable. Su ventaja depende del régimen---decisiva cuando
+el over-squashing es severo y un empate cuando es leve---lo cual reportamos
+llanamente en lugar de sobreafirmar. Un resultado negativo complementario mostró
+que usar el \emph{cociente} del álgebra de caminos para comprimir caminos
+equivalentes es contraproducente cuando la multiplicidad de caminos porta señal;
+el valor del álgebra es dar forma al soporte de la atención, no descartar
+información.
+
+La construcción es deliberadamente elemental y autocontenida, de modo que pueda
+servir como punto de entrada que conecte la teoría de representaciones de quivers
+con el aprendizaje de representaciones de grafos. Varias direcciones se siguen
+naturalmente.
+
+\begin{itemize}
+  \item \textbf{Benchmarks con over-squashing severo.} Peptides-func es un caso
+  leve donde el soporte multi-salto no es decisivo. El paso siguiente natural es
+  identificar tareas reales de largo alcance cuyos grafos sí tengan cuellos de
+  botella agudos---donde la ventaja sintética debería transferirse---y comparar
+  contra rewiring \cite{topping2022understanding} y graph Transformers.
+  \item \textbf{Soportes con forma de cociente.} El cociente $\kQ/I$, en lugar de
+  comprimir la señal, puede \emph{particionar} los caminos en clases de
+  equivalencia; enrutar clases distintas a cabezas distintas dejaría que el
+  álgebra estructure las cabezas. Aprender qué relaciones $I$ son útiles es un
+  problema atractivo.
+  \item \textbf{Escalar el soporte.} Para grafos densos el soporte de rango-$g$
+  puede crecer; truncar, muestrear o aprender un soporte admisible más disperso
+  controlan el costo preservando el largo alcance.
+\end{itemize}
+
+\subsubsection*{Reproducibilidad.}
+Todos los generadores de grafos, los operadores de walk, la capa Walk Attention,
+las líneas base y los registros de experimentos están liberados. Los cálculos del
+álgebra se apoyan en una biblioteca abierta de quivers/álgebras de caminos; este
+trabajo es, hasta donde sabemos, la primera aplicación publicada de esa maquinaria
+algebraica a redes neuronales de grafos, por lo que mantuvimos la construcción
+algebraica explícita en todo momento.
