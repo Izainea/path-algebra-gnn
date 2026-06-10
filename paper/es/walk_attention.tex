@@ -45,27 +45,21 @@ Las redes neuronales de grafos (GNN) de paso de mensajes sufren de
 largos hacia un nodo, se comprime en un vector de ancho fijo y la se\~nal se
 pierde. Introducimos \textbf{Walk Attention}, una arquitectura que aborda el
 over-squashing a trav\'es del \emph{\'algebra de caminos} $\kQ$ del grafo dirigido
-(quiver) subyacente a los datos. Las componentes graduadas de $\kQ$ cuentan los
-caminos dirigidos de una longitud dada entre dos v\'ertices, dando una
-descripci\'on exacta y algebraica de la alcanzabilidad multi-salto. Usamos esta
-estructura para definir una atenci\'on dispersa y multi-salto: un nodo atiende
-directamente a todo v\'ertice alcanzable por un camino de longitud~$k$, donde el
-\'algebra provee el \emph{soporte} de la atenci\'on y la red aprende los
-\emph{pesos}. Damos una construcci\'on autocontenida de los quivers, sus \'algebras
-de caminos y los operadores de walk, relacion\'andolos con el paso de mensajes y la
-atenci\'on de los Transformers. En una familia controlada de cuellos de botella con
-over-squashing ajustable, Walk Attention alcanza $1.000 \pm 0.000$ de precisi\'on
-sobre cinco semillas donde una atenci\'on de grafos de un salto colapsa al azar
-($0.26$--$0.44$) y un agregador multi-salto de pesos fijos llega solo a
-$0.50$--$0.62$; en la prueba est\'andar \textsc{RingTransfer} se mantiene exacta
-($1.00$) mientras las l\'ineas base de un salto se degradan, y en el benchmark
-real Peptides-func es competitiva con l\'ineas base fuertes. Su ventaja es por
-tanto dependiente del r\'egimen: decisiva cuando el over-squashing es severo, y
-comparable a la atenci\'on de un salto cuando es leve. Adem\'as, reportamos un resultado negativo que motiva el
-dise\~no: usar el \emph{cociente} del \'algebra para \emph{colapsar} caminos
-equivalentes descarta la multiplicidad que la tarea necesita y falla. El \'algebra
-de caminos es valiosa no como un cociente que comprime informaci\'on, sino como el
-objeto que \emph{define el soporte de la atenci\'on}. Conceptualmente, Walk
+(quiver) subyacente a los datos, cuyas componentes graduadas dan una descripci\'on
+exacta y algebraica de la alcanzabilidad multi-salto. Usamos esta estructura para
+definir una atenci\'on dispersa y multi-salto: el \'algebra provee el \emph{soporte}
+de la atenci\'on (qu\'e v\'ertices alcanza un nodo por un camino de longitud~$k$) y
+la red aprende los \emph{pesos}. En una familia de cuellos de botella con
+over-squashing ajustable, Walk Attention alcanza $1.000\pm0.000$ de precisi\'on
+sobre cinco semillas donde una atenci\'on de grafos de un salto colapsa al azar y
+un agregador de pesos fijos solo tiene \'exito parcial; se mantiene exacta en la
+prueba est\'andar \textsc{RingTransfer} y es competitiva en el benchmark real
+Peptides-func---una ventaja decisiva cuando el over-squashing es severo y
+comparable a la atenci\'on de un salto cuando es leve. Un resultado negativo motiva
+el dise\~no: usar el \emph{cociente} del \'algebra para colapsar caminos
+equivalentes descarta la multiplicidad que la tarea necesita y falla, de modo que
+el \'algebra es valiosa no para comprimir sino como el objeto que \emph{define el
+soporte de la atenci\'on}. Conceptualmente, Walk
 Attention es la lectura aprendida y representacional de un sustrato algebraico
 cuya lectura din\'amica es el marco de aut\'omatas de impacto.
 

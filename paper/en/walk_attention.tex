@@ -42,31 +42,22 @@ Message-passing graph neural networks (GNNs) suffer from \emph{over-squashing}:
 when information must travel along many long paths into a node, it is compressed
 into a fixed-width vector and the signal is lost. We introduce \textbf{Walk
 Attention}, an architecture that addresses over-squashing through the
-\emph{path algebra} $\kQ$ of the directed graph (quiver) underlying the data.
-The graded components of $\kQ$ count directed walks of a given length between
-two vertices and thus give an exact, algebraic description of the multi-hop
-reachability structure of the network. We use this structure to define a sparse,
-multi-hop attention: a node attends directly to every vertex it can reach by a
-walk of length~$k$, with the path algebra supplying the attention \emph{support}
-and the network learning the attention \emph{weights}. We give a self-contained
-construction of quivers, their path algebras, and the walk operators, and we
-relate them to message passing and to Transformer attention. On a controlled
-family of bottleneck graphs with tunable over-squashing, Walk Attention reaches
-$1.000 \pm 0.000$ accuracy over five seeds at problem depths where a one-hop
-graph-attention network collapses to chance ($0.26$--$0.44$) and a
-fixed-weight multi-hop aggregator reaches only $0.50$--$0.62$; on the standard
-\textsc{RingTransfer} probe it remains exact ($1.00$) as the ring grows while
-one-hop baselines degrade, and on the real-world Peptides-func benchmark it is
-competitive with strong baselines while remaining sparse and stable. Its
-advantage is thus regime-dependent: decisive when over-squashing is severe, and
-comparable to one-hop attention when it is mild. We additionally report a
-negative result that motivates the design: using the path-algebra \emph{quotient}
-to \emph{collapse} equivalent walks discards the multiplicity that the task needs
-and fails. The path algebra is therefore valuable not as a quotient that
-compresses information, but as the object that \emph{defines the attention
-support}. Conceptually, Walk Attention is the learned, representational reading of
-an algebraic substrate whose dynamical reading is the automata-of-impact
-framework.
+\emph{path algebra} $\kQ$ of the directed graph (quiver) underlying the data,
+whose graded components give an exact, algebraic description of multi-hop
+reachability. We use this structure to define a sparse, multi-hop attention: the
+path algebra supplies the attention \emph{support} (which vertices a node reaches
+by a length-$k$ walk) and the network learns the \emph{weights}. On bottleneck
+graphs with tunable over-squashing, Walk Attention reaches $1.000\pm0.000$
+accuracy over five seeds where one-hop graph attention collapses to chance and a
+fixed-weight aggregator only partially succeeds; it stays exact on the standard
+\textsc{RingTransfer} probe and is competitive on the real-world Peptides-func
+benchmark---an advantage that is decisive when over-squashing is severe and
+comparable to one-hop attention when it is mild. A negative result motivates the
+design: using the path-algebra \emph{quotient} to collapse equivalent walks
+discards multiplicity the task needs and fails, so the algebra is valuable not for
+compression but as the object that \emph{defines the attention support}.
+Conceptually, Walk Attention is the learned, representational reading of an
+algebraic substrate whose dynamical reading is the automata-of-impact framework.
 
 \keywords{Graph neural networks \and Over-squashing \and Path algebra \and
 Quiver \and Representation theory \and Attention.}
