@@ -41,7 +41,7 @@ Bogot\'a, Colombia\\
 
 \begin{abstract}
 Las redes neuronales de grafos (GNN) de paso de mensajes sufren de
-\emph{over-squashing}: cuando la informaci\'on debe viajar por muchos caminos
+\emph{over-squashing}: cuando la informaci\'on debe propagarse por muchos caminos
 largos hacia un nodo, se comprime en un vector de ancho fijo y la se\~nal se
 pierde. Introducimos \textbf{Walk Attention}, una arquitectura que aborda el
 over-squashing a trav\'es del \emph{\'algebra de caminos} $\kQ$ del grafo dirigido
@@ -58,10 +58,10 @@ over-squashing ajustable, Walk Attention alcanza $1.000 \pm 0.000$ de precisi\'o
 sobre cinco semillas donde una atenci\'on de grafos de un salto colapsa al azar
 ($0.26$--$0.44$) y un agregador multi-salto de pesos fijos llega solo a
 $0.50$--$0.62$; en la prueba est\'andar \textsc{RingTransfer} se mantiene exacta
-($1.00$) mientras las l\'ineas base de un salto se desmoronan, y en el benchmark
+($1.00$) mientras las l\'ineas base de un salto se degradan, y en el benchmark
 real Peptides-func es competitiva con l\'ineas base fuertes. Su ventaja es por
-tanto dependiente del r\'egimen: decisiva cuando el over-squashing es severo, un
-empate cuando es leve. Adem\'as, reportamos un resultado negativo que motiva el
+tanto dependiente del r\'egimen: decisiva cuando el over-squashing es severo, y
+comparable a la atenci\'on de un salto cuando es leve. Adem\'as, reportamos un resultado negativo que motiva el
 dise\~no: usar el \emph{cociente} del \'algebra para \emph{colapsar} caminos
 equivalentes descarta la multiplicidad que la tarea necesita y falla. El \'algebra
 de caminos es valiosa no como un cociente que comprime informaci\'on, sino como el
@@ -81,10 +81,10 @@ vecinos inmediatos e iterando esta regla local a trav\'es de las capas. Tras $k$
 capas, la informaci\'on de nodos a $k$ saltos de distancia alcanza un nodo
 objetivo. Aunque simple y efectivo, este esquema tiene un modo de fallo bien
 documentado: el \emph{over-squashing} \cite{alon2021bottleneck}. Cuando el n\'umero
-de caminos que canalizan informaci\'on hacia un nodo crece---t\'ipicamente de forma
-exponencial con la distancia---los mensajes que llevan todos esos caminos deben
-comprimirse en un \'unico vector de ancho fijo. El receptor no puede separarlos, y
-la se\~nal de largo alcance se pierde. El over-squashing es el obst\'aculo
+de caminos que llevan informaci\'on hacia un nodo crece---t\'ipicamente de forma
+exponencial con la distancia---los mensajes a lo largo de todos esos caminos deben
+comprimirse en un \'unico vector de ancho fijo. El nodo receptor no puede recuperarlos
+individualmente, y la se\~nal de largo alcance se pierde. El over-squashing es el obst\'aculo
 principal para aprender tareas cuyas etiquetas dependen de informaci\'on distante o
 distribuida globalmente.
 
@@ -137,11 +137,11 @@ over-squashing. Llamamos a la arquitectura resultante \textbf{Walk Attention}.
   colapsa al azar y un agregador multi-salto de pesos fijos solo tiene \'exito
   parcial; en el benchmark real Peptides-func es competitiva con l\'ineas base
   fuertes, por lo que su ventaja es dependiente del r\'egimen (decisiva bajo
-  over-squashing severo, un empate cuando es leve).
+  over-squashing severo, comparable a la atenci\'on de un salto cuando es leve).
   \item Reportamos un resultado \emph{negativo} que afina el dise\~no: colapsar
   caminos equivalentes mediante el \emph{cociente} del \'algebra de caminos
   descarta la multiplicidad necesaria y falla. El papel del cociente es
-  \emph{moldear} el soporte, no comprimir la se\~nal.
+  \emph{determinar} el soporte, no comprimir la se\~nal.
 \end{enumerate}
 
 % =====================================================================
@@ -165,8 +165,8 @@ Las redes de atenci\'on de grafos \cite{velickovic2017graph} aprenden pesos de
 atenci\'on de un salto; los graph Transformers completos aplican la auto-atenci\'on
 de los Transformers \cite{vaswani2017attention} sobre todos los pares de nodos,
 recuperando el largo alcance a costo cuadr\'atico y con codificaciones
-posicionales/estructurales para reinyectar la topolog\'ia. Walk Attention se sit\'ua
-entre ambos: es atenci\'on, pero su soporte es la alcanzabilidad dispersa
+posicionales/estructurales para reinyectar la topolog\'ia. Walk Attention es
+intermedia entre las dos: es atenci\'on, pero su soporte es la alcanzabilidad dispersa
 multi-salto por walks del quiver, en lugar de un salto o de todos los pares.
 
 \paragraph{Estructura de caminos y walks.}

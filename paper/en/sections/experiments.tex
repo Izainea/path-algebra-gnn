@@ -4,8 +4,8 @@
 
 We evaluate Walk Attention on a controlled family of graphs in which
 over-squashing is severe and \emph{tunable}, so that the contribution of each
-architectural ingredient can be isolated. All code, configurations and a full
-experiment-tracking log are released with the paper.
+architectural component can be isolated. All code, configurations and the
+experiment logs are released with the paper.
 
 % ---------------------------------------------------------------------
 \subsection{A tunable over-squashing benchmark}
@@ -21,17 +21,17 @@ the last layer connects to the target. Because the bottleneck vertices are
 interchangeable, the number of length-$(d{+}1)$ walks from a source to the target
 is $M^{d}$, so the walk multiplicity into the target grows as
 $n_{d+1}(\cdot,\text{target})\sim K\,M^{d}$
-(Proposition~\ref{prop:count}); a message-passing GNN must squash all of them
+(Proposition~\ref{prop:count}); a message-passing GNN must compress all of them
 into the target's fixed-width vector. The walk-reachability support, by contrast,
-remains sparse: at the deepest range it is only the $K$ source--target pairs,
-about $2\%$ of all node pairs in our configuration.
+remains sparse: at the deepest range it consists of only the $K$ source--target
+pairs, about $2\%$ of all node pairs in our configuration.
 
 \paragraph{Task.}
 Each source carries a one-hot \emph{key} and a scalar \emph{payload}; the target
 carries a query key. The model must output, at the target node, the key of the
-source whose key matches the query---a retrieval task whose answer sits $d{+}1$
-hops away, behind the bottleneck. Accuracy is measured at the target node;
-chance is $1/K$.
+source whose key matches the query---a retrieval task whose answer lies $d{+}1$
+hops away, beyond the bottleneck. Accuracy is measured at the target node;
+chance level is $1/K$.
 
 \paragraph{Models.} We compare:
 \begin{itemize}
@@ -54,15 +54,15 @@ $K=5$, $M=4$.
 \subsection{Main result}
 % ---------------------------------------------------------------------
 
-Table~\ref{tab:main} reports the results. One-hop GAT collapses towards chance
-($0.26$--$0.44$): it cannot carry the signal across the bottleneck, as expected
-of a local operator under over-squashing. The fixed-weight walk operator reaches
-the target---its multi-hop support bypasses the bottleneck---but, weighting all
-reachable sources by multiplicity alone, it cannot select the matching source and
-plateaus at $0.50$--$0.62$. \textbf{Walk Attention solves the task exactly},
-attaining $1.000\pm0.000$ accuracy at both depths across all five seeds: the same
-multi-hop support, now with learned query--key weights, lets the target attend
-selectively to the relevant source.
+Table~\ref{tab:main} reports the results. One-hop GAT degrades to near chance
+($0.26$--$0.44$): a local operator cannot propagate the signal across the
+bottleneck under over-squashing. The fixed-weight walk operator reaches the
+target---its multi-hop support spans the bottleneck in a single layer---but,
+weighting all reachable sources by multiplicity alone, it cannot select the
+matching source and plateaus at $0.50$--$0.62$. \textbf{Walk Attention solves the
+task exactly}, attaining $1.000\pm0.000$ accuracy at both depths over all five
+seeds: the same multi-hop support, now with learned query--key weights, lets the
+target attend selectively to the relevant source.
 
 \begin{table}[t]
 \centering
@@ -96,22 +96,21 @@ a property of the operator.
 The bottleneck family is our own construction. To confirm the effect on an
 \emph{independent} benchmark we use \textsc{RingTransfer}
 \cite{digiovanni2023oversquashing}: a cycle of $n$ nodes in which a source must
-transmit its one-hot label to the diametrically opposite target. Here the
-parallel-path structure is unmistakable---information can travel the \emph{two
-arcs} of the ring, which are two paths of the same length $n/2$---and
-over-squashing is severe and tunable, since the number of length-$(n/2)$ walks
-into the target grows like $4^{\,n/2}$ with the ring size. The task needs $n/2$
-hops, so a one-hop model needs $n/2$ layers. We use five classes (chance $0.2$),
-the same width and training recipe as above, and $n/2$ layers/ranges for all
-models.
+transmit its one-hot label to the diametrically opposite target. The
+parallel-path structure is explicit: the source reaches the target along the
+\emph{two arcs} of the ring, two paths of equal length $n/2$. Over-squashing is
+severe and tunable, since the number of length-$(n/2)$ walks into the target
+grows as $4^{\,n/2}$ with the ring size. The task requires $n/2$ hops, so a
+one-hop model requires $n/2$ layers. We use five classes (chance $0.2$), the same
+width and training procedure as above, and $n/2$ layers/ranges for all models.
 
-Table~\ref{tab:ring} shows the expected picture. On small rings ($n\le 10$,
-distance $\le 5$) every model succeeds---the squashing is not yet severe. From
-$n=14$ (distance $7$) onward, the one-hop baselines collapse---GCN and GAT fall to
-$0.25$--$0.60$---while \textbf{Walk Attention stays at $1.000$ throughout}: its
-multi-hop support lets the target read the source directly across either arc, and
-the learned weights pick out the labelled source. The separation grows with ring
-size, i.e.\ with the severity of over-squashing, which is exactly the prediction.
+Table~\ref{tab:ring} reports the results. On small rings ($n\le 10$, distance
+$\le 5$) every model succeeds, as the squashing is not yet severe. From $n=14$
+(distance $7$) onward the one-hop baselines degrade---GCN and GAT fall to
+$0.25$--$0.60$---while \textbf{Walk Attention remains at $1.000$ throughout}: its
+multi-hop support aggregates the source directly along either arc, and the
+learned weights identify the labelled source. The gap widens with ring size,
+i.e.\ with the severity of over-squashing, as predicted.
 
 \begin{table}[t]
 \centering
@@ -165,22 +164,21 @@ Walk operator (raw walks)          & $\mathbf{0.64}$ & $\mathbf{0.53}$ \\
 \end{tabular}
 \end{table}
 
-This negative result is informative: it tells us that the value of the path
-algebra here is \emph{not} compression. The right use of the algebra is to supply
-the multi-hop attention \emph{support} (which it does, sparsely and exactly), and
-to let the network learn weights over that support---which is precisely Walk
-Attention. We regard finding a regime in which the quotient's compression is
-itself beneficial (e.g.\ when parallel paths are genuinely redundant noise, or
-when distinct path classes should be routed to distinct heads) as an open
-question rather than a settled negative.
+This negative result indicates that the contribution of the path algebra here is
+\emph{not} compression. Its appropriate role is to supply the multi-hop attention
+\emph{support}---sparsely and exactly---over which the network learns weights,
+which is precisely Walk Attention. Whether a regime exists in which the
+quotient's compression is itself beneficial (e.g.\ when parallel paths are
+genuinely redundant noise, or when distinct path classes are routed to distinct
+heads) remains an open question.
 
 % ---------------------------------------------------------------------
 \subsection{LRGB Peptides-func}
 % ---------------------------------------------------------------------
 
 The synthetic benchmark is deliberately a worst case: an extreme bottleneck where
-multi-hop reach is decisive. To see how Walk Attention behaves on real data we
-also evaluate on \textbf{Peptides-func} from the Long Range Graph Benchmark
+multi-hop reach is decisive. To assess Walk Attention on real data we also
+evaluate on \textbf{Peptides-func} from the Long Range Graph Benchmark
 \cite{dwivedi2022lrgb} ($10{,}873/2{,}331/2{,}331$ train/val/test molecular
 graphs, median $138$ nodes; multi-label graph classification, metric Average
 Precision). We use the same atom embedding, four layers, hidden width $80$, mean
@@ -189,19 +187,19 @@ the walk-reachability support of each molecule. On these graphs the support stay
 sparse ($1$--$8\%$ of $n^2$ at range $3$), so the method remains cheap.
 
 Table~\ref{tab:lrgb} reports test AP. \textbf{Walk Attention is competitive with
-the strong baselines but does not surpass them here}: it clearly beats GCN and is
-statistically indistinguishable from GAT. This is informative and we report it
-plainly. It is \emph{not} for want of parallel paths: peptide graphs do contain
-rings and branches, and a typical molecule has hundreds of vertex pairs joined by
-$\ge 2$ walks of length $\le 4$ (which the quotient ideal would collapse). The
-reason is rather that the over-squashing is \emph{mild}: these graphs are small
-(median $138$ nodes), so a few layers of one-hop attention already reach far
-enough, and the multiplicity into any node never grows large enough to saturate
-the embedding. The multi-hop support that is decisive under severe over-squashing
-buys little when the squashing is mild. Walk Attention's advantage is therefore
-\emph{regime-dependent}---large when the squashing is severe (Table~\ref{tab:main}
-and Table~\ref{tab:ring}) and a tie when it is mild---and, crucially, on real data
-the operator still trains stably and stays cheap; it does not degrade.
+the strong baselines but does not surpass them here}: it exceeds GCN and is
+statistically indistinguishable from GAT. The result is not explained by an
+absence of parallel paths: peptide graphs contain rings and branches, and a
+typical molecule has hundreds of vertex pairs joined by $\ge 2$ walks of length
+$\le 4$ (which the quotient ideal would collapse). Rather, the over-squashing is
+\emph{mild}: these graphs are small (median $138$ nodes), so a few layers of
+one-hop attention already reach far enough, and the multiplicity into any node
+does not grow large enough to saturate the embedding. The multi-hop support that
+is decisive under severe over-squashing yields little benefit when the squashing
+is mild. Walk Attention's advantage is therefore \emph{regime-dependent}---large
+when the squashing is severe (Tables~\ref{tab:main} and~\ref{tab:ring}), and
+comparable to one-hop attention when it is mild---while on real data the operator
+continues to train stably and remains computationally cheap.
 
 \begin{table}[t]
 \centering

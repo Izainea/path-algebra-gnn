@@ -55,11 +55,11 @@ family of bottleneck graphs with tunable over-squashing, Walk Attention reaches
 $1.000 \pm 0.000$ accuracy over five seeds at problem depths where a one-hop
 graph-attention network collapses to chance ($0.26$--$0.44$) and a
 fixed-weight multi-hop aggregator reaches only $0.50$--$0.62$; on the standard
-\textsc{RingTransfer} probe it stays exact ($1.00$) as the ring grows while
-one-hop baselines fall apart, and on the real-world Peptides-func benchmark it is
+\textsc{RingTransfer} probe it remains exact ($1.00$) as the ring grows while
+one-hop baselines degrade, and on the real-world Peptides-func benchmark it is
 competitive with strong baselines while remaining sparse and stable. Its
-advantage is thus regime-dependent: decisive when over-squashing is severe, and a
-tie when it is mild. We additionally report a
+advantage is thus regime-dependent: decisive when over-squashing is severe, and
+comparable to one-hop attention when it is mild. We additionally report a
 negative result that motivates the design: using the path-algebra \emph{quotient}
 to \emph{collapse} equivalent walks discards the multiplicity that the task needs
 and fails. The path algebra is therefore valuable not as a quotient that
@@ -79,11 +79,11 @@ Graph neural networks (GNNs) built on the message-passing paradigm
 immediate neighbours and iterating this local rule across layers. After $k$
 layers, information from nodes $k$ hops away reaches a target node. While simple
 and effective, this scheme has a well-documented failure mode:
-\emph{over-squashing} \cite{alon2021bottleneck}. When the number of paths that
-funnel information into a node grows---typically exponentially with
-distance---the messages carried by all of those paths must be compressed into a
-single fixed-width vector. The receiver cannot disentangle them, and long-range
-signal is lost. Over-squashing is the principal obstacle to learning tasks whose
+\emph{over-squashing} \cite{alon2021bottleneck}. When the number of paths
+carrying information into a node grows---typically exponentially with
+distance---the messages along all of those paths must be compressed into a
+single fixed-width vector. The receiving node cannot recover them individually,
+and long-range signal is lost. Over-squashing is the principal obstacle to learning tasks whose
 labels depend on distant or globally-distributed information.
 
 Existing remedies act on the graph or the aggregation: \emph{rewiring} adds or
@@ -129,10 +129,11 @@ over-squashing. We call the resulting architecture \textbf{Walk Attention}.
   five seeds where one-hop graph attention collapses to chance and a fixed-weight
   multi-hop aggregator only partially succeeds; on the real Peptides-func
   benchmark it is competitive with strong baselines, so its advantage is
-  regime-dependent (decisive under severe over-squashing, a tie when it is mild).
+  regime-dependent (decisive under severe over-squashing, comparable to one-hop
+  attention when it is mild).
   \item We report a \emph{negative} result that sharpens the design: collapsing
   equivalent walks via the path-algebra \emph{quotient} discards needed
-  multiplicity and fails. The quotient's role is to \emph{shape} the support, not
+  multiplicity and fails. The quotient's role is to \emph{determine} the support, not
   to compress the signal.
 \end{enumerate}
 
@@ -156,8 +157,9 @@ Graph attention networks \cite{velickovic2017graph} learn one-hop attention
 weights; full graph Transformers apply Transformer self-attention
 \cite{vaswani2017attention} over all node pairs, recovering long range at
 quadratic cost and with positional/structural encodings to reinject topology.
-Walk Attention sits between these: it is attention, but its support is the sparse
-multi-hop walk-reachability of the quiver rather than one hop or all pairs.
+Walk Attention is intermediate between the two: it is attention, but its support
+is the sparse multi-hop walk-reachability of the quiver rather than one hop or all
+pairs.
 
 \paragraph{Path and walk structure.}
 Path-counting and powers of the adjacency matrix are classical, and the path

@@ -140,8 +140,8 @@ El Algoritmo~\ref{alg:wa} resume una capa.
 La Tabla~\ref{tab:relation} sitúa la Atención por Caminos entre los operadores relacionados según dos
 ejes: el \emph{soporte} de interacción y si los pesos son
 \emph{aprendidos}. Una capa de atención sobre grafos de un salto \cite{velickovic2017graph} aprende
-pesos pero sólo sobre los vecinos directos, de modo que debe encaminar la señal de largo alcance
-a través de $L$ capas apiladas---precisamente el régimen donde el over-squashing muerde. Un
+pesos pero sólo sobre los vecinos directos, de modo que debe propagar la señal de largo alcance
+a través de $L$ capas apiladas---precisamente el régimen donde el over-squashing es más severo. Un
 Transformer de grafo completo \cite{vaswani2017attention} aprende pesos sobre todos los pares,
 pagando $O(n^2)$ y descartando la estructura del grafo a menos que se reinyecte mediante
 codificaciones posicionales. El operador de caminos de pesos fijos tiene el soporte multi-salto

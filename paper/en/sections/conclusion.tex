@@ -12,12 +12,12 @@ weights are learned. On a tunable bottleneck benchmark, Walk Attention solved a
 long-range retrieval task exactly ($1.000\pm0.000$ over five seeds) where a
 one-hop attention network collapsed to chance and a fixed-weight multi-hop
 aggregator only partially succeeded; on the real Peptides-func benchmark it was
-competitive with strong baselines while staying sparse and stable. Its advantage
-is regime-dependent---decisive when over-squashing is severe and a tie when it is
-mild---which we report plainly rather than over-claim. A complementary negative
-result showed that using the path-algebra \emph{quotient} to compress equivalent
-walks is counterproductive when path multiplicity carries signal; the algebra's
-value is to shape the attention support, not to discard information.
+competitive with strong baselines while remaining sparse and stable. Its
+advantage is regime-dependent---decisive when over-squashing is severe and
+comparable to one-hop attention when it is mild. A complementary negative result
+showed that using the path-algebra \emph{quotient} to compress equivalent walks
+is counterproductive when path multiplicity carries signal; the role of the
+algebra is to determine the attention support, not to discard information.
 
 The construction is deliberately elementary and self-contained, so that it can
 serve as an entry point connecting quiver representation theory to graph

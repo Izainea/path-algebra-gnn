@@ -139,9 +139,10 @@ Algorithm~\ref{alg:wa} summarises one layer.
 Table~\ref{tab:relation} situates Walk Attention among related operators by two
 axes: the \emph{support} of interaction and whether the weights are
 \emph{learned}. A one-hop graph-attention layer \cite{velickovic2017graph} learns
-weights but only over direct neighbours, so it must route long-range signal
-through $L$ stacked layers---precisely the regime where over-squashing bites. A
-full graph Transformer \cite{vaswani2017attention} learns weights over all pairs,
+weights but only over direct neighbours, so it must propagate long-range signal
+through $L$ stacked layers---precisely the regime where over-squashing is most
+severe. A full graph Transformer \cite{vaswani2017attention} learns weights over
+all pairs,
 paying $O(n^2)$ and discarding graph structure unless it is reinjected by
 positional encodings. The fixed-weight walk operator has the right multi-hop
 support but cannot select. Walk Attention occupies the remaining cell: multi-hop,

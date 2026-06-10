@@ -4,8 +4,8 @@
 
 Evaluamos Walk Attention sobre una familia controlada de grafos en la que el
 over-squashing es severo y \emph{ajustable}, de modo que la contribución de cada
-ingrediente arquitectónico pueda aislarse. Todo el código, las configuraciones y un
-registro completo de seguimiento de experimentos se publican junto con el artículo.
+componente arquitectónico pueda aislarse. Todo el código, las configuraciones y los
+registros de los experimentos se publican junto con el artículo.
 
 % ---------------------------------------------------------------------
 \subsection{Un benchmark de over-squashing ajustable}
@@ -54,10 +54,10 @@ $K=5$, $M=4$.
 \subsection{Resultado principal}
 % ---------------------------------------------------------------------
 
-La Tabla~\ref{tab:main} reporta los resultados. La GAT de un salto colapsa hacia el azar
-($0.26$--$0.44$): no puede transportar la señal a través del cuello de botella, como es de esperar
-de un operador local bajo over-squashing. El operador de caminos de pesos fijos alcanza
-el objetivo---su soporte multi-salto sortea el cuello de botella---pero, al ponderar todas
+La Tabla~\ref{tab:main} reporta los resultados. La GAT de un salto se degrada hasta cerca del azar
+($0.26$--$0.44$): un operador local no puede propagar la señal a través del cuello de botella
+bajo over-squashing. El operador de caminos de pesos fijos alcanza
+el objetivo---su soporte multi-salto cubre el cuello de botella en una sola capa---pero, al ponderar todas
 las fuentes alcanzables únicamente por multiplicidad, no puede seleccionar la fuente que coincide y
 se estanca en $0.50$--$0.62$. \textbf{Walk Attention resuelve la tarea exactamente},
 alcanzando una precisión de $1.000\pm0.000$ en ambas profundidades y en las cinco semillas: el mismo
@@ -96,21 +96,21 @@ una propiedad del operador.
 La familia de cuellos de botella es construcción propia. Para confirmar el efecto
 en un benchmark \emph{independiente} usamos \textsc{RingTransfer}
 \cite{digiovanni2023oversquashing}: un ciclo de $n$ nodos donde una fuente debe
-transmitir su etiqueta one-hot al objetivo diametralmente opuesto. Los caminos
-paralelos son inconfundibles---la información puede recorrer los \emph{dos arcos}
-del anillo, dos caminos de igual longitud $n/2$---y el over-squashing es severo y
+transmitir su etiqueta one-hot al objetivo diametralmente opuesto. La estructura de
+caminos paralelos es explícita: la fuente alcanza el objetivo por los \emph{dos arcos}
+del anillo, dos caminos de igual longitud $n/2$. El over-squashing es severo y
 ajustable, pues el número de caminos de longitud $n/2$ hacia el objetivo crece
-como $4^{\,n/2}$ con el tamaño del anillo. La tarea necesita $n/2$ saltos, luego un
-modelo de un salto necesita $n/2$ capas. Usamos cinco clases (azar $0.2$), el mismo
-ancho y receta de entrenamiento, y $n/2$ capas/rangos para todos los modelos.
+como $4^{\,n/2}$ con el tamaño del anillo. La tarea requiere $n/2$ saltos, luego un
+modelo de un salto requiere $n/2$ capas. Usamos cinco clases (azar $0.2$), el mismo
+ancho y procedimiento de entrenamiento, y $n/2$ capas/rangos para todos los modelos.
 
-La Tabla~\ref{tab:ring} muestra el panorama esperado. En anillos pequeños
-($n\le 10$) todos los modelos tienen éxito---la compresión aún no es severa. Desde
-$n=14$ (distancia $7$), las líneas base de un salto colapsan---GCN y GAT caen a
+La Tabla~\ref{tab:ring} reporta los resultados. En anillos pequeños
+($n\le 10$) todos los modelos tienen éxito, pues la compresión aún no es severa. Desde
+$n=14$ (distancia $7$) las líneas base de un salto se degradan---GCN y GAT caen a
 $0.25$--$0.60$---mientras que \textbf{Walk Attention se mantiene en $1.000$}: su
-soporte multi-salto deja que el objetivo lea la fuente directamente por cualquier
-arco, y los pesos aprendidos identifican la fuente etiquetada. La separación crece
-con el tamaño del anillo, es decir, con la severidad del over-squashing.
+soporte multi-salto agrega la fuente directamente por cualquiera de los dos
+arcos, y los pesos aprendidos identifican la fuente etiquetada. La brecha se
+amplía con el tamaño del anillo, es decir, con la severidad del over-squashing, como se predice.
 
 \begin{table}[t]
 \centering
@@ -164,21 +164,21 @@ Walk operator (raw walks)          & $\mathbf{0.64}$ & $\mathbf{0.53}$ \\
 \end{tabular}
 \end{table}
 
-Este resultado negativo es informativo: nos dice que el valor del álgebra de caminos
-aquí \emph{no} es la compresión. El uso correcto del álgebra es proporcionar
-el \emph{soporte} de la atención multi-salto (lo cual hace, de forma dispersa y exacta), y
-dejar que la red aprenda pesos sobre ese soporte---que es precisamente Walk
-Attention. Consideramos que encontrar un régimen en el que la compresión del cociente sea
+Este resultado negativo indica que la contribución del álgebra de caminos
+aquí \emph{no} es la compresión. Su papel apropiado es proporcionar
+el \emph{soporte} de la atención multi-salto---de forma dispersa y exacta---sobre
+el cual la red aprende los pesos, que es precisamente Walk
+Attention. Que exista un régimen en el que la compresión del cociente sea
 en sí misma beneficiosa (p.\ ej.\ cuando los caminos paralelos son genuinamente ruido redundante, o
-cuando clases de caminos distintas deban enrutarse hacia cabezas distintas) es una cuestión
-abierta más que un resultado negativo zanjado.
+cuando clases de caminos distintas se enruten hacia cabezas distintas) permanece como una cuestión
+abierta.
 
 % ---------------------------------------------------------------------
 \subsection{LRGB Peptides-func}
 % ---------------------------------------------------------------------
 
 El benchmark sintético es deliberadamente un peor caso: un cuello de botella extremo donde
-el alcance multi-salto es decisivo. Para ver cómo se comporta Walk Attention con datos reales
+el alcance multi-salto es decisivo. Para evaluar Walk Attention con datos reales
 evaluamos también en \textbf{Peptides-func} del Long Range Graph Benchmark
 \cite{dwivedi2022lrgb} ($10{,}873/2{,}331/2{,}331$ grafos moleculares de entrenamiento/validación/prueba,
 mediana $138$ nodos; clasificación multietiqueta de grafos, métrica Average Precision).
@@ -190,18 +190,18 @@ disperso ($1$--$8\%$ de $n^2$ en el rango $3$), de modo que el método sigue sie
 En AP de prueba obtenemos GCN $0.484$, GAT $\mathbf{0.527}$ y Walk Attention
 $0.522$. \textbf{Walk Attention es competitivo con las líneas base fuertes pero no
 las supera aquí}: claramente supera a GCN y es estadísticamente indistinguible de
-GAT. Lo reportamos con franqueza. \emph{No} es por falta de caminos paralelos: los
-grafos de péptidos sí contienen anillos y ramificaciones, y una molécula típica
+GAT. El resultado no se explica por una ausencia de caminos paralelos: los
+grafos de péptidos contienen anillos y ramificaciones, y una molécula típica
 tiene cientos de pares de vértices unidos por $\ge 2$ caminos de longitud $\le 4$
-(que el ideal del cociente colapsaría). La razón es que el over-squashing es
+(que el ideal del cociente colapsaría). Más bien, el over-squashing es
 \emph{leve}: estos grafos son pequeños (mediana $138$ nodos), así que unas pocas
 capas de atención de un salto ya alcanzan suficientemente lejos, y la
-multiplicidad hacia cualquier nodo nunca crece lo bastante como para saturar el
+multiplicidad hacia cualquier nodo no crece lo bastante como para saturar el
 embedding. El soporte multi-salto, decisivo bajo over-squashing severo, aporta
-poco cuando la compresión es leve. La ventaja de Walk Attention es por tanto
+poco beneficio cuando la compresión es leve. La ventaja de Walk Attention es por tanto
 \emph{dependiente del régimen}---grande cuando la compresión es severa
-(Tablas~\ref{tab:main} y~\ref{tab:ring}) y un empate cuando es leve---y, con datos
-reales, el operador aún entrena de forma estable y barata; no se degrada.
+(Tablas~\ref{tab:main} y~\ref{tab:ring}), y comparable a la atención de un salto cuando es leve---mientras
+que, con datos reales, el operador sigue entrenando de forma estable y se mantiene computacionalmente barato.
 
 % ---------------------------------------------------------------------
 \subsection{Costo}
