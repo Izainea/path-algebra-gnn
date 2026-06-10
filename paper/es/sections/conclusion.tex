@@ -6,7 +6,7 @@ Introdujimos \textbf{Walk Attention}, una arquitectura que mitiga el
 over-squashing en redes neuronales de grafos atendiendo sobre un soporte
 multi-salto del álgebra de caminos del quiver subyacente. El álgebra graduada
 da, vía la Proposición~\ref{prop:count}, qué pares de nodos conectan caminos de
-longitud-$g$ y con qué multiplicidad; con ello definimos una atención dispersa
+longitud-$k$ y con qué multiplicidad; con ello definimos una atención dispersa
 de soporte algebraico y pesos aprendidos. Sobre un benchmark ajustable resolvió
 exactamente una recuperación de largo alcance ($1.000\pm0.000$ sobre cinco
 semillas) donde la atención de un salto colapsó al azar y un agregador
@@ -17,16 +17,24 @@ negativo mostró que comprimir caminos equivalentes con el \emph{cociente} es
 contraproducente cuando la multiplicidad porta señal: el papel del álgebra es
 determinar el soporte, no descartarla.
 
-La construcción es elemental y autocontenida, como puente entre la teoría de
+La construcción es elemental y autocontenida, un puente entre la teoría de
 representaciones de quivers y el aprendizaje de representaciones de grafos. Walk
-Attention es la lectura
-aprendida y representacional de un sustrato algebraico común
+Attention es la lectura aprendida de un sustrato algebraico común
 (Sección~\ref{sec:ground})---el álgebra de caminos graduada y su sistema de
 vecindades por grado de impacto---cuya lectura dinámica es el marco de autómatas de
-impacto sobre quivers \cite{zainea2026aiq}; relacionarlas es ya una dirección, y
-siguen varias más.
+impacto sobre quivers \cite{zainea2026aiq}. Siguen varias direcciones.
 
 \begin{itemize}
+  \item \textbf{De los pesos aprendidos a la dinámica.} El hermano dinámico
+  \cite{zainea2026aiq} fija \emph{a priori} la regla $\varphi$, ponderando la
+  influencia por grado de impacto; Walk Attention en cambio \emph{aprende} esos
+  pesos. Esto sugiere un puente en dos sentidos: los pesos aprendidos en una tarea
+  pueden inyectarse en un AIQ como regla de evolución guiada por datos, leyendo el
+  efecto \emph{dinámico} de cada peso---con qué fuerza una fuente, a un grado de
+  impacto dado, impulsa el estado de un nodo en el tiempo---y, recíprocamente,
+  dejando que los análisis de estabilidad y alcanzabilidad del AIQ acoten lo
+  aprendido. Cuantificar esta correspondencia es, para nosotros, la dirección más
+  prometedora.
   \item \textbf{Benchmarks con over-squashing severo.} Peptides-func es leve y el
   soporte multi-salto no es decisivo. El siguiente paso es buscar tareas reales de
   largo alcance con cuellos de botella agudos---donde la ventaja debería
@@ -43,6 +51,7 @@ siguen varias más.
 
 \subsubsection*{Reproducibilidad.}
 Liberamos los generadores de grafos, los operadores de walk, la capa Walk
-Attention, las líneas base y los registros de experimentos. Los cálculos del
-álgebra usan una biblioteca abierta de quivers/álgebras de caminos; al ser su
-primera aplicación publicada a GNNs, mantuvimos la construcción explícita.
+Attention, las líneas base y los registros de experimentos
+\cite{repo_walkattention}. Los cálculos del álgebra usan la biblioteca abierta
+\texttt{aiq-quivers} \cite{repo_aiqquivers}; al ser su primera aplicación
+publicada a GNNs, mantuvimos la construcción explícita.

@@ -6,7 +6,7 @@ We introduced \textbf{Walk Attention}, an architecture that mitigates
 over-squashing in graph neural networks by attending over a multi-hop support
 supplied by the path algebra of the underlying quiver. The graded path algebra
 gives, through Proposition~\ref{prop:count}, an exact account of which node pairs
-are connected by length-$g$ walks and with what multiplicity; we use this to
+are connected by length-$k$ walks and with what multiplicity; we use this to
 define a sparse attention whose support is algebraically determined and whose
 weights are learned. On a tunable bottleneck benchmark, Walk Attention solved a
 long-range retrieval task exactly ($1.000\pm0.000$ over five seeds) where a
@@ -28,6 +28,17 @@ the automata-of-impact-over-quivers framework \cite{zainea2026aiq}; relating the
 two is itself a direction. Several others follow naturally.
 
 \begin{itemize}
+  \item \textbf{From learned weights to dynamics.} The dynamical sibling
+  \cite{zainea2026aiq} fixes the node-update rule $\varphi$ \emph{a priori},
+  weighting influence by impact degree; Walk Attention instead \emph{learns}
+  those weights. This suggests a two-way bridge: the attention weights learned on
+  a task can be injected into an AIQ as a data-driven evolution rule, letting one
+  read off the \emph{dynamical} effect of each weight---how strongly a given
+  source, at a given impact degree, drives the state of a node over time---and,
+  conversely, letting AIQ stability and reachability analyses interpret and
+  constrain what Walk Attention has learned. Quantifying this correspondence
+  between learned attention and impact-weighted dynamics is, to us, the most
+  promising direction.
   \item \textbf{Benchmarks with severe over-squashing.} Peptides-func is a mild
   case where the multi-hop support is not decisive. Identifying real long-range
   tasks whose graphs do contain acute bottlenecks---where the synthetic advantage
@@ -47,8 +58,9 @@ two is itself a direction. Several others follow naturally.
 
 \subsubsection*{Reproducibility.}
 All graph generators, the path-algebra walk operators, the Walk Attention layer,
-the baselines, and the experiment-tracking logs are released. The path-algebra
-computations build on an open-source quiver/path-algebra library; the present
-work is, to our knowledge, the first published application of that algebraic
-machinery to graph neural networks, and we have therefore kept the algebraic
-construction explicit throughout.
+the baselines, and the experiment-tracking logs are released
+\cite{repo_walkattention}. The path-algebra computations build on the open-source
+\texttt{aiq-quivers} library \cite{repo_aiqquivers}; the present work is, to our
+knowledge, the first published application of that algebraic machinery to graph
+neural networks, and we have therefore kept the algebraic construction explicit
+throughout.
