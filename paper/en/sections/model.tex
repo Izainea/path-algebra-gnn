@@ -10,13 +10,15 @@ the features of the nodes that reach it. Transformer self-attention
 \emph{learned} weights; graph attention \cite{velickovic2017graph} restricts the
 support to one hop. Walk Attention keeps the learned weights of attention and
 takes the support from the path algebra: the multi-hop, sparse walk-reachability
-$\mathcal{S}_g$.
+$\mathcal{S}_k$. In the terms of Section~\ref{sec:ground}, it is the learned node
+update $\varphi$ of the common substrate---a graded representation of $Q$ whose
+arrow maps are optimised over the fundamental neighbourhood system.
 
 % ---------------------------------------------------------------------
 \subsection{The Walk Attention layer}
 % ---------------------------------------------------------------------
 
-Fix a range $g$ with reachability support $\mathcal{S}_g$
+Fix a range $k$ with reachability support $\mathcal{S}_k$
 (Definition~\ref{def:walkop}). A Walk Attention layer with $H$ heads and head
 dimension $C$ transforms node features $x\in\RR^{n\times d_{\text{in}}}$ as
 follows. For each head $h$ it computes queries, keys and values by linear maps,
@@ -25,22 +27,22 @@ follows. For each head $h$ it computes queries, keys and values by linear maps,
   \qquad W^h_\bullet\in\RR^{d_{\text{in}}\times C},
 \]
 and then attends \emph{only over the reachable pairs}: for every
-$(j,i)\in\mathcal{S}_g$,
+$(j,i)\in\mathcal{S}_k$,
 \begin{align}
   \ell^h_{ji} &= \frac{1}{\sqrt{C}}\,\langle Q^h_j,\,K^h_i\rangle, \label{eq:logit}\\
-  \alpha^h_{ji} &= \softmax_{\,i:\,(j,i)\in\mathcal{S}_g}\bigl(\ell^h_{ji}\bigr),
+  \alpha^h_{ji} &= \softmax_{\,i:\,(j,i)\in\mathcal{S}_k}\bigl(\ell^h_{ji}\bigr),
     \label{eq:softmax}\\
-  z^h_j &= \sum_{i:\,(j,i)\in\mathcal{S}_g}\alpha^h_{ji}\,V^h_i. \label{eq:agg}
+  z^h_j &= \sum_{i:\,(j,i)\in\mathcal{S}_k}\alpha^h_{ji}\,V^h_i. \label{eq:agg}
 \end{align}
 The softmax in \eqref{eq:softmax} is taken, for each target $j$, over exactly the
-sources $i$ that reach $j$ by a length-$g$ walk---a \emph{segmented} softmax over
+sources $i$ that reach $j$ by a length-$k$ walk---a \emph{segmented} softmax over
 the support, never over all $n$ nodes. The head outputs are concatenated (or
 averaged in the final layer) and a residual ``root'' term is added:
 \[
-  \mathrm{WA}_g(x)_j \;=\; \bigl\Vert_{h=1}^{H} z^h_j \;+\; x_j W_{\!\text{root}}.
+  \mathrm{WA}_k(x)_j \;=\; \bigl\Vert_{h=1}^{H} z^h_j \;+\; x_j W_{\!\text{root}}.
 \]
 Because \eqref{eq:logit}--\eqref{eq:agg} only ever touch the pairs in
-$\mathcal{S}_g$, the layer costs $O(|\mathcal{S}_g|\,H\,C)$ time and memory, not
+$\mathcal{S}_k$, the layer costs $O(|\mathcal{S}_k|\,H\,C)$ time and memory, not
 $O(n^2)$. The support is precomputed once per graph from
 Proposition~\ref{prop:count} (the nonzero pattern of $\Adj^{\,g}$).
 Figure~\ref{fig:layer} summarises the data flow.
@@ -58,12 +60,12 @@ Figure~\ref{fig:layer} summarises the data flow.
   \node[box,below=2mm of q] (k) {$K=xW_K$};
   \node[box,below=2mm of k] (v) {$V=xW_V$};
   \node[alg,right=10mm of k] (att)
-    {$\displaystyle \alpha_{ji}=\softmax_{i:(j,i)\in\mathcal{S}_g}\!\frac{\langle Q_j,K_i\rangle}{\sqrt C}$};
+    {$\displaystyle \alpha_{ji}=\softmax_{i:(j,i)\in\mathcal{S}_k}\!\frac{\langle Q_j,K_i\rangle}{\sqrt C}$};
   \node[box,right=10mm of att] (agg) {$z_j=\sum_i \alpha_{ji}V_i$};
-  \node[box,right=8mm of agg] (out) {$\mathrm{WA}_g(x)$};
+  \node[box,right=8mm of agg] (out) {$\mathrm{WA}_k(x)$};
   % support callout
   \node[alg,below=8mm of att,fill=green!10] (supp)
-    {support $\mathcal{S}_g=\{(j,i):(\Adj^{\,g})_{ij}>0\}$};
+    {support $\mathcal{S}_k=\{(j,i):(\Adj^{\,g})_{ij}>0\}$};
   \draw[->] (x) -- (q.west);
   \draw[->] (x) |- (k.west);
   \draw[->] (x) |- (v.west);
@@ -77,19 +79,19 @@ Figure~\ref{fig:layer} summarises the data flow.
   \draw[->,rounded corners] (x.north) -- ++(0,6mm) -| (out.north)
     node[pos=0.25,above,lbl] {root (residual)};
 \end{tikzpicture}
-\caption{One Walk Attention layer at range $g$. Queries, keys and values are
+\caption{One Walk Attention layer at range $k$. Queries, keys and values are
 linear maps of the node features; attention is computed \emph{only} over the
-walk-reachable pairs $\mathcal{S}_g$ supplied by the path algebra (the nonzero
+walk-reachable pairs $\mathcal{S}_k$ supplied by the path algebra (the nonzero
 pattern of $\Adj^{\,g}$), then aggregated and added to a residual root term. The
-green support box is what distinguishes Walk Attention from dense ($\mathcal{S}_g
-=$ all pairs) and one-hop ($\mathcal{S}_g = $ edges) attention.}
+green support box is what distinguishes Walk Attention from dense ($\mathcal{S}_k
+=$ all pairs) and one-hop ($\mathcal{S}_k = $ edges) attention.}
 \label{fig:layer}
 \end{figure}
 
 \begin{remark}[Why learned weights matter]
-The fixed-weight operator $W^{(g)}$ of Definition~\ref{def:walkop} is the special
-case in which $\alpha^h_{ji}$ is replaced by the constant $n_g(i,j)/Z_g$.
-It reaches every range-$g$ source but weights them by multiplicity alone, so it
+The fixed-weight operator $W^{(k)}$ of Definition~\ref{def:walkop} is the special
+case in which $\alpha^h_{ji}$ is replaced by the constant $n_k(i,j)/Z_k$.
+It reaches every range-$k$ source but weights them by multiplicity alone, so it
 cannot \emph{select} which source carries the relevant signal. The learned
 attention \eqref{eq:logit}--\eqref{eq:softmax} restores this selectivity while
 keeping the same multi-hop support. Section~\ref{sec:exp} shows this distinction
@@ -101,13 +103,13 @@ is decisive.
 % ---------------------------------------------------------------------
 
 A depth-$L$ Walk Attention network stacks one layer per range
-$g=1,\dots,L$. Layer $g$ uses the support $\mathcal{S}_g$ derived from
-$\Adj^{\,g}$, so successive layers read from progressively longer walks. Each
+$k=1,\dots,L$. Layer $k$ uses the support $\mathcal{S}_k$ derived from
+$\Adj^{\,k}$, so successive layers read from progressively longer walks. Each
 layer is followed by layer normalisation, an \textsc{elu} nonlinearity and
 dropout; a final multilayer perceptron maps the node embedding to task outputs:
 \[
-  x^{(g)} \;=\; \mathrm{dropout}\Bigl(\mathrm{elu}\bigl(\mathrm{LN}\bigl(
-  \mathrm{WA}_g\bigl(x^{(g-1)}\bigr)\bigr)\bigr)\Bigr),\qquad
+  x^{(k)} \;=\; \mathrm{dropout}\Bigl(\mathrm{elu}\bigl(\mathrm{LN}\bigl(
+  \mathrm{WA}_k\bigl(x^{(k-1)}\bigr)\bigr)\bigr)\Bigr),\qquad
   \hat y \;=\; \mathrm{MLP}\bigl(x^{(L)}\bigr).
 \]
 Layer normalisation is important in practice: without it the learned attention is
@@ -117,15 +119,15 @@ clipping, training converges reliably (Section~\ref{sec:exp}).
 Algorithm~\ref{alg:wa} summarises one layer.
 
 \begin{algorithm}[t]
-\caption{Walk Attention layer at range $g$ (sparse).}\label{alg:wa}
+\caption{Walk Attention layer at range $k$ (sparse).}\label{alg:wa}
 \begin{algorithmic}[1]
 \Require features $x\in\RR^{n\times d_{\text{in}}}$; support
-  $\mathcal{S}_g=\{(j,i):(\Adj^{\,g})_{ij}>0\}$
+  $\mathcal{S}_k=\{(j,i):(\Adj^{\,g})_{ij}>0\}$
 \State $Q,K,V \gets xW_Q,\,xW_K,\,xW_V$ \Comment{per head; shapes $n\times HC$}
-\For{each $(j,i)\in\mathcal{S}_g$ and head $h$}
+\For{each $(j,i)\in\mathcal{S}_k$ and head $h$}
   \State $\ell^h_{ji}\gets \langle Q^h_j,K^h_i\rangle/\sqrt{C}$
 \EndFor
-\State $\alpha^h_{ji}\gets$ segmented-$\softmax$ over $\{i:(j,i)\in\mathcal{S}_g\}$
+\State $\alpha^h_{ji}\gets$ segmented-$\softmax$ over $\{i:(j,i)\in\mathcal{S}_k\}$
 \State $z^h_j\gets \sum_i \alpha^h_{ji}V^h_i$
   \Comment{scatter-add into targets}
 \State \Return $\bigl\Vert_h z^h \;+\; xW_{\!\text{root}}$
@@ -158,9 +160,9 @@ structure-aware support \emph{and} learned, selective weights.
 \midrule
 GCN / message passing       & 1-hop      & fixed (degree) & $O(|Q_1|)$ \\
 Graph attention (GAT)       & 1-hop      & learned        & $O(|Q_1|)$ \\
-Walk operator $W^{(g)}$     & walk-reachable & fixed (multiplicity) & $O(|\mathcal{S}_g|)$ \\
+Walk operator $W^{(k)}$     & walk-reachable & fixed (multiplicity) & $O(|\mathcal{S}_k|)$ \\
 Graph Transformer           & all pairs  & learned        & $O(n^2)$ \\
-\textbf{Walk Attention (ours)} & \textbf{walk-reachable} & \textbf{learned} & $O(|\mathcal{S}_g|)$ \\
+\textbf{Walk Attention (ours)} & \textbf{walk-reachable} & \textbf{learned} & $O(|\mathcal{S}_k|)$ \\
 \bottomrule
 \end{tabular}
 \end{table}

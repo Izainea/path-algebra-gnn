@@ -49,7 +49,7 @@ over-squashing a trav\'es del \emph{\'algebra de caminos} $\kQ$ del grafo dirigi
 caminos dirigidos de una longitud dada entre dos v\'ertices, dando una
 descripci\'on exacta y algebraica de la alcanzabilidad multi-salto. Usamos esta
 estructura para definir una atenci\'on dispersa y multi-salto: un nodo atiende
-directamente a todo v\'ertice alcanzable por un camino de longitud~$g$, donde el
+directamente a todo v\'ertice alcanzable por un camino de longitud~$k$, donde el
 \'algebra provee el \emph{soporte} de la atenci\'on y la red aprende los
 \emph{pesos}. Damos una construcci\'on autocontenida de los quivers, sus \'algebras
 de caminos y los operadores de walk, relacion\'andolos con el paso de mensajes y la
@@ -65,10 +65,12 @@ comparable a la atenci\'on de un salto cuando es leve. Adem\'as, reportamos un r
 dise\~no: usar el \emph{cociente} del \'algebra para \emph{colapsar} caminos
 equivalentes descarta la multiplicidad que la tarea necesita y falla. El \'algebra
 de caminos es valiosa no como un cociente que comprime informaci\'on, sino como el
-objeto que \emph{define el soporte de la atenci\'on}.
+objeto que \emph{define el soporte de la atenci\'on}. Conceptualmente, Walk
+Attention es la lectura aprendida y representacional de un sustrato algebraico
+cuya lectura din\'amica es el marco de aut\'omatas de impacto.
 
 \keywords{Redes neuronales de grafos \and Over-squashing \and \'Algebra de caminos
-\and Quiver \and Atenci\'on \and Paso de mensajes.}
+\and Quiver \and Teor\'ia de representaciones \and Atenci\'on.}
 \end{abstract}
 
 % =====================================================================
@@ -82,7 +84,7 @@ capas, la informaci\'on de nodos a $k$ saltos de distancia alcanza un nodo
 objetivo. Aunque simple y efectivo, este esquema tiene un modo de fallo bien
 documentado: el \emph{over-squashing} \cite{alon2021bottleneck}. Cuando el n\'umero
 de caminos que llevan informaci\'on hacia un nodo crece---t\'ipicamente de forma
-exponencial con la distancia---los mensajes a lo largo de todos esos caminos deben
+exponencial con la distancia---los mensajes a lo largo de todos ellos deben
 comprimirse en un \'unico vector de ancho fijo. El nodo receptor no puede recuperarlos
 individualmente, y la se\~nal de largo alcance se pierde. El over-squashing es el obst\'aculo
 principal para aprender tareas cuyas etiquetas dependen de informaci\'on distante o
@@ -91,9 +93,9 @@ distribuida globalmente.
 Los remedios existentes act\'uan sobre el grafo o sobre la agregaci\'on: el
 \emph{rewiring} a\~nade o repondera aristas para ensanchar los cuellos de botella
 \cite{topping2022understanding}, el \emph{coarsening} y el \emph{pooling} de grafos
-reducen el grafo intentando preservar su estructura, y los an\'alisis basados en
+lo reducen preservando su estructura, y los an\'alisis basados en
 curvatura explican \emph{d\'onde} ocurre el squashing \cite{digiovanni2023oversquashing}.
-Una l\'inea de trabajo complementaria reemplaza la agregaci\'on local por
+Una l\'inea complementaria reemplaza la agregaci\'on local por
 \emph{atenci\'on} global como en los Transformers \cite{vaswani2017attention}, al
 costo de una interacci\'on de todos-contra-todos que ignora la estructura del
 grafo.
@@ -103,30 +105,36 @@ representaciones de quivers. Un \emph{quiver} es un grafo dirigido, posiblemente
 con flechas m\'ultiples \cite{schiffler2014quiver,assem2006elements}, y su
 \emph{\'algebra de caminos} $\kQ$ tiene como base los caminos dirigidos del quiver,
 con la concatenaci\'on como multiplicaci\'on. La pieza graduada
-$e_i \cdot \kQ_g \cdot e_j$ de esta \'algebra tiene como base los caminos dirigidos
-de longitud~$g$ del v\'ertice~$i$ al v\'ertice~$j$; su dimensi\'on es igual a
-$(\Adj^g)_{ij}$, la entrada correspondiente de la $g$-\'esima potencia de la matriz
+$e_i \cdot \kQ_k \cdot e_j$ de esta \'algebra tiene como base los caminos dirigidos
+de longitud~$k$ del v\'ertice~$i$ al v\'ertice~$j$; su dimensi\'on es igual a
+$(\Adj^k)_{ij}$, la entrada correspondiente de la $k$-\'esima potencia de la matriz
 de adyacencia. El \'algebra de caminos provee, por tanto, una \emph{descripci\'on
 exacta y algebraica de la alcanzabilidad y la multiplicidad multi-salto}.
 
 Nuestra observaci\'on central es que esta estructura algebraica es precisamente lo
 que se necesita para definir una atenci\'on dispersa y multi-salto con fundamento.
 Dejamos que cada nodo atienda directamente a todo v\'ertice alcanzable desde \'el
-por un camino de longitud~$g$: el \'algebra de caminos provee el \emph{soporte} de
-la atenci\'on (qu\'e pares pueden interactuar a rango~$g$), y la red aprende los
+por un camino de longitud~$k$: el \'algebra de caminos provee el \emph{soporte} de
+la atenci\'on (qu\'e pares pueden interactuar a rango~$k$), y la red aprende los
 \emph{pesos} (cu\'anto). Dado que el soporte de alcanzabilidad por walks es
 disperso---t\'ipicamente una peque\~na fracci\'on de todos los pares de nodos---esto
 es mucho m\'as barato que la auto-atenci\'on completa, sin dejar de actuar a
 distancia y as\'i evitando el cuello de botella iterativo que causa el
 over-squashing. Llamamos a la arquitectura resultante \textbf{Walk Attention}.
 
+Esto sit\'ua a Walk Attention sobre un suelo algebraico com\'un
+(Secci\'on~\ref{sec:ground}): como una red de grafos sobre $Q$ es una
+representaci\'on del quiver ($\mathrm{Rep}(Q)\cong\kQ\text{-}\mathrm{Mod}$), es la
+lectura \emph{aprendida} de un sustrato cuya lectura \emph{din\'amica} es el marco
+de aut\'omatas de impacto sobre quivers \cite{zainea2026aiq}.
+
 \paragraph{Contribuciones.}
 \begin{enumerate}
   \item Damos una construcci\'on \emph{autocontenida} (Secci\'on~\ref{sec:algebra})
-  de los quivers, las \'algebras de caminos, las componentes graduadas y los
-  \emph{operadores de walk} asociados, dirigida a una audiencia de reconocimiento
-  de patrones e independiente de cualquier exposici\'on previa a la teor\'ia de
-  representaciones.
+  de los quivers, las \'algebras de caminos, las componentes graduadas, el sistema
+  de vecindades por grado de impacto y los \emph{operadores de walk} asociados,
+  desarrollando desde los primeros principios la teor\'ia de representaciones
+  necesaria para una audiencia de reconocimiento de patrones.
   \item Definimos \textbf{Walk Attention} (Secci\'on~\ref{sec:model}): una
   atenci\'on multi-salto aprendida cuyo soporte es la estructura de alcanzabilidad
   por walks del \'algebra de caminos, y la relacionamos con el paso de mensajes y
@@ -152,11 +160,11 @@ over-squashing. Llamamos a la arquitectura resultante \textbf{Walk Attention}.
 Alon y Yahav \cite{alon2021bottleneck} identificaron el over-squashing y
 propusieron la prueba \textsc{NeighborsMatch}, en la que las GNN est\'andar se
 degradan abruptamente con el radio del problema. Topping et al.\
-\cite{topping2022understanding} conectaron el over-squashing con la curvatura
+\cite{topping2022understanding} lo conectaron con la curvatura
 negativa del grafo y propusieron el rewiring por flujo de Ricci discreto
 estoc\'astico (SDRF); Di Giovanni et al.\ \cite{digiovanni2023oversquashing} dieron
 un an\'alisis de sensibilidad que relaciona el squashing con el ancho, la
-profundidad y la topolog\'ia. Estos trabajos o bien modifican el grafo o bien
+profundidad y la topolog\'ia. Estos trabajos modifican el grafo o
 caracterizan el fen\'omeno. Nosotros, en cambio, cambiamos el operador de
 agregaci\'on, atendiendo a distancia sobre un soporte definido algebraicamente.
 
@@ -166,8 +174,8 @@ atenci\'on de un salto; los graph Transformers completos aplican la auto-atenci\
 de los Transformers \cite{vaswani2017attention} sobre todos los pares de nodos,
 recuperando el largo alcance a costo cuadr\'atico y con codificaciones
 posicionales/estructurales para reinyectar la topolog\'ia. Walk Attention es
-intermedia entre las dos: es atenci\'on, pero su soporte es la alcanzabilidad dispersa
-multi-salto por walks del quiver, en lugar de un salto o de todos los pares.
+intermedia: es atenci\'on, pero su soporte es la alcanzabilidad dispersa
+multi-salto por walks del quiver, no un salto ni todos los pares.
 
 \paragraph{Estructura de caminos y walks.}
 El conteo de caminos y las potencias de la matriz de adyacencia son cl\'asicos, y
@@ -175,7 +183,11 @@ el \'algebra de caminos de un quiver es est\'andar en la teor\'ia de
 representaciones \cite{schiffler2014quiver,assem2006elements}. Las \'algebras de
 configuraci\'on de Brauer y construcciones afines se han aplicado recientemente a
 problemas combinatorios y aplicados por Moreno Ca\~nadas y colaboradores
-\cite{moreno2021brauer,moreno2024integer}. Hasta donde sabemos, usar el \'algebra
+\cite{moreno2021brauer,moreno2024integer}. Lo m\'as cercano al presente trabajo es
+el sistema de vecindades por grado de impacto y el marco de aut\'omatas de impacto
+sobre quivers \cite{zainea2026aiq,ibanez2025casimulations}, que tomamos como el
+hermano din\'amico de Walk Attention sobre el mismo sustrato algebraico
+(Secci\'on~\ref{sec:ground}). Hasta donde sabemos, usar el \'algebra
 de caminos graduada para definir el \emph{soporte} de una atenci\'on de grafos
 multi-salto aprendida es nuevo.
 

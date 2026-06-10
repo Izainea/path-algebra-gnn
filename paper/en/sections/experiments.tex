@@ -38,7 +38,7 @@ chance level is $1/K$.
   \item \textbf{GAT} \cite{velickovic2017graph}: one-hop graph attention, $d{+}1$
   layers (learned weights, one-hop support);
   \item \textbf{Walk operator} (\texttt{walkraw}): the fixed-weight multi-hop
-  operator $W^{(g)}$ of Definition~\ref{def:walkop} (multi-hop support, fixed
+  operator $W^{(k)}$ of Definition~\ref{def:walkop} (multi-hop support, fixed
   multiplicity weights);
   \item \textbf{Walk Attention} (ours): Algorithm~\ref{alg:wa} (multi-hop
   support, learned weights).
@@ -134,8 +134,8 @@ GAT                    & $1.00$ & $1.00$ & $0.43$ & $0.60$ \\
 % ---------------------------------------------------------------------
 
 The path-algebra quotient $\kQ/I$ of Section~\ref{sec:algebra} suggests an
-alternative remedy: replace the walk multiplicities $n_g(i,j)$ by the smaller
-quotient dimensions $\dim(e_j(\kQ/I)_g e_i)$, de-duplicating equivalent walks
+alternative remedy: replace the walk multiplicities $n_k(i,j)$ by the smaller
+quotient dimensions $\dim(e_j(\kQ/I)_k e_i)$, de-duplicating equivalent walks
 before aggregation. We implemented this (the fixed-weight operator built from the
 quotient dimensions) and compared it to the unquotiented walk operator on the
 same task, in a separate controlled ablation that changes \emph{only} the
@@ -182,7 +182,7 @@ evaluate on \textbf{Peptides-func} from the Long Range Graph Benchmark
 \cite{dwivedi2022lrgb} ($10{,}873/2{,}331/2{,}331$ train/val/test molecular
 graphs, median $138$ nodes; multi-label graph classification, metric Average
 Precision). We use the same atom embedding, four layers, hidden width $80$, mean
-pooling and AdamW for every model; Walk Attention uses ranges $g=1,\dots,4$ with
+pooling and AdamW for every model; Walk Attention uses ranges $k=1,\dots,4$ with
 the walk-reachability support of each molecule. On these graphs the support stays
 sparse ($1$--$8\%$ of $n^2$ at range $3$), so the method remains cheap.
 
@@ -224,7 +224,7 @@ Walk Attention (ours)        & $0.522$ \\
 % ---------------------------------------------------------------------
 
 Walk Attention operates on the walk-reachability support, whose size is the
-number of nonzero entries of $\Adj^{\,g}$. On the bottleneck family this is a
+number of nonzero entries of $\Adj^{\,k}$. On the bottleneck family this is a
 small fraction of $n^2$ (about $2\%$ at the deepest range), so the layer is far
 cheaper than a dense graph Transformer while retaining its long range. The
 supports are precomputed once per graph topology and cached, so the path-algebra

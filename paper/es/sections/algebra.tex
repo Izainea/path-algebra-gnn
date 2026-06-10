@@ -2,11 +2,12 @@
 \section{El álgebra de caminos de un quiver}\label{sec:algebra}
 % =====================================================================
 
-Esta sección es autocontenida. Construimos, desde los primeros principios, los
+Esta sección es autocontenida. Construimos desde los primeros principios los
 objetos algebraicos en los que se apoya el modelo de la Sección~\ref{sec:model}:
-quivers, caminos, el álgebra de caminos, su graduación por longitud, y los
-\emph{operadores de recorrido} que codifican la alcanzabilidad a múltiples saltos.
-No se asume ningún conocimiento previo de teoría de representaciones; las
+quivers, caminos, el álgebra de caminos, su graduación por longitud, el sistema de
+vecindades por grado de impacto, y los \emph{operadores de recorrido} que codifican
+la alcanzabilidad a múltiples saltos. Desarrollamos la
+teoría de representaciones necesaria sin asumir exposición previa; las
 referencias estándar son \cite{schiffler2014quiver,assem2006elements}.
 
 % ---------------------------------------------------------------------
@@ -21,26 +22,25 @@ $s(\alpha)$ y su \emph{objetivo} $t(\alpha)$. Escribimos $\alpha\colon i\to j$ c
 $s(\alpha)=i$ y $t(\alpha)=j$.
 \end{definition}
 
-Un quiver es, por tanto, un grafo dirigido en el que se permiten múltiples flechas
+Un quiver es, por tanto, un grafo dirigido que permite múltiples flechas
 entre el mismo par ordenado de vértices (un \emph{multigrafo}). Para el
-reconocimiento de patrones esto es exactamente el dato de una estructura relacional
-dirigida: los vértices son entidades y las flechas son relaciones dirigidas, con las
+reconocimiento de patrones es el dato de una estructura relacional
+dirigida: los vértices son entidades y las flechas relaciones dirigidas, con las
 flechas paralelas registrando la multiplicidad. Escribimos $n=|Q_0|$ e identificamos
 $Q_0$ con $\{1,\dots,n\}$.
 
 \begin{definition}[Camino]
-Un \emph{camino de longitud} $g\ge 1$ en $Q$ es una sucesión de flechas
-$p=\alpha_g\cdots\alpha_2\alpha_1$ tal que $t(\alpha_r)=s(\alpha_{r+1})$ para
-$1\le r<g$; es decir, las flechas se componen cabeza con cola. Su fuente es
-$s(p)=s(\alpha_1)$ y su objetivo es $t(p)=t(\alpha_g)$. Para cada vértice $i$
+Un \emph{camino de longitud} $k\ge 1$ en $Q$ es una sucesión de flechas
+$p=\alpha_k\cdots\alpha_2\alpha_1$ tal que $t(\alpha_r)=s(\alpha_{r+1})$ para
+$1\le r<k$; es decir, las flechas se componen cabeza con cola. Su fuente es
+$s(p)=s(\alpha_1)$ y su objetivo es $t(p)=t(\alpha_k)$. Para cada vértice $i$
 admitimos además un \emph{camino trivial} $e_i$ de longitud $0$ con $s(e_i)=t(e_i)=i$.
 \end{definition}
 
 Leemos los caminos de derecha a izquierda, como en la composición de funciones. Un
-camino es un \emph{recorrido} dirigido: los vértices y las flechas pueden repetirse.
+camino es un \emph{recorrido} dirigido: vértices y flechas pueden repetirse.
 El número de recorridos distintos de una longitud dada entre dos vértices es la
-cantidad que impulsa el over-squashing, y el álgebra de caminos lo hace
-algebraicamente explícito.
+cantidad que impulsa el over-squashing, y el álgebra de caminos lo hace explícito.
 
 % ---------------------------------------------------------------------
 \subsection{El álgebra de caminos y su graduación}
@@ -64,50 +64,82 @@ $e_ie_j=\delta_{ij}e_i$, de modo que $\{e_i\}_{i\in Q_0}$ es un conjunto complet
 idempotentes ortogonales y $1=\sum_{i}e_i$ es la unidad.
 \end{definition}
 
-La multiplicación respeta la longitud de los caminos: concatenar un camino de longitud $g$ con
-uno de longitud $h$ produce un camino de longitud $g+h$ (o cero). Por tanto $\kQ$ es un
+La multiplicación respeta la longitud: concatenar un camino de longitud $k$ con
+uno de longitud $\ell$ da un camino de longitud $k+\ell$ (o cero). Por tanto $\kQ$ es un
 álgebra \emph{graduada},
 \[
-  \kQ \;=\; \bigoplus_{g\ge 0}\kQ_g,
-  \qquad \kQ_g\cdot \kQ_h \subseteq \kQ_{g+h},
+  \kQ \;=\; \bigoplus_{k\ge 0}\kQ_k,
+  \qquad \kQ_k\cdot \kQ_\ell \subseteq \kQ_{k+\ell},
 \]
-donde $\kQ_g$ es el subespacio generado por los caminos de longitud exactamente $g$. En
+donde $\kQ_k$ es el subespacio generado por los caminos de longitud exactamente $k$. En
 particular $\kQ_0=\bigoplus_i \kk e_i$ y $\kQ_1$ está generado por las flechas.
 
-Los idempotentes $e_i$ nos permiten aislar los caminos entre un par fijo de vértices.
-Para $i,j\in Q_0$ y $g\ge 0$, el subespacio
+Los idempotentes $e_i$ permiten aislar los caminos entre un par fijo de vértices.
+Para $i,j\in Q_0$ y $k\ge 0$, el subespacio
 \[
-  e_j\cdot \kQ_g\cdot e_i \;\subseteq\; \kQ
+  e_j\cdot \kQ_k\cdot e_i \;\subseteq\; \kQ
 \]
-está generado exactamente por los caminos de longitud $g$ de $i$ a $j$. Su dimensión es
-por tanto el \emph{número de recorridos dirigidos} de longitud $g$ de $i$ a $j$. La
-siguiente proposición elemental enuncia la correspondencia con el álgebra lineal
-con precisión; subyace al cómputo del modelo.
+está generado exactamente por los caminos de longitud $k$ de $i$ a $j$, y su dimensión es
+por tanto el \emph{número de recorridos dirigidos} de longitud $k$ de $i$ a $j$. La
+siguiente proposición elemental precisa esta correspondencia con el álgebra lineal;
+subyace al cómputo del modelo.
 
 \begin{proposition}[La multiplicidad graduada es igual al conteo de recorridos]\label{prop:count}
 Sea $\Adj\in\NN^{n\times n}$ la matriz de adyacencia de $Q$, $\Adj_{ij}=\#\{\alpha
-\in Q_1: \alpha\colon i\to j\}$. Entonces para todo $g\ge 0$ y todo $i,j\in Q_0$,
+\in Q_1: \alpha\colon i\to j\}$. Entonces para todo $k\ge 0$ y todo $i,j\in Q_0$,
 \[
-  \dim_{\kk}\bigl(e_j\cdot \kQ_g\cdot e_i\bigr)
-  \;=\; (\Adj^{\,g})_{ij}.
+  \dim_{\kk}\bigl(e_j\cdot \kQ_k\cdot e_i\bigr)
+  \;=\; (\Adj^{\,k})_{ij}.
 \]
 \end{proposition}
 
 \begin{proof}
-Por inducción sobre $g$. Para $g=0$, $e_j\kQ_0 e_i=\delta_{ij}\,\kk e_i$, de dimensión
-$\delta_{ij}=(\Adj^0)_{ij}=(\mathrm{Id})_{ij}$. Para $g=1$, una base de
+Por inducción sobre $k$. Para $k=0$, $e_j\kQ_0 e_i=\delta_{ij}\,\kk e_i$, de dimensión
+$\delta_{ij}=(\Adj^0)_{ij}=(\mathrm{Id})_{ij}$. Para $k=1$, una base de
 $e_j\kQ_1 e_i$ es el conjunto de flechas $i\to j$, de cardinalidad $\Adj_{ij}$.
-Supongamos la afirmación para $g-1$. Todo camino de longitud $g$ de $i$ a $j$ se factoriza
-de manera única como $\alpha\cdot p$, donde $p$ es un camino de longitud $g-1$ de $i$ a algún
+Supongamos la afirmación para $k-1$. Todo camino de longitud $k$ de $i$ a $j$ se factoriza
+de manera única como $\alpha\cdot p$, donde $p$ es un camino de longitud $k-1$ de $i$ a algún
 vértice intermedio $r$ y $\alpha\colon r\to j$ es una flecha. El número de tales
-factorizaciones es $\sum_{r}\Adj_{rj}\,(\Adj^{\,g-1})_{ir}=(\Adj^{\,g})_{ij}$,
+factorizaciones es $\sum_{r}\Adj_{rj}\,(\Adj^{\,k-1})_{ir}=(\Adj^{\,k})_{ij}$,
 lo que prueba la afirmación. \qed
 \end{proof}
 
-Llamamos al entero $n_g(i,j):=(\Adj^{\,g})_{ij}=\dim_\kk(e_j\kQ_g e_i)$ la
-\emph{multiplicidad de recorrido} de $i$ a $j$ a alcance $g$. Es exactamente el número
-de mensajes de longitud $g$ que un GNN de paso de mensajes fuerza a través del nodo $j$ desde
-el nodo $i$ tras $g$ capas, y por tanto la fuente del over-squashing.
+Llamamos al entero $n_k(i,j):=(\Adj^{\,k})_{ij}=\dim_\kk(e_j\kQ_k e_i)$ la
+\emph{multiplicidad de recorrido} de $i$ a $j$ a alcance $k$. Es el número
+de mensajes de longitud $k$ que un GNN de paso de mensajes fuerza hacia el nodo $j$ desde
+el nodo $i$ tras $k$ capas, y por tanto la fuente del over-squashing.
+
+% ---------------------------------------------------------------------
+\subsection{Grado de impacto y el sistema fundamental de vecindades}
+\label{sec:sfv}
+% ---------------------------------------------------------------------
+
+La graduación por longitud induce una estratificación canónica de los vértices
+alrededor de cada nodo, que organiza la estructura multi-salto que el modelo
+explotará. Para un quiver $Q$, el \emph{grado de impacto} $g(i,j)$ es la longitud
+del camino dirigido más corto de $i$ a $j$ (con $g(i,i)=0$ y $g(i,j)=\infty$ si no
+existe camino dirigido); equivalentemente, $g(i,j)=\min\{k: (\Adj^{\,k})_{ij}>0\}$,
+el primer alcance en el que la multiplicidad de recorrido se hace positiva.
+
+\begin{definition}[Sistema fundamental de vecindades]\label{def:sfv}
+Para un nodo $c\in Q_0$, su \emph{vecindad de entrada} de radio $k$ es
+\[
+  A_k(c) \;=\; \{\,i\in Q_0 : g(i,c)\le k\,\},
+\]
+el conjunto de nodos que pueden enviar influencia a $c$ por un camino dirigido de
+longitud a lo sumo $k$. La familia anidada $\{A_k(c)\}_{k\ge 0}$, con
+$A_0(c)=\{c\}\subseteq A_1(c)\subseteq\cdots$, es el \emph{sistema fundamental de
+vecindades} (SFV) de $c$, y la capa $\mathcal{N}_k(c)=A_k(c)\setminus A_{k-1}(c)$
+reúne los nodos a grado de impacto exactamente $k$.
+\end{definition}
+
+El SFV es el objeto combinatorio sobre el que actúan los operadores de recorrido:
+el soporte de alcance $k$, $\mathcal{S}_k$, de la Definición~\ref{def:walkop} es
+precisamente la relación $\{(c,i): i\in A_k(c)\setminus A_{k-1}(c)\}$, de modo que
+apilar los alcances $k=1,2,\dots$ recorre la incrustación hacia afuera a través de
+las capas del SFV. La multiplicidad $n_k(i,c)$ registra \emph{cuántos} caminos de
+longitud $k$ pueblan esa capa---el refinamiento algebraico y texturado del grado
+de impacto escalar.
 
 % ---------------------------------------------------------------------
 \subsection{Un ejemplo explícito}
@@ -123,10 +155,10 @@ cuadrado son
   \qquad
   \Adj^2=\begin{pmatrix}0&0&0&2\\0&0&0&0\\0&0&0&0\\0&0&0&0\end{pmatrix}.
 \]
-Hay dos recorridos de longitud $2$ de $1$ a $4$, a saber,
+Hay dos recorridos de longitud $2$ de $1$ a $4$,
 $\beta_1\alpha_1$ y $\beta_2\alpha_2$, de modo que
-$\dim(e_4\kQ_2 e_1)=(\Adj^2)_{14}=2$, en concordancia con la
-Proposición~\ref{prop:count}. Estos dos recorridos son \emph{paralelos}: misma fuente,
+$\dim(e_4\kQ_2 e_1)=(\Adj^2)_{14}=2$, conforme a la
+Proposición~\ref{prop:count}. Ambos son \emph{paralelos}: misma fuente,
 mismo objetivo, misma longitud. Si deben tratarse como un único canal o como dos es
 una decisión de modelado a la que volvemos en la Sección~\ref{sec:exp}.
 \end{example}
@@ -153,66 +185,89 @@ $1\walk 4$ son paralelos; $\dim(e_4\kQ_2 e_1)=2$.}
 \subsection{Operadores de recorrido}
 % ---------------------------------------------------------------------
 
-La Proposición~\ref{prop:count} nos permite convertir el álgebra de caminos graduada en una familia de
-operadores lineales sobre las características de los nodos, uno por cada alcance $g$. Estos \emph{operadores de recorrido}
+La Proposición~\ref{prop:count} convierte el álgebra de caminos graduada en una familia de
+operadores lineales sobre las características de los nodos, uno por alcance $k$. Estos \emph{operadores de recorrido}
 son el puente hacia el modelo neuronal.
 
 \begin{definition}[Operador de recorrido]\label{def:walkop}
-Para cada alcance $g\ge 1$ definimos la matriz $W^{(g)}\in\RR^{n\times n}$ mediante
+Para cada alcance $k\ge 1$ definimos la matriz $W^{(k)}\in\RR^{n\times n}$ mediante
 \[
-  W^{(g)}_{j i}\;=\;\frac{(\Adj^{\,g})_{ij}}{\,Z_g\,},
+  W^{(k)}_{j i}\;=\;\frac{(\Adj^{\,k})_{ij}}{\,Z_k\,},
 \]
-donde $Z_g=\max_{j}\sum_i (\Adj^{\,g})_{ij}$ es una única constante de normalización para
-el alcance. El \emph{soporte de alcanzabilidad por recorrido} a alcance $g$ es el conjunto de índices
+donde $Z_k=\max_{j}\sum_i (\Adj^{\,k})_{ij}$ es una única constante de normalización para
+el alcance. El \emph{soporte de alcanzabilidad por recorrido} a alcance $k$ es el conjunto de índices
 \[
-  \mathcal{S}_g \;=\; \bigl\{(j,i): (\Adj^{\,g})_{ij}>0\bigr\}
-  \;=\;\bigl\{(j,i): \dim(e_j\kQ_g e_i)>0\bigr\}.
+  \mathcal{S}_k \;=\; \bigl\{(j,i): (\Adj^{\,k})_{ij}>0\bigr\}
+  \;=\;\bigl\{(j,i): \dim(e_j\kQ_k e_i)>0\bigr\}.
 \]
 \end{definition}
 
-Actuando sobre una matriz de características $H\in\RR^{n\times d}$, el operador $W^{(g)}H$ envía a
-cada nodo $j$ una suma ponderada de las características de cada nodo $i$ que alcanza a $j$ mediante
-un recorrido de longitud $g$, siendo el peso proporcional a la multiplicidad de recorrido
-$n_g(i,j)$. Conviene subrayar dos hechos.
+Actuando sobre una matriz de características $H\in\RR^{n\times d}$, el operador $W^{(k)}H$ envía a
+cada nodo $j$ una suma ponderada de las características de cada nodo $i$ que lo alcanza por
+un recorrido de longitud $k$, con peso proporcional a la multiplicidad de recorrido
+$n_k(i,j)$. Subrayamos dos hechos.
 
-\emph{(i) Normalización global, no normalización por filas.} Dividimos por una única
-constante $Z_g$ por alcance en lugar de normalizar cada fila para que sume uno. La normalización
+\emph{(i) Normalización global, no por filas.} Dividimos por una única
+constante $Z_k$ por alcance en lugar de normalizar cada fila a uno. La normalización
 por filas mapearía las multiplicidades a una distribución uniforme sobre las
-fuentes alcanzables y borraría la propia información de multiplicidad que
-distingue a $W^{(g)}$ de una simple máscara de alcanzabilidad; la constante global mantiene
-las multiplicidades relativas intactas a la vez que acota la magnitud.
+fuentes alcanzables y borraría la información de multiplicidad que
+distingue a $W^{(k)}$ de una simple máscara de alcanzabilidad; la constante global mantiene
+intactas las multiplicidades relativas a la vez que acota la magnitud.
 
-\emph{(ii) Esparcidad.} El soporte $\mathcal{S}_g$ es exactamente el patrón de no nulos
-de $\Adj^{\,g}$. En los grafos estructurados de interés es una pequeña fracción de
-todos los $n^2$ pares (véase la Sección~\ref{sec:exp}), de modo que $W^{(g)}$ puede almacenarse y
-aplicarse en $O(|\mathcal{S}_g|)$ en lugar de $O(n^2)$.
+\emph{(ii) Esparcidad.} El soporte $\mathcal{S}_k$ es exactamente el patrón de no nulos
+de $\Adj^{\,k}$. En los grafos estructurados de interés es una pequeña fracción de
+los $n^2$ pares (véase la Sección~\ref{sec:exp}), por lo que $W^{(k)}$ puede almacenarse y
+aplicarse en $O(|\mathcal{S}_k|)$ en lugar de $O(n^2)$.
 
-El operador de pesos fijos $W^{(g)}$ ya mitiga el over-squashing, porque
-permite que el nodo $j$ lea de las fuentes a alcance $g$ \emph{directamente}, en un solo paso, en lugar
-de forzar la señal a través de $g$ rondas de paso de mensajes local. Su
+El operador de pesos fijos $W^{(k)}$ ya mitiga el over-squashing, pues
+permite que el nodo $j$ lea las fuentes a alcance $k$ \emph{directamente}, en un solo paso, sin
+forzar la señal a través de $k$ rondas de paso de mensajes local. Su
 limitación---que motiva la Walk Attention---es que los pesos están fijados por
-la multiplicidad y no pueden \emph{seleccionar} qué fuente alcanzable importa. Abordamos
-esto en la Sección~\ref{sec:model} aprendiendo los pesos sobre el mismo soporte.
+la multiplicidad y no pueden \emph{seleccionar} qué fuente alcanzable importa. Lo abordamos
+en la Sección~\ref{sec:model} aprendiendo los pesos sobre el mismo soporte.
 
 % ---------------------------------------------------------------------
 \subsection{El álgebra cociente}
 % ---------------------------------------------------------------------
 
 La teoría de representaciones pasa habitualmente de $\kQ$ a un cociente $\kQ/I$ por un
-\emph{ideal admisible} $I$, identificando caminos que se declaran iguales. En el
+\emph{ideal admisible} $I$, identificando caminos declarados iguales. En el
 diamante del Ejemplo~\ref{ex:diamond}, la relación $\beta_1\alpha_1\equiv
-\beta_2\alpha_2$ genera un ideal $I$ para el cual
+\beta_2\alpha_2$ genera un ideal $I$ con
 $\dim\bigl(e_4(\kQ/I)_2 e_1\bigr)=1$: los dos recorridos paralelos colapsan a una única
-clase. Más en general, $\dim\bigl(e_j(\kQ/I)_g e_i\bigr)\le n_g(i,j)$, de modo que el
+clase. En general, $\dim\bigl(e_j(\kQ/I)_k e_i\bigr)\le n_k(i,j)$, así que el
 cociente produce una multiplicidad estructuralmente menor.
 
-Resulta tentador usar este cociente directamente como remedio del over-squashing:
-reemplazar las multiplicidades de recorrido $n_g(i,j)$ por las dimensiones menores del cociente,
-``deduplicando'' así los caminos redundantes antes de la agregación. Probamos esto y
+Resulta tentador usar este cociente como remedio del over-squashing:
+reemplazar las multiplicidades $n_k(i,j)$ por las dimensiones menores del cociente,
+``deduplicando'' los caminos redundantes antes de la agregación. Lo probamos y
 lo encontramos \emph{contraproducente} (Sección~\ref{sec:exp}): colapsar los recorridos paralelos
 destruye información de multiplicidad que las tareas posteriores pueden requerir. El
-papel constructivo del cociente, entonces, no es comprimir la señal sino
-\emph{reconfigurar el soporte}---p.\ ej.\ encaminar clases de caminos distintas hacia cabezas de
+papel constructivo del cociente no es comprimir la señal sino
+\emph{reconfigurar el soporte}---p.\ ej.\ encaminar clases de caminos distintas a cabezas de
 atención distintas---una dirección que dejamos para trabajo futuro. En el modelo que sigue
-usamos el álgebra de caminos solo a través del soporte de alcanzabilidad $\mathcal{S}_g$ y
-los operadores de recorrido $W^{(g)}$ (sin cocientar).
+usamos el álgebra de caminos solo a través del soporte de alcanzabilidad $\mathcal{S}_k$ y
+los operadores de recorrido $W^{(k)}$ (sin cocientar).
+
+% ---------------------------------------------------------------------
+\subsection{Un suelo algebraico común}\label{sec:ground}
+% ---------------------------------------------------------------------
+
+Los objetos anteriores---el álgebra de caminos graduada $\kQ$, el grado de impacto
+y su sistema fundamental de vecindades (SFV), y el cociente $\kQ/I$---forman un
+sustrato algebraico que se especializa en dos direcciones, según cómo se lea una
+actualización de nodo $\varphi$ sobre las capas $\mathcal{N}_k(c)$. En la lectura
+\emph{dinámica}, $\varphi$ es una regla de evolución fija sobre el SFV, ponderando
+la influencia por grado de impacto; iterarla en el tiempo produce el marco de
+\emph{autómatas de impacto sobre quivers} (AIQ), con sus reglas SI/SIS/SIR y su
+estructura categorial, desarrollado por separado
+\cite{zainea2026aiq,ibanez2025casimulations}. En la lectura
+\emph{representacional}, adoptada aquí, $\varphi$ es \emph{aprendida}: un espacio
+vectorial en cada vértice y una aplicación lineal en cada flecha es una
+representación de $Q$ (un $\kQ$-módulo, vía
+$\mathrm{Rep}(Q)\cong\kQ\text{-}\mathrm{Mod}$
+\cite{schiffler2014quiver,assem2006elements}), y una red neuronal de grafos sobre
+$Q$ es una de estas representaciones con aplicaciones de flecha aprendidas. La
+Atención por Caminos es su instancia graduada: una representación aprendida cuyo
+soporte es el SFV. Las dos lecturas comparten el tronco y difieren solo en si
+$\varphi$ se prescribe o se aprende.

@@ -2,10 +2,10 @@
 \section{Experimentos}\label{sec:exp}
 % =====================================================================
 
-Evaluamos Walk Attention sobre una familia controlada de grafos en la que el
-over-squashing es severo y \emph{ajustable}, de modo que la contribución de cada
-componente arquitectónico pueda aislarse. Todo el código, las configuraciones y los
-registros de los experimentos se publican junto con el artículo.
+Evaluamos Walk Attention sobre una familia controlada de grafos con
+over-squashing severo y \emph{ajustable}, para aislar la contribución de cada
+componente arquitectónico. Publicamos junto al artículo todo el código, las
+configuraciones y los registros de los experimentos.
 
 % ---------------------------------------------------------------------
 \subsection{Un benchmark de over-squashing ajustable}
@@ -14,12 +14,12 @@ registros de los experimentos se publican junto con el artículo.
 \paragraph{Grafos de cadena con cuello de botella.}
 Construimos una familia parametrizada por una \emph{profundidad} $d$, un número de fuentes $K$
 y un ancho $M$. El grafo tiene $K$ vértices fuente, luego $d$ \emph{capas de cuello de botella}
-consecutivas de $M$ vértices intercambiables cada una, y finalmente un
+consecutivas de $M$ vértices intercambiables cada una, y un
 vértice objetivo. Cada fuente se conecta con cada vértice de la primera capa, cada
-vértice de la capa $r$ se conecta con cada vértice de la capa $r+1$, y cada vértice de
-la última capa se conecta con el objetivo. Como los vértices del cuello de botella son
-intercambiables, el número de caminos de longitud $(d{+}1)$ desde una fuente hasta el objetivo
-es $M^{d}$, así que la multiplicidad de caminos hacia el objetivo crece como
+vértice de la capa $r$ con cada vértice de la capa $r+1$, y cada vértice de
+la última capa con el objetivo. Como los vértices del cuello de botella son
+intercambiables, hay $M^{d}$ caminos de longitud $(d{+}1)$ desde una fuente al objetivo,
+de modo que la multiplicidad de caminos hacia el objetivo crece como
 $n_{d+1}(\cdot,\text{target})\sim K\,M^{d}$
 (Proposición~\ref{prop:count}); una GNN de paso de mensajes debe comprimirlos todos
 en el vector de ancho fijo del objetivo. El soporte de alcanzabilidad por caminos, en cambio,
@@ -28,9 +28,9 @@ aproximadamente el $2\%$ de todos los pares de nodos en nuestra configuración.
 
 \paragraph{Tarea.}
 Cada fuente lleva una \emph{clave} one-hot y una \emph{carga útil} escalar; el objetivo
-lleva una clave de consulta. El modelo debe producir, en el nodo objetivo, la clave de la
-fuente cuya clave coincide con la consulta---una tarea de recuperación cuya respuesta se sitúa a $d{+}1$
-saltos de distancia, detrás del cuello de botella. La precisión se mide en el nodo objetivo;
+lleva una clave de consulta. El modelo debe producir en el objetivo la clave de la
+fuente que coincide con la consulta---una recuperación cuya respuesta se sitúa a $d{+}1$
+saltos, detrás del cuello de botella. La precisión se mide en el objetivo;
 el azar es $1/K$.
 
 \paragraph{Modelos.} Comparamos:
@@ -38,16 +38,16 @@ el azar es $1/K$.
   \item \textbf{GAT} \cite{velickovic2017graph}: atención de grafos de un salto, $d{+}1$
   capas (pesos aprendidos, soporte de un salto);
   \item \textbf{Operador de caminos} (\texttt{walkraw}): el operador multi-salto de pesos fijos
-  $W^{(g)}$ de la Definición~\ref{def:walkop} (soporte multi-salto, pesos fijos
+  $W^{(k)}$ de la Definición~\ref{def:walkop} (soporte multi-salto, pesos fijos
   de multiplicidad);
   \item \textbf{Walk Attention} (nuestro): Algoritmo~\ref{alg:wa} (soporte multi-salto,
   pesos aprendidos).
 \end{itemize}
 Todos los modelos usan ancho oculto $16$, cuatro cabezas cuando corresponde, y $d{+}1$
-capas/rangos. Entrenamos con AdamW, un warmup lineal de la tasa de aprendizaje de diez épocas
-seguido de decaimiento coseno, y recorte de gradiente; Walk Attention usa además
-normalización de capa después de cada capa. Reportamos la media y la desviación estándar de
-la precisión en el objetivo sobre cinco semillas aleatorias, en las profundidades de problema $d\in\{2,3\}$ con
+capas/rangos. Entrenamos con AdamW, warmup lineal de diez épocas
+seguido de decaimiento coseno, y recorte de gradiente; Walk Attention añade
+normalización de capa tras cada capa. Reportamos media y desviación estándar de
+la precisión en el objetivo sobre cinco semillas, en profundidades $d\in\{2,3\}$ con
 $K=5$, $M=4$.
 
 % ---------------------------------------------------------------------
@@ -58,9 +58,9 @@ La Tabla~\ref{tab:main} reporta los resultados. La GAT de un salto se degrada ha
 ($0.26$--$0.44$): un operador local no puede propagar la señal a través del cuello de botella
 bajo over-squashing. El operador de caminos de pesos fijos alcanza
 el objetivo---su soporte multi-salto cubre el cuello de botella en una sola capa---pero, al ponderar todas
-las fuentes alcanzables únicamente por multiplicidad, no puede seleccionar la fuente que coincide y
+las fuentes alcanzables solo por multiplicidad, no puede seleccionar la que coincide y
 se estanca en $0.50$--$0.62$. \textbf{Walk Attention resuelve la tarea exactamente},
-alcanzando una precisión de $1.000\pm0.000$ en ambas profundidades y en las cinco semillas: el mismo
+con precisión $1.000\pm0.000$ en ambas profundidades y en las cinco semillas: el mismo
 soporte multi-salto, ahora con pesos consulta--clave aprendidos, permite que el objetivo atienda
 selectivamente a la fuente relevante.
 
@@ -82,11 +82,11 @@ Walk operator (fixed weights)      & $0.62\pm0.12$ & $0.50\pm0.12$ \\
 \end{table}
 
 \paragraph{Sobre la estabilidad.}
-Sin normalización de capa ni warmup, Walk Attention tiene un techo alto pero es
-de alta varianza: a través de las semillas su precisión osciló entre $0.44$ y $1.00$. Los tres
-estabilizadores estándar (normalización de capa, warmup de la tasa de aprendizaje, recorte de gradiente)
-eliminan por completo esta varianza, dando como resultado el $\pm0.000$ de la
-Tabla~\ref{tab:main}. La inestabilidad fue, por tanto, un artefacto de optimización, no
+Sin normalización de capa ni warmup, Walk Attention tiene un techo alto pero
+alta varianza: su precisión osciló entre $0.44$ y $1.00$ según la semilla. Los tres
+estabilizadores estándar (normalización de capa, warmup, recorte de gradiente)
+eliminan por completo esta varianza, dando el $\pm0.000$ de la
+Tabla~\ref{tab:main}. La inestabilidad fue, pues, un artefacto de optimización, no
 una propiedad del operador.
 
 % ---------------------------------------------------------------------
@@ -100,8 +100,8 @@ transmitir su etiqueta one-hot al objetivo diametralmente opuesto. La estructura
 caminos paralelos es explícita: la fuente alcanza el objetivo por los \emph{dos arcos}
 del anillo, dos caminos de igual longitud $n/2$. El over-squashing es severo y
 ajustable, pues el número de caminos de longitud $n/2$ hacia el objetivo crece
-como $4^{\,n/2}$ con el tamaño del anillo. La tarea requiere $n/2$ saltos, luego un
-modelo de un salto requiere $n/2$ capas. Usamos cinco clases (azar $0.2$), el mismo
+como $4^{\,n/2}$ con el tamaño del anillo. La tarea requiere $n/2$ saltos, y por tanto
+$n/2$ capas en un modelo de un salto. Usamos cinco clases (azar $0.2$), el mismo
 ancho y procedimiento de entrenamiento, y $n/2$ capas/rangos para todos los modelos.
 
 La Tabla~\ref{tab:ring} reporta los resultados. En anillos pequeños
@@ -109,8 +109,8 @@ La Tabla~\ref{tab:ring} reporta los resultados. En anillos pequeños
 $n=14$ (distancia $7$) las líneas base de un salto se degradan---GCN y GAT caen a
 $0.25$--$0.60$---mientras que \textbf{Walk Attention se mantiene en $1.000$}: su
 soporte multi-salto agrega la fuente directamente por cualquiera de los dos
-arcos, y los pesos aprendidos identifican la fuente etiquetada. La brecha se
-amplía con el tamaño del anillo, es decir, con la severidad del over-squashing, como se predice.
+arcos, y los pesos aprendidos identifican la etiquetada. La brecha se
+amplía con el tamaño del anillo, esto es, con la severidad del over-squashing, como se predijo.
 
 \begin{table}[t]
 \centering
@@ -133,16 +133,16 @@ GAT                    & $1.00$ & $1.00$ & $0.43$ & $0.60$ \\
 \subsection{Colapsar caminos perjudica}
 % ---------------------------------------------------------------------
 
-El cociente del álgebra de caminos $\kQ/I$ de la Sección~\ref{sec:algebra} sugiere un
-remedio alternativo: reemplazar las multiplicidades de caminos $n_g(i,j)$ por las dimensiones
-del cociente $\dim(e_j(\kQ/I)_g e_i)$, más pequeñas, deduplicando caminos equivalentes
+El cociente $\kQ/I$ de la Sección~\ref{sec:algebra} sugiere un
+remedio alternativo: reemplazar las multiplicidades $n_k(i,j)$ por las dimensiones
+menores del cociente $\dim(e_j(\kQ/I)_k e_i)$, deduplicando caminos equivalentes
 antes de la agregación. Implementamos esto (el operador de pesos fijos construido a partir de las
-dimensiones del cociente) y lo comparamos con el operador de caminos sin cociente sobre la
-misma tarea, en una ablación controlada separada que cambia \emph{únicamente} el
+dimensiones del cociente) y lo comparamos con el operador sin cociente sobre la
+misma tarea, en una ablación controlada que cambia \emph{únicamente} el
 operador (cociente frente a crudo) y mantiene todo lo demás fijo. Como
 muestra la Tabla~\ref{tab:quotient}, \textbf{el operador del cociente rinde peor que el
 crudo}: colapsar caminos paralelos descarta la multiplicidad de fuentes que la
-tarea de recuperación necesita. En este régimen los caminos redundantes son \emph{señal}, no
+recuperación necesita. En este régimen los caminos redundantes son \emph{señal}, no
 ruido, y eliminarlos elimina información.
 
 \begin{table}[t]
@@ -166,12 +166,12 @@ Walk operator (raw walks)          & $\mathbf{0.64}$ & $\mathbf{0.53}$ \\
 
 Este resultado negativo indica que la contribución del álgebra de caminos
 aquí \emph{no} es la compresión. Su papel apropiado es proporcionar
-el \emph{soporte} de la atención multi-salto---de forma dispersa y exacta---sobre
+el \emph{soporte} de la atención multi-salto---disperso y exacto---sobre
 el cual la red aprende los pesos, que es precisamente Walk
-Attention. Que exista un régimen en el que la compresión del cociente sea
-en sí misma beneficiosa (p.\ ej.\ cuando los caminos paralelos son genuinamente ruido redundante, o
-cuando clases de caminos distintas se enruten hacia cabezas distintas) permanece como una cuestión
-abierta.
+Attention. Si existe un régimen en el que la compresión del cociente sea
+beneficiosa (p.\ ej.\ cuando los caminos paralelos son ruido redundante, o
+cuando clases de caminos distintas se enrutan a cabezas distintas) queda
+abierto.
 
 % ---------------------------------------------------------------------
 \subsection{LRGB Peptides-func}
@@ -179,37 +179,36 @@ abierta.
 
 El benchmark sintético es deliberadamente un peor caso: un cuello de botella extremo donde
 el alcance multi-salto es decisivo. Para evaluar Walk Attention con datos reales
-evaluamos también en \textbf{Peptides-func} del Long Range Graph Benchmark
+usamos también \textbf{Peptides-func} del Long Range Graph Benchmark
 \cite{dwivedi2022lrgb} ($10{,}873/2{,}331/2{,}331$ grafos moleculares de entrenamiento/validación/prueba,
 mediana $138$ nodos; clasificación multietiqueta de grafos, métrica Average Precision).
 Usamos el mismo embedding de átomos, cuatro capas, ancho oculto $80$, pooling de media
-y AdamW para todos los modelos; Walk Attention usa los rangos $g=1,\dots,4$ con
-el soporte de alcanzabilidad por caminos de cada molécula. En estos grafos el soporte permanece
-disperso ($1$--$8\%$ de $n^2$ en el rango $3$), de modo que el método sigue siendo barato.
+y AdamW para todos los modelos; Walk Attention usa los rangos $k=1,\dots,4$ con
+el soporte de alcanzabilidad por caminos de cada molécula. Aquí el soporte sigue
+disperso ($1$--$8\%$ de $n^2$ en el rango $3$), de modo que el método sigue barato.
 
 En AP de prueba obtenemos GCN $0.484$, GAT $\mathbf{0.527}$ y Walk Attention
 $0.522$. \textbf{Walk Attention es competitivo con las líneas base fuertes pero no
-las supera aquí}: claramente supera a GCN y es estadísticamente indistinguible de
-GAT. El resultado no se explica por una ausencia de caminos paralelos: los
-grafos de péptidos contienen anillos y ramificaciones, y una molécula típica
+las supera aquí}: supera claramente a GCN y es indistinguible de
+GAT. No se debe a la ausencia de caminos paralelos: los
+grafos de péptidos tienen anillos y ramificaciones, y una molécula típica
 tiene cientos de pares de vértices unidos por $\ge 2$ caminos de longitud $\le 4$
 (que el ideal del cociente colapsaría). Más bien, el over-squashing es
-\emph{leve}: estos grafos son pequeños (mediana $138$ nodos), así que unas pocas
-capas de atención de un salto ya alcanzan suficientemente lejos, y la
-multiplicidad hacia cualquier nodo no crece lo bastante como para saturar el
+\emph{leve}: estos grafos son pequeños (mediana $138$ nodos), así que pocas
+capas de atención de un salto ya alcanzan lo suficiente, y la
+multiplicidad hacia cualquier nodo no crece lo bastante para saturar el
 embedding. El soporte multi-salto, decisivo bajo over-squashing severo, aporta
-poco beneficio cuando la compresión es leve. La ventaja de Walk Attention es por tanto
-\emph{dependiente del régimen}---grande cuando la compresión es severa
-(Tablas~\ref{tab:main} y~\ref{tab:ring}), y comparable a la atención de un salto cuando es leve---mientras
-que, con datos reales, el operador sigue entrenando de forma estable y se mantiene computacionalmente barato.
+poco cuando la compresión es leve. La ventaja de Walk Attention es por tanto
+\emph{dependiente del régimen}---grande bajo compresión severa
+(Tablas~\ref{tab:main} y~\ref{tab:ring}) y comparable a la atención de un salto cuando es leve---y,
+con datos reales, el operador sigue entrenando de forma estable y barata.
 
 % ---------------------------------------------------------------------
 \subsection{Costo}
 % ---------------------------------------------------------------------
 
 Walk Attention opera sobre el soporte de alcanzabilidad por caminos, de tamaño el
-número de entradas no nulas de $\Adj^{\,g}$: una pequeña fracción de $n^2$
+número de entradas no nulas de $\Adj^{\,k}$: una pequeña fracción de $n^2$
 ($\sim 2\%$ en el rango más profundo), por lo que la capa es mucho más barata que
-un Transformer de grafos denso conservando su largo alcance. Los soportes se
-precalculan una vez por topología y se almacenan en caché, así que el cálculo del
-álgebra no entra en el bucle de entrenamiento.
+un Transformer denso sin perder largo alcance. Los soportes se
+precalculan y cachean por topología, fuera del bucle de entrenamiento.

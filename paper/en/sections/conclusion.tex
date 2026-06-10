@@ -21,7 +21,11 @@ algebra is to determine the attention support, not to discard information.
 
 The construction is deliberately elementary and self-contained, so that it can
 serve as an entry point connecting quiver representation theory to graph
-representation learning. Several directions follow naturally.
+representation learning. Walk Attention is the learned, representational reading
+of a common algebraic substrate (Section~\ref{sec:ground})---the graded path
+algebra and its impact-degree neighbourhood system---whose dynamical reading is
+the automata-of-impact-over-quivers framework \cite{zainea2026aiq}; relating the
+two is itself a direction. Several others follow naturally.
 
 \begin{itemize}
   \item \textbf{Benchmarks with severe over-squashing.} Peptides-func is a mild
@@ -33,9 +37,10 @@ representation learning. Several directions follow naturally.
   \item \textbf{Quotient-shaped supports.} The quotient $\kQ/I$, rather than
   compressing the signal, can \emph{partition} walks into equivalence classes;
   routing distinct classes to distinct attention heads would let the algebra
-  structure the heads themselves. Identifying which relations $I$ are useful, and
-  learning them from data, is an appealing problem.
-  \item \textbf{Scaling the support.} For dense graphs the range-$g$ support can
+  structure the heads themselves. Identifying which relations $I$ are useful---and
+  learning them from data, much as the dynamical sibling fixes them by a rule---is
+  an appealing problem.
+  \item \textbf{Scaling the support.} For dense graphs the range-$k$ support can
   itself grow large; truncating, sampling, or learning a sparser admissible
   support are natural ways to control cost while preserving long range.
 \end{itemize}

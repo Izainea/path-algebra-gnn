@@ -47,7 +47,7 @@ The graded components of $\kQ$ count directed walks of a given length between
 two vertices and thus give an exact, algebraic description of the multi-hop
 reachability structure of the network. We use this structure to define a sparse,
 multi-hop attention: a node attends directly to every vertex it can reach by a
-walk of length~$g$, with the path algebra supplying the attention \emph{support}
+walk of length~$k$, with the path algebra supplying the attention \emph{support}
 and the network learning the attention \emph{weights}. We give a self-contained
 construction of quivers, their path algebras, and the walk operators, and we
 relate them to message passing and to Transformer attention. On a controlled
@@ -64,10 +64,12 @@ negative result that motivates the design: using the path-algebra \emph{quotient
 to \emph{collapse} equivalent walks discards the multiplicity that the task needs
 and fails. The path algebra is therefore valuable not as a quotient that
 compresses information, but as the object that \emph{defines the attention
-support}.
+support}. Conceptually, Walk Attention is the learned, representational reading of
+an algebraic substrate whose dynamical reading is the automata-of-impact
+framework.
 
 \keywords{Graph neural networks \and Over-squashing \and Path algebra \and
-Quiver \and Attention \and Message passing.}
+Quiver \and Representation theory \and Attention.}
 \end{abstract}
 
 % =====================================================================
@@ -99,28 +101,34 @@ In this paper we take a different route, grounded in the representation theory o
 quivers. A \emph{quiver} is a directed graph, possibly with multiple arrows
 \cite{schiffler2014quiver,assem2006elements}, and its \emph{path algebra} $\kQ$
 has the directed walks of the quiver as a basis, with concatenation as
-multiplication. The graded piece $e_i \cdot \kQ_g \cdot e_j$ of this algebra has
-a basis consisting of the directed walks of length~$g$ from vertex~$i$ to
-vertex~$j$; its dimension equals $(\Adj^g)_{ij}$, the corresponding entry of the
-$g$-th power of the adjacency matrix. The path algebra therefore provides an
+multiplication. The graded piece $e_i \cdot \kQ_k \cdot e_j$ of this algebra has
+a basis consisting of the directed walks of length~$k$ from vertex~$i$ to
+vertex~$j$; its dimension equals $(\Adj^k)_{ij}$, the corresponding entry of the
+$k$-th power of the adjacency matrix. The path algebra therefore provides an
 \emph{exact, algebraic description of multi-hop reachability and multiplicity}.
 
 Our central observation is that this algebraic structure is precisely what is
 needed to define a principled, sparse, multi-hop attention. We let each node
-attend directly to every vertex reachable from it by a walk of length~$g$: the
+attend directly to every vertex reachable from it by a walk of length~$k$: the
 path algebra supplies the \emph{support} of the attention (which pairs may
-interact at range~$g$), and the network learns the \emph{weights} (how much).
+interact at range~$k$), and the network learns the \emph{weights} (how much).
 Because the walk-reachability support is sparse---typically a small fraction of
 all node pairs---this is far cheaper than full self-attention, while still acting
 at a distance and thereby bypassing the iterative bottleneck that causes
 over-squashing. We call the resulting architecture \textbf{Walk Attention}.
 
+This places Walk Attention on a common algebraic ground (Section~\ref{sec:ground}):
+since a graph network on $Q$ is a representation of the quiver
+($\mathrm{Rep}(Q)\cong\kQ\text{-}\mathrm{Mod}$), it is the \emph{learned}
+reading of a substrate whose \emph{dynamical} reading is the
+automata-of-impact-over-quivers framework \cite{zainea2026aiq}.
+
 \paragraph{Contributions.}
 \begin{enumerate}
   \item We give a \emph{self-contained} construction (Section~\ref{sec:algebra})
-  of quivers, path algebras, graded components, and the associated \emph{walk
-  operators}, aimed at a pattern-recognition audience and independent of prior
-  exposure to representation theory.
+  of quivers, path algebras, graded components, the impact-degree neighbourhood
+  system, and the associated \emph{walk operators}, developing the needed
+  representation theory from first principles for a pattern-recognition audience.
   \item We define \textbf{Walk Attention} (Section~\ref{sec:model}): a learned
   multi-hop attention whose support is the path-algebra walk-reachability
   structure, and we relate it to message passing and to Transformer attention.
@@ -167,9 +175,12 @@ algebra of a quiver is a standard object in representation theory
 \cite{schiffler2014quiver,assem2006elements}. Brauer-configuration algebras and
 related path-algebraic constructions have recently been applied to combinatorial
 and applied problems by Moreno Ca\~nadas and collaborators
-\cite{moreno2021brauer,moreno2024integer}. To our knowledge, the use of the
-graded path algebra to define the \emph{support} of a learned multi-hop graph
-attention is new.
+\cite{moreno2021brauer,moreno2024integer}. Closest to the present work is the
+impact-degree neighbourhood system and the automata-of-impact-over-quivers
+framework \cite{zainea2026aiq,ibanez2025casimulations}, which we take as the
+dynamical sibling of Walk Attention over the same algebraic substrate
+(Section~\ref{sec:ground}). To our knowledge, the use of the graded path algebra
+to define the \emph{support} of a learned multi-hop graph attention is new.
 
 \input{sections/algebra}
 \input{sections/model}

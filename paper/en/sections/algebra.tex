@@ -4,8 +4,9 @@
 
 This section is self-contained. We build, from first principles, the algebraic
 objects that the model in Section~\ref{sec:model} relies on: quivers, paths, the
-path algebra, its grading by length, and the \emph{walk operators} that encode
-multi-hop reachability. No prior background in representation theory is assumed;
+path algebra, its grading by length, the impact-degree neighbourhood system, and
+the \emph{walk operators} that encode multi-hop reachability. We develop the
+needed representation theory from first principles, assuming no prior exposure;
 standard references are \cite{schiffler2014quiver,assem2006elements}.
 
 % ---------------------------------------------------------------------
@@ -27,10 +28,10 @@ are entities and arrows are directed relations, with parallel arrows recording
 multiplicity. We write $n=|Q_0|$ and identify $Q_0$ with $\{1,\dots,n\}$.
 
 \begin{definition}[Path]
-A \emph{path of length} $g\ge 1$ in $Q$ is a sequence of arrows
-$p=\alpha_g\cdots\alpha_2\alpha_1$ such that $t(\alpha_r)=s(\alpha_{r+1})$ for
-$1\le r<g$; that is, the arrows compose head-to-tail. Its source is
-$s(p)=s(\alpha_1)$ and its target is $t(p)=t(\alpha_g)$. For each vertex $i$ we
+A \emph{path of length} $k\ge 1$ in $Q$ is a sequence of arrows
+$p=\alpha_k\cdots\alpha_2\alpha_1$ such that $t(\alpha_r)=s(\alpha_{r+1})$ for
+$1\le r<k$; that is, the arrows compose head-to-tail. Its source is
+$s(p)=s(\alpha_1)$ and its target is $t(p)=t(\alpha_k)$. For each vertex $i$ we
 also admit a \emph{trivial path} $e_i$ of length $0$ with $s(e_i)=t(e_i)=i$.
 \end{definition}
 
@@ -61,50 +62,82 @@ $e_ie_j=\delta_{ij}e_i$, so $\{e_i\}_{i\in Q_0}$ is a complete set of orthogonal
 idempotents and $1=\sum_{i}e_i$ is the unit.
 \end{definition}
 
-The multiplication respects path length: concatenating a path of length $g$ with
-one of length $h$ yields a path of length $g+h$ (or zero). Hence $\kQ$ is a
+The multiplication respects path length: concatenating a path of length $k$ with
+one of length $\ell$ yields a path of length $k+\ell$ (or zero). Hence $\kQ$ is a
 \emph{graded} algebra,
 \[
-  \kQ \;=\; \bigoplus_{g\ge 0}\kQ_g,
-  \qquad \kQ_g\cdot \kQ_h \subseteq \kQ_{g+h},
+  \kQ \;=\; \bigoplus_{k\ge 0}\kQ_k,
+  \qquad \kQ_k\cdot \kQ_\ell \subseteq \kQ_{k+\ell},
 \]
-where $\kQ_g$ is the subspace spanned by the paths of length exactly $g$. In
+where $\kQ_k$ is the subspace spanned by the paths of length exactly $k$. In
 particular $\kQ_0=\bigoplus_i \kk e_i$ and $\kQ_1$ is spanned by the arrows.
 
 The idempotents $e_i$ let us isolate the paths between a fixed pair of vertices.
-For $i,j\in Q_0$ and $g\ge 0$, the subspace
+For $i,j\in Q_0$ and $k\ge 0$, the subspace
 \[
-  e_j\cdot \kQ_g\cdot e_i \;\subseteq\; \kQ
+  e_j\cdot \kQ_k\cdot e_i \;\subseteq\; \kQ
 \]
-is spanned exactly by the paths of length $g$ from $i$ to $j$. Its dimension is
-therefore the \emph{number of directed walks} of length $g$ from $i$ to $j$. The
+is spanned exactly by the paths of length $k$ from $i$ to $j$. Its dimension is
+therefore the \emph{number of directed walks} of length $k$ from $i$ to $j$. The
 following elementary proposition states the correspondence with linear algebra
 precisely; it underlies the model's computation.
 
 \begin{proposition}[Graded multiplicity equals walk count]\label{prop:count}
 Let $\Adj\in\NN^{n\times n}$ be the adjacency matrix of $Q$, $\Adj_{ij}=\#\{\alpha
-\in Q_1: \alpha\colon i\to j\}$. Then for all $g\ge 0$ and all $i,j\in Q_0$,
+\in Q_1: \alpha\colon i\to j\}$. Then for all $k\ge 0$ and all $i,j\in Q_0$,
 \[
-  \dim_{\kk}\bigl(e_j\cdot \kQ_g\cdot e_i\bigr)
-  \;=\; (\Adj^{\,g})_{ij}.
+  \dim_{\kk}\bigl(e_j\cdot \kQ_k\cdot e_i\bigr)
+  \;=\; (\Adj^{\,k})_{ij}.
 \]
 \end{proposition}
 
 \begin{proof}
-By induction on $g$. For $g=0$, $e_j\kQ_0 e_i=\delta_{ij}\,\kk e_i$, of dimension
-$\delta_{ij}=(\Adj^0)_{ij}=(\mathrm{Id})_{ij}$. For $g=1$, a basis of
+By induction on $k$. For $k=0$, $e_j\kQ_0 e_i=\delta_{ij}\,\kk e_i$, of dimension
+$\delta_{ij}=(\Adj^0)_{ij}=(\mathrm{Id})_{ij}$. For $k=1$, a basis of
 $e_j\kQ_1 e_i$ is the set of arrows $i\to j$, of cardinality $\Adj_{ij}$.
-Assume the claim for $g-1$. Every path of length $g$ from $i$ to $j$ factors
-uniquely as $\alpha\cdot p$, where $p$ is a path of length $g-1$ from $i$ to some
+Assume the claim for $k-1$. Every path of length $k$ from $i$ to $j$ factors
+uniquely as $\alpha\cdot p$, where $p$ is a path of length $k-1$ from $i$ to some
 intermediate vertex $r$ and $\alpha\colon r\to j$ is an arrow. The number of such
-factorisations is $\sum_{r}\Adj_{rj}\,(\Adj^{\,g-1})_{ir}=(\Adj^{\,g})_{ij}$,
+factorisations is $\sum_{r}\Adj_{rj}\,(\Adj^{\,k-1})_{ir}=(\Adj^{\,k})_{ij}$,
 which proves the claim. \qed
 \end{proof}
 
-We call the integer $n_g(i,j):=(\Adj^{\,g})_{ij}=\dim_\kk(e_j\kQ_g e_i)$ the
-\emph{walk multiplicity} from $i$ to $j$ at range $g$. It is exactly the number
-of length-$g$ messages that a message-passing GNN forces through node $j$ from
-node $i$ after $g$ layers, and hence the source of over-squashing.
+We call the integer $n_k(i,j):=(\Adj^{\,k})_{ij}=\dim_\kk(e_j\kQ_k e_i)$ the
+\emph{walk multiplicity} from $i$ to $j$ at range $k$. It is exactly the number
+of length-$k$ messages that a message-passing GNN forces through node $j$ from
+node $i$ after $k$ layers, and hence the source of over-squashing.
+
+% ---------------------------------------------------------------------
+\subsection{Impact degree and the fundamental neighbourhood system}
+\label{sec:sfv}
+% ---------------------------------------------------------------------
+
+The grading by length induces a canonical stratification of the vertices around
+each node, which organises the multi-hop structure the model will exploit. For a
+quiver $Q$, the \emph{impact degree} $g(i,j)$ is the length of the shortest
+directed path from $i$ to $j$ (with $g(i,i)=0$ and $g(i,j)=\infty$ if no directed
+path exists); equivalently, $g(i,j)=\min\{k: (\Adj^{\,k})_{ij}>0\}$, the first
+range at which the walk multiplicity becomes positive.
+
+\begin{definition}[Fundamental neighbourhood system]\label{def:sfv}
+For a node $c\in Q_0$, its \emph{in-neighbourhood} of radius $k$ is
+\[
+  A_k(c) \;=\; \{\,i\in Q_0 : g(i,c)\le k\,\},
+\]
+the set of nodes that can send influence to $c$ along a directed path of length
+at most $k$. The nested family $\{A_k(c)\}_{k\ge 0}$, with
+$A_0(c)=\{c\}\subseteq A_1(c)\subseteq\cdots$, is the \emph{fundamental
+neighbourhood system} (FNS) of $c$, and the layer
+$\mathcal{N}_k(c)=A_k(c)\setminus A_{k-1}(c)$ collects the nodes at impact degree
+exactly $k$.
+\end{definition}
+
+The FNS is the combinatorial object that the walk operators act on: the
+range-$k$ support $\mathcal{S}_k$ of Definition~\ref{def:walkop} is precisely the
+relation $\{(c,i): i\in A_k(c)\setminus A_{k-1}(c)\}$, so stacking ranges
+$k=1,2,\dots$ walks the embedding outward through the layers of the FNS. The
+multiplicity $n_k(i,c)$ records \emph{how many} length-$k$ paths populate that
+layer---the textured, algebraic refinement of the scalar impact degree.
 
 % ---------------------------------------------------------------------
 \subsection{An explicit example}
@@ -151,42 +184,42 @@ $1\walk 4$ are parallel; $\dim(e_4\kQ_2 e_1)=2$.}
 % ---------------------------------------------------------------------
 
 Proposition~\ref{prop:count} lets us turn the graded path algebra into a family of
-linear operators on node features, one per range $g$. These \emph{walk operators}
+linear operators on node features, one per range $k$. These \emph{walk operators}
 are the bridge to the neural model.
 
 \begin{definition}[Walk operator]\label{def:walkop}
-For each range $g\ge 1$ define the matrix $W^{(g)}\in\RR^{n\times n}$ by
+For each range $k\ge 1$ define the matrix $W^{(k)}\in\RR^{n\times n}$ by
 \[
-  W^{(g)}_{j i}\;=\;\frac{(\Adj^{\,g})_{ij}}{\,Z_g\,},
+  W^{(k)}_{j i}\;=\;\frac{(\Adj^{\,k})_{ij}}{\,Z_k\,},
 \]
-where $Z_g=\max_{j}\sum_i (\Adj^{\,g})_{ij}$ is a single normalising constant for
-the range. The \emph{walk-reachability support} at range $g$ is the index set
+where $Z_k=\max_{j}\sum_i (\Adj^{\,k})_{ij}$ is a single normalising constant for
+the range. The \emph{walk-reachability support} at range $k$ is the index set
 \[
-  \mathcal{S}_g \;=\; \bigl\{(j,i): (\Adj^{\,g})_{ij}>0\bigr\}
-  \;=\;\bigl\{(j,i): \dim(e_j\kQ_g e_i)>0\bigr\}.
+  \mathcal{S}_k \;=\; \bigl\{(j,i): (\Adj^{\,k})_{ij}>0\bigr\}
+  \;=\;\bigl\{(j,i): \dim(e_j\kQ_k e_i)>0\bigr\}.
 \]
 \end{definition}
 
-Acting on a feature matrix $H\in\RR^{n\times d}$, the operator $W^{(g)}H$ sends to
+Acting on a feature matrix $H\in\RR^{n\times d}$, the operator $W^{(k)}H$ sends to
 each node $j$ a weighted sum of the features of every node $i$ that reaches $j$ by
-a length-$g$ walk, the weight being proportional to the walk multiplicity
-$n_g(i,j)$. Two facts are worth stressing.
+a length-$k$ walk, the weight being proportional to the walk multiplicity
+$n_k(i,j)$. Two facts are worth stressing.
 
 \emph{(i) Global normalisation, not row normalisation.} We divide by a single
-constant $Z_g$ per range rather than normalising each row to sum to one. Row
+constant $Z_k$ per range rather than normalising each row to sum to one. Row
 normalisation would map the multiplicities to a uniform distribution over the
 reachable sources and would erase the very multiplicity information that
-distinguishes $W^{(g)}$ from a plain reachability mask; the global constant keeps
+distinguishes $W^{(k)}$ from a plain reachability mask; the global constant keeps
 the relative multiplicities intact while bounding the magnitude.
 
-\emph{(ii) Sparsity.} The support $\mathcal{S}_g$ is exactly the nonzero pattern
-of $\Adj^{\,g}$. On the structured graphs of interest it is a small fraction of
-all $n^2$ pairs (see Section~\ref{sec:exp}), so $W^{(g)}$ can be stored and
-applied in $O(|\mathcal{S}_g|)$ rather than $O(n^2)$.
+\emph{(ii) Sparsity.} The support $\mathcal{S}_k$ is exactly the nonzero pattern
+of $\Adj^{\,k}$. On the structured graphs of interest it is a small fraction of
+all $n^2$ pairs (see Section~\ref{sec:exp}), so $W^{(k)}$ can be stored and
+applied in $O(|\mathcal{S}_k|)$ rather than $O(n^2)$.
 
-The fixed-weight operator $W^{(g)}$ already mitigates over-squashing, because it
-lets node $j$ read from range-$g$ sources \emph{directly}, in one step, instead
-of forcing the signal through $g$ rounds of local message passing. Its
+The fixed-weight operator $W^{(k)}$ already mitigates over-squashing, because it
+lets node $j$ read from range-$k$ sources \emph{directly}, in one step, instead
+of forcing the signal through $k$ rounds of local message passing. Its
 limitation---which motivates Walk Attention---is that the weights are fixed by
 multiplicity and cannot \emph{select} which reachable source matters. We address
 this in Section~\ref{sec:model} by learning the weights over the same support.
@@ -200,16 +233,37 @@ Representation theory routinely passes from $\kQ$ to a quotient $\kQ/I$ by an
 diamond of Example~\ref{ex:diamond}, the relation $\beta_1\alpha_1\equiv
 \beta_2\alpha_2$ generates an ideal $I$ for which
 $\dim\bigl(e_4(\kQ/I)_2 e_1\bigr)=1$: the two parallel walks collapse to a single
-class. More generally, $\dim\bigl(e_j(\kQ/I)_g e_i\bigr)\le n_g(i,j)$, so the
+class. More generally, $\dim\bigl(e_j(\kQ/I)_k e_i\bigr)\le n_k(i,j)$, so the
 quotient yields a structurally smaller multiplicity.
 
 It is tempting to use this quotient directly as an over-squashing remedy:
-replace the walk multiplicities $n_g(i,j)$ by the smaller quotient dimensions,
+replace the walk multiplicities $n_k(i,j)$ by the smaller quotient dimensions,
 thereby ``de-duplicating'' redundant paths before aggregation. We tested this and
 found it \emph{counterproductive} (Section~\ref{sec:exp}): collapsing parallel
 walks destroys multiplicity information that downstream tasks may require. The
 constructive role of the quotient, then, is not to compress the signal but to
 \emph{reshape the support}---e.g.\ to route distinct path classes to distinct
 attention heads---a direction we leave to future work. In the model that follows
-we use the path algebra only through the reachability support $\mathcal{S}_g$ and
-the (unquotiented) walk operators $W^{(g)}$.
+we use the path algebra only through the reachability support $\mathcal{S}_k$ and
+the (unquotiented) walk operators $W^{(k)}$.
+
+% ---------------------------------------------------------------------
+\subsection{A common algebraic ground}\label{sec:ground}
+% ---------------------------------------------------------------------
+
+The objects above---the graded path algebra $\kQ$, the impact degree and its
+fundamental neighbourhood system (FNS), and the quotient $\kQ/I$---form one
+algebraic substrate that specialises in two directions, according to how a
+node-update map $\varphi$ over the layers $\mathcal{N}_k(c)$ is read. In the
+\emph{dynamical} reading, $\varphi$ is a fixed evolution rule applied over the
+FNS, weighting influence by impact degree; iterating it in time yields the
+\emph{automata of impact over quivers} (AIQ) framework, with its SI/SIS/SIR rules
+and category structure, developed separately
+\cite{zainea2026aiq,ibanez2025casimulations}. In the \emph{representational}
+reading, taken here, $\varphi$ is \emph{learned}: a vector space at each vertex
+and a linear map at each arrow is a representation of $Q$ (a $\kQ$-module, via
+$\mathrm{Rep}(Q)\cong\kQ\text{-}\mathrm{Mod}$
+\cite{schiffler2014quiver,assem2006elements}), and a graph neural network on $Q$
+is such a representation with learned arrow maps. Walk Attention is its graded
+instance: a learned representation whose support is the FNS. The two readings
+share the trunk and differ only in whether $\varphi$ is prescribed or learned.
