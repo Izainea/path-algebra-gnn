@@ -1,0 +1,907 @@
+\documentclass[runningheads]{llncs}
+
+% ===== Packages =====
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning}
+\usetikzlibrary{babel}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage[hidelinks]{hyperref}
+
+% ===== Math shortcuts =====
+\newcommand{\kk}{\Bbbk}
+\newcommand{\kQ}{\kk Q}
+\newcommand{\NN}{\mathbb{N}}
+\newcommand{\RR}{\mathbb{R}}
+\newcommand{\Adj}{A}
+\newcommand{\walk}{\rightsquigarrow}
+\DeclareMathOperator{\softmax}{softmax}
+
+\begin{document}
+
+\title{Álgebras de Caminos de Quivers como una\\ Atención Dispersa Multi-Salto para Mitigar\\ el Over-Squashing en GNNs}
+\titlerunning{Walk Attention}
+
+\author{Carlos Isaac Zainea Maya\inst{1}\orcidID{0000-0002-6459-2397} \and
+Agustín Moreno Cañadas\inst{1}\orcidID{0000-0001-6812-5131}}
+\authorrunning{C. I. Zainea Maya and A. Moreno Cañadas}
+\institute{Universidad Nacional de Colombia, Departamento de Matemáticas,\\
+Bogotá, Colombia\\
+\email{\{cizaineam,amorenoca\}@unal.edu.co}}
+
+\maketitle
+
+\begin{abstract}
+Las redes neuronales de grafos de paso de mensajes sufren de
+\emph{over-squashing}: la señal que viaja por muchos caminos largos hacia un
+nodo se comprime en un vector de ancho fijo y se pierde. Introducimos
+\textbf{Walk Attention}: el \emph{álgebra de caminos} $\kQ$ del quiver
+subyacente provee, mediante sus componentes graduadas, la estructura exacta de
+alcanzabilidad multi-salto, que usamos como \emph{soporte} disperso de una
+atención aprendida---el álgebra dice qué vértices pueden interactuar a alcance
+$k$, la red aprende cuánto. En grafos de cuello de botella con over-squashing
+ajustable \emph{demostramos} la separación---el paso de mensajes con
+agregación lineal queda exactamente en el azar para toda profundidad y todo
+ancho, mientras que una sola capa de Walk Attention en el alcance adecuado
+resuelve la tarea de recuperación exactamente---y la confirmamos
+empíricamente ($1.000\pm0.000$ sobre cinco semillas, donde la atención de un
+salto se degrada hacia el azar); Walk Attention se mantiene exacta en
+\textsc{RingTransfer} y, bajo un presupuesto pequeño compartido, empata con la
+atención de un salto en Peptides-func: su ventaja es decisiva bajo
+over-squashing severo y modesta cuando es leve. Un resultado negativo afina el
+diseño: colapsar caminos equivalentes vía el cociente $\kQ/I$ descarta
+multiplicidad que la tarea necesita; el papel del álgebra es \emph{definir el
+soporte}, no comprimir.
+
+\keywords{Redes neuronales de grafos \and Over-squashing \and Álgebra de
+caminos \and Quiver \and Teoría de representaciones \and Atención.}
+\end{abstract}
+
+% =====================================================================
+\section{Introducción}
+% =====================================================================
+
+Las redes neuronales de grafos construidas sobre el paradigma de paso de
+mensajes \cite{gilmer2017neural} actualizan cada nodo agregando mensajes de sus
+vecinos inmediatos e iterando esta regla local a través de las capas, de modo
+que tras $k$ capas la información de nodos a $k$ saltos alcanza un nodo
+objetivo. Aunque simple y efectivo, el esquema tiene un modo de fallo bien
+documentado: el \emph{over-squashing} \cite{alon2021bottleneck}. Cuando el
+número de caminos que llevan información hacia un nodo crece---típicamente de
+forma exponencial con la distancia---los mensajes a lo largo de todos ellos
+deben comprimirse en un único vector de ancho fijo; el nodo receptor no puede
+recuperarlos individualmente y la señal de largo alcance se pierde. El
+over-squashing es el obstáculo principal para tareas cuyas etiquetas dependen
+de información distante o distribuida globalmente. Los remedios existentes
+actúan sobre el grafo o sobre la agregación: el \emph{rewiring} ensancha los
+cuellos de botella \cite{topping2022understanding}, los análisis de curvatura y
+sensibilidad explican \emph{dónde} ocurre \cite{digiovanni2023oversquashing},
+y una línea complementaria reemplaza la agregación local por atención global de
+Transformer \cite{vaswani2017attention}, a costo cuadrático y ciego a la
+estructura del grafo.
+
+En este artículo tomamos una ruta diferente, fundamentada en la teoría de
+representaciones de quivers. Un \emph{quiver} es un grafo dirigido,
+posiblemente con flechas múltiples \cite{schiffler2014quiver,assem2006elements},
+y su \emph{álgebra de caminos} $\kQ$ tiene como base los recorridos dirigidos
+del quiver, con la concatenación como multiplicación. La pieza graduada
+$e_j\cdot\kQ_k\cdot e_i$ de esta álgebra tiene como base los recorridos
+dirigidos de longitud~$k$ del vértice~$i$ al vértice~$j$; su dimensión es
+$(\Adj^k)_{ij}$, la entrada correspondiente de la $k$-ésima potencia de la
+matriz de adyacencia. El álgebra de caminos provee, por tanto, una
+\emph{descripción exacta y algebraica de la alcanzabilidad y la multiplicidad
+multi-salto}.
+
+Nuestra observación central es que esta estructura es precisamente lo que se
+necesita para definir una atención multi-salto dispersa con fundamento. Dejamos
+que cada nodo atienda directamente a todo vértice alcanzable desde él por un
+recorrido de longitud~$k$: el álgebra provee el \emph{soporte} de la atención
+(qué pares pueden interactuar a alcance~$k$), y la red aprende los \emph{pesos}
+(cuánto). Como el soporte es disperso---típicamente una pequeña fracción de
+todos los pares---esto es mucho más barato que la auto-atención completa, sin
+dejar de actuar a distancia, evitando el cuello de botella iterativo. Llamamos
+a la arquitectura resultante \textbf{Walk Attention}. Como una red de grafos sobre
+$Q$ es una representación del quiver
+($\mathrm{Rep}(Q)\cong\kQ\text{-}\mathrm{Mod}$), Walk Attention es la lectura
+\emph{aprendida} de un sustrato algebraico cuya lectura \emph{dinámica} es el
+marco de autómatas de impacto sobre quivers \cite{zainea2026aiq}
+(Sección~\ref{sec:ground}).
+
+\paragraph{Contribuciones.}
+\begin{enumerate}
+  \item Una construcción autocontenida (Sección~\ref{sec:algebra}) de quivers,
+  álgebras de caminos, el sistema de vecindades por grado de impacto y los
+  \emph{operadores de recorrido} que codifican la alcanzabilidad multi-salto,
+  con ejemplos desarrollados.
+  \item \textbf{Walk Attention} (Sección~\ref{sec:model}): una atención
+  multi-salto aprendida cuyo soporte es la alcanzabilidad del álgebra de
+  caminos, relacionada con el paso de mensajes y con los Transformers.
+  \item Una separación \emph{demostrada} (Sección~\ref{sec:theory}): con la
+  profundidad estándar de una capa por salto, toda GNN cuya primera agregación
+  es lineal en los atributos de las fuentes (GCN, GIN) tiene precisión
+  exactamente igual al azar en la familia de cuellos de botella, para toda
+  profundidad, ancho y parámetros, mientras que una sola capa de Walk Attention
+  en el alcance adecuado resuelve la tarea exactamente---confirmado
+  empíricamente (Sección~\ref{sec:exp}).
+  \item Un resultado \emph{negativo} que afina el diseño: colapsar caminos
+  equivalentes vía el cociente $\kQ/I$ descarta multiplicidad necesaria y
+  falla; el papel del cociente es determinar el soporte, no comprimir la señal.
+\end{enumerate}
+
+% =====================================================================
+\section{Trabajo Relacionado}\label{sec:related}
+% =====================================================================
+
+\paragraph{Over-squashing, atención y agregación multi-salto.}
+Alon y Yahav \cite{alon2021bottleneck} identificaron el over-squashing con la
+prueba \textsc{NeighborsMatch}; Topping et al.\ \cite{topping2022understanding}
+lo conectaron con la curvatura negativa y propusieron el rewiring SDRF; Di
+Giovanni et al.\ \cite{digiovanni2023oversquashing} dieron un análisis de
+sensibilidad.
+GAT \cite{velickovic2017graph} aprende pesos de atención de un salto; los graph
+Transformers aplican atención de todos los pares \cite{vaswani2017attention} a
+costo $O(n^2)$.
+Agregar más allá de un salto está, en sí, bien explorado: MixHop
+\cite{abu2019mixhop} y SIGN \cite{frasca2020sign} mezclan potencias fijas de la
+adyacencia, la convolución por difusión \cite{gasteiger2019diffusion} recablea
+con un núcleo de difusión, MAGNA \cite{wang2021magna} difunde los puntajes de
+atención, el paso de mensajes por caminos más cortos agrega sobre capas de
+distancia \cite{abboud2022shortest}, NAGphormer \cite{chen2023nagphormer}
+tokeniza agregados por salto, Graphormer \cite{ying2021graphormer} sesga la
+atención densa por la distancia más corta, y DRew \cite{gutteridge2023drew}
+recablea dinámicamente con retardo. Walk Attention difiere en el objeto que
+define el soporte: el \emph{álgebra de caminos graduada}---recorridos con su
+multiplicidad, no capas de distancia ni pesos de difusión---lo que hace el
+soporte exacto (Proposición~\ref{prop:count}), expone el cociente $\kQ/I$ como
+grado de libertad de diseño e inserta la arquitectura en la teoría de
+representaciones de quivers.
+
+\paragraph{Estructura algebraica de caminos.}
+El álgebra de caminos es un objeto estándar de la teoría de representaciones
+\cite{schiffler2014quiver,assem2006elements}; las álgebras de configuración de
+Brauer y construcciones afines se han aplicado recientemente a problemas
+combinatorios por Moreno Cañadas y colaboradores
+\cite{moreno2021brauer,moreno2024integer}. Lo más cercano al presente trabajo
+es el sistema de vecindades por grado de impacto y el marco de autómatas de
+impacto \cite{zainea2026aiq,ibanez2025casimulations}, que tomamos como el
+hermano dinámico de Walk Attention sobre el mismo sustrato
+(Sección~\ref{sec:ground}). La atención sobre soportes multi-salto no es nueva
+en sí misma; lo nuevo, hasta donde sabemos, es tomar el soporte del álgebra de
+caminos graduada, con sus multiplicidades, su cociente y su lectura dinámica.
+
+% =====================================================================
+\section{El Álgebra de Caminos de un Quiver}\label{sec:algebra}
+% =====================================================================
+
+Esta sección es autocontenida: construimos los quivers, los caminos, el álgebra
+de caminos con su graduación, el sistema de vecindades por grado de impacto y
+los operadores de recorrido en que se apoya el modelo de la
+Sección~\ref{sec:model}, sin suponer exposición previa. Referencias estándar:
+\cite{schiffler2014quiver,assem2006elements}.
+
+% ---------------------------------------------------------------------
+\subsection{Quivers y caminos}
+% ---------------------------------------------------------------------
+
+\begin{definition}
+Un \emph{quiver} es una cuádrupla $Q=(Q_0,Q_1,s,t)$ donde $Q_0$ es un conjunto
+finito de \emph{vértices}, $Q_1$ un conjunto finito de \emph{flechas} y
+$s,t\colon Q_1\to Q_0$ asignan a cada flecha $\alpha$ su fuente $s(\alpha)$ y
+su destino $t(\alpha)$; escribimos $\alpha\colon i\to j$. Se permiten flechas
+múltiples entre el mismo par ordenado. Identificamos $Q_0$ con $\{1,\dots,n\}$.
+\end{definition}
+
+Un quiver es así un multigrafo dirigido, el dato de una estructura relacional
+dirigida: entidades, relaciones dirigidas y flechas paralelas que registran
+multiplicidad.
+
+\begin{example}\label{ex:firstquiver}
+Sea $Q_0=\{1,2,3\}$ con flechas $\alpha,\alpha'\colon 1\to 2$ (dos flechas
+paralelas), $\beta\colon 2\to 3$ y un lazo $\gamma\colon 3\to 3$. Su matriz de
+adyacencia, contando flechas, es
+\[
+  \Adj=\begin{pmatrix}0&2&0\\0&0&1\\0&0&1\end{pmatrix}.
+\]
+En una red de citaciones, por ejemplo, los vértices son documentos, las flechas
+citaciones, el par paralelo $\alpha,\alpha'$ una citación doble y el lazo
+$\gamma$ una autocitación.
+\end{example}
+
+\begin{definition}
+Un \emph{camino de longitud} $k\ge1$ en $Q$ es una secuencia de flechas
+$p=\alpha_k\cdots\alpha_2\alpha_1$ con $t(\alpha_r)=s(\alpha_{r+1})$, leída de
+derecha a izquierda como la composición de funciones, con fuente
+$s(p)=s(\alpha_1)$ y destino $t(p)=t(\alpha_k)$. Cada vértice $i$ porta además
+un \emph{camino trivial} $e_i$ de longitud $0$.
+\end{definition}
+
+Un camino es un \emph{recorrido} dirigido: vértices y flechas pueden repetirse.
+En el Ejemplo~\ref{ex:firstquiver}, $\beta\alpha$ y $\beta\alpha'$ son dos
+caminos distintos de longitud $2$ de $1$ a $3$, y el lazo genera recorridos
+arbitrariamente largos $\gamma^m\beta\alpha$. El número de recorridos distintos
+de una longitud dada entre dos vértices es precisamente la cantidad que produce
+el over-squashing, y el álgebra de caminos lo hace algebraicamente explícito.
+
+% ---------------------------------------------------------------------
+\subsection{El álgebra de caminos y su graduación}
+% ---------------------------------------------------------------------
+
+Sea $\kk$ un cuerpo (en la práctica $\kk=\RR$).
+
+\begin{definition}
+El \emph{álgebra de caminos} $\kQ$ es el $\kk$-espacio vectorial con base el
+conjunto de todos los caminos de $Q$, dotado de la multiplicación bilineal dada
+en la base por la concatenación:
+\[
+  q\cdot p \;=\;
+  \begin{cases}
+    q\,p & \text{si } s(q)=t(p),\\[2pt]
+    0 & \text{en otro caso.}
+  \end{cases}
+\]
+Los caminos triviales satisfacen $e_{t(p)}\,p=p=p\,e_{s(p)}$ y
+$e_ie_j=\delta_{ij}e_i$, de modo que $\{e_i\}$ es un sistema completo de
+idempotentes ortogonales y $1=\sum_i e_i$ es la unidad.
+\end{definition}
+
+La multiplicación respeta la longitud: concatenar caminos de longitudes $k$ y
+$\ell$ da un camino de longitud $k+\ell$ (o cero). Por tanto $\kQ$ es una
+álgebra \emph{graduada},
+\[
+  \kQ \;=\; \bigoplus_{k\ge 0}\kQ_k,
+  \qquad \kQ_k\cdot \kQ_\ell \subseteq \kQ_{k+\ell},
+\]
+con $\kQ_k$ generada por los caminos de longitud exactamente $k$; en particular
+$\kQ_0=\bigoplus_i\kk e_i$ y $\kQ_1$ está generada por las flechas. Los
+idempotentes permiten aislar los caminos entre un par fijo de vértices: el
+subespacio $e_j\cdot\kQ_k\cdot e_i$ está generado exactamente por los caminos
+de longitud $k$ de $i$ a $j$, y su dimensión es por tanto el número de tales
+recorridos. La siguiente proposición, en la que se apoya todo lo que el modelo
+calcula, hace precisa la correspondencia con el álgebra lineal.
+
+\begin{proposition}\label{prop:count}
+Sea $\Adj\in\NN^{n\times n}$ la matriz de adyacencia de $Q$,
+$\Adj_{ij}=\#\{\alpha\in Q_1:\alpha\colon i\to j\}$. Entonces, para todo
+$k\ge0$ y todos $i,j\in Q_0$,
+\[
+  \dim_{\kk}\bigl(e_j\cdot \kQ_k\cdot e_i\bigr) \;=\; (\Adj^{\,k})_{ij}.
+\]
+\end{proposition}
+
+\begin{proof}
+Inducción sobre $k$; para $k\in\{0,1\}$ es la definición. Todo camino de
+longitud $k$ de $i$ a $j$ se factoriza de forma única como $\alpha\cdot p$, con
+$p$ de longitud $k-1$ de $i$ a algún vértice intermedio $r$ y
+$\alpha\colon r\to j$ una flecha; el número de tales factorizaciones es
+$\sum_r(\Adj^{\,k-1})_{ir}\Adj_{rj}=(\Adj^{\,k})_{ij}$. \qed
+\end{proof}
+
+Llamamos a $n_k(i,j):=(\Adj^{\,k})_{ij}=\dim_\kk(e_j\kQ_k e_i)$ la
+\emph{multiplicidad de recorrido} de $i$ a $j$ a alcance $k$. Es exactamente el
+número de mensajes de longitud $k$ que una GNN de paso de mensajes fuerza del
+nodo $i$ hacia el nodo $j$ tras $k$ capas---y por tanto la fuente del
+over-squashing.
+
+\begin{example}\label{ex:diamond}
+Sea $Q$ con vértices $\{1,2,3,4\}$ y flechas $\alpha_1\colon1\to2$,
+$\alpha_2\colon1\to3$, $\beta_1\colon2\to4$, $\beta_2\colon3\to4$
+(Figura~\ref{fig:diamond}). Entonces
+\[
+  \Adj=\begin{pmatrix}0&1&1&0\\0&0&0&1\\0&0&0&1\\0&0&0&0\end{pmatrix},
+  \qquad
+  \Adj^2=\begin{pmatrix}0&0&0&2\\0&0&0&0\\0&0&0&0\\0&0&0&0\end{pmatrix},
+\]
+y $\dim(e_4\kQ_2e_1)=(\Adj^2)_{14}=2$, de acuerdo con la
+Proposición~\ref{prop:count}: los dos recorridos \emph{paralelos} de longitud
+$2$, $\beta_1\alpha_1$ y $\beta_2\alpha_2$, con la misma fuente, el mismo
+destino y la misma longitud. Si deben tratarse como un canal o como dos es una
+decisión de modelado a la que volvemos en la Sección~\ref{sec:exp}.
+\end{example}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[->,>={Stealth[round]},node distance=8mm and 12mm,
+  every node/.style={circle,draw,minimum size=6mm,inner sep=0pt,font=\scriptsize}]
+  \node (1) {1};
+  \node (2) [above right=of 1] {2};
+  \node (3) [below right=of 1] {3};
+  \node (4) [below right=of 2] {4};
+  \draw (1) -- node[draw=none,fill=none,above left,font=\tiny]{$\alpha_1$} (2);
+  \draw (1) -- node[draw=none,fill=none,below left,font=\tiny]{$\alpha_2$} (3);
+  \draw (2) -- node[draw=none,fill=none,above right,font=\tiny]{$\beta_1$} (4);
+  \draw (3) -- node[draw=none,fill=none,below right,font=\tiny]{$\beta_2$} (4);
+\end{tikzpicture}
+\caption{El quiver diamante del Ejemplo~\ref{ex:diamond}: dos recorridos
+paralelos de longitud $2$, $1\walk4$; $\dim(e_4\kQ_2 e_1)=2$.}
+\label{fig:diamond}
+\end{figure}
+
+% ---------------------------------------------------------------------
+\subsection{Grado de impacto y el sistema fundamental de vecindades}
+\label{sec:sfv}
+% ---------------------------------------------------------------------
+
+La graduación por longitud induce una estratificación canónica de los vértices
+alrededor de cada nodo, que organiza la estructura multi-salto que el modelo
+explotará. El \emph{grado de impacto} $g(i,j)$ es la longitud del camino
+dirigido más corto de $i$ a $j$ (con $g(i,i)=0$ y $g(i,j)=\infty$ si no
+existe); equivalentemente, $g(i,j)=\min\{k:(\Adj^{\,k})_{ij}>0\}$, el primer
+alcance en que la multiplicidad se hace positiva.
+
+\begin{definition}\label{def:sfv}
+Para un nodo $c\in Q_0$, su \emph{vecindad de entrada} de radio $k$ es
+$A_k(c)=\{i\in Q_0: g(i,c)\le k\}$, el conjunto de nodos que pueden influir en
+$c$ por un camino dirigido de longitud a lo sumo $k$. La familia anidada
+$\{A_k(c)\}_{k\ge0}$, con $A_0(c)=\{c\}\subseteq A_1(c)\subseteq\cdots$, es el
+\emph{sistema fundamental de vecindades} (SFV) de $c$; la capa
+$\mathcal{N}_k(c)=A_k(c)\setminus A_{k-1}(c)$ reúne los nodos a grado de
+impacto exactamente $k$.
+\end{definition}
+
+El SFV es el objeto combinatorio sobre el que actúan los operadores de
+recorrido de más abajo, y su relación precisa con la alcanzabilidad es la
+siguiente.
+
+\begin{proposition}\label{prop:fns}
+Para $k\ge1$ sea $\mathcal{S}_k=\{(c,i):(\Adj^{\,k})_{ic}>0\}$ el conjunto de
+pares unidos por un recorrido de longitud $k$, $i\walk c$. Entonces
+\[
+  \{(c,i): i\in \mathcal{N}_k(c)\} \;\subseteq\; \mathcal{S}_k ,
+\]
+y la inclusión es estricta en general: los recorridos de longitud $k$ pueden
+alcanzar también nodos a grado de impacto $<k$. Si $Q$ es
+\emph{graduado}---existe $\rho\colon Q_0\to\mathbb{Z}$ con
+$\rho(t(\alpha))=\rho(s(\alpha))+1$ para toda flecha $\alpha$---vale la
+igualdad para todo $k$.
+\end{proposition}
+
+\begin{proof}
+Si $g(i,c)=k$, un camino más corto es un recorrido de longitud $k$, así que
+$(\Adj^{\,k})_{ic}>0$. Estrictez: en $1\to2\to3$ con una flecha adicional
+$1\to3$, $(\Adj^2)_{13}>0$ y sin embargo $g(1,3)=1$. Si $Q$ es graduado, todo
+recorrido $i\walk c$ tiene longitud $\rho(c)-\rho(i)$, así que un recorrido de
+longitud $k$ fuerza $g(i,c)=k$. \qed
+\end{proof}
+
+Los grafos del benchmark de la Sección~\ref{sec:exp} son graduados (el índice
+de capa es un tal $\rho$), así que allí los soportes coinciden con las capas
+del SFV; en grafos con ciclos, como un anillo, $\mathcal{S}_k$ contiene
+estrictamente la relación de capas. La multiplicidad $n_k(i,c)$ registra
+\emph{cuántos} caminos de longitud $k$ pueblan cada capa---el refinamiento
+algebraico del grado de impacto escalar.
+
+% ---------------------------------------------------------------------
+\subsection{Operadores de recorrido}
+% ---------------------------------------------------------------------
+
+La Proposición~\ref{prop:count} permite convertir el álgebra graduada en una
+familia de operadores lineales sobre los atributos, uno por alcance; son el
+puente hacia el modelo neuronal.
+
+\begin{definition}\label{def:walkop}
+Para cada alcance $k\ge1$ defínase $W^{(k)}\in\RR^{n\times n}$ por
+\[
+  W^{(k)}_{j i}\;=\;\frac{(\Adj^{\,k})_{ij}}{\,Z_k\,},
+  \qquad Z_k=\max_{j}\sum_i (\Adj^{\,k})_{ij},
+\]
+una sola constante de normalización por alcance. El \emph{soporte de
+alcanzabilidad por recorridos} es
+$\mathcal{S}_k=\{(j,i):(\Adj^{\,k})_{ij}>0\}$.
+\end{definition}
+
+Actuando sobre una matriz de atributos $H\in\RR^{n\times d}$, el operador
+$W^{(k)}H$ envía a cada nodo $j$ una suma ponderada de los atributos de cada
+nodo $i$ que lo alcanza por un recorrido de longitud $k$, con peso proporcional
+a la multiplicidad $n_k(i,j)$. Dos hechos merecen énfasis.
+\emph{(i) Normalización global, no por filas}: normalizar por filas mapearía
+las multiplicidades a una distribución uniforme sobre las fuentes alcanzables,
+borrando exactamente la información que distingue a $W^{(k)}$ de una simple
+máscara de alcanzabilidad; la constante global preserva las multiplicidades
+relativas acotando las magnitudes. \emph{(ii) Sparsity}: $\mathcal{S}_k$ es el
+patrón de no-ceros de $\Adj^{\,k}$, así que en los grafos de interés $W^{(k)}$
+se almacena y aplica en $O(|\mathcal{S}_k|)$ y no en $O(n^2)$. El operador de
+pesos fijos $W^{(k)}$ ya mitiga el over-squashing, porque deja que el nodo $j$
+lea las fuentes a alcance $k$ \emph{directamente}, en un paso, en vez de forzar
+la señal por $k$ rondas locales. Su limitación---que motiva Walk Attention---es
+que sus pesos están fijados por la multiplicidad y no pueden \emph{seleccionar}
+qué fuente importa.
+
+% ---------------------------------------------------------------------
+\subsection{El álgebra cociente}
+% ---------------------------------------------------------------------
+
+La teoría de representaciones pasa rutinariamente de $\kQ$ a un cociente
+$\kQ/I$ por un \emph{ideal admisible} $I$, identificando caminos declarados
+iguales. En el diamante del Ejemplo~\ref{ex:diamond}, la relación
+$\beta_1\alpha_1\equiv\beta_2\alpha_2$ genera un ideal con
+$\dim\bigl(e_4(\kQ/I)_2e_1\bigr)=1$: los dos recorridos paralelos colapsan a
+una sola clase, y en general
+$\dim\bigl(e_j(\kQ/I)_ke_i\bigr)\le n_k(i,j)$. Es tentador usarlo como remedio
+del over-squashing: reemplazar las multiplicidades por las dimensiones menores,
+deduplicando caminos antes de agregar. Lo probamos y resultó
+\emph{contraproducente}
+(Sección~\ref{sec:exp}): colapsar recorridos paralelos destruye información de
+multiplicidad que las tareas pueden requerir. El papel constructivo del
+cociente no es comprimir la señal sino \emph{remodelar el soporte}---por
+ejemplo enrutando clases de caminos distintas a cabezas de atención distintas,
+dirección que dejamos a trabajo futuro. En el modelo que sigue el álgebra entra
+solo por el soporte $\mathcal{S}_k$ y los operadores sin cociente $W^{(k)}$.
+
+% ---------------------------------------------------------------------
+\subsection{Un suelo algebraico común}\label{sec:ground}
+% ---------------------------------------------------------------------
+
+Los objetos anteriores---el álgebra graduada $\kQ$, el grado de impacto con su
+SFV y el cociente $\kQ/I$---forman un sustrato algebraico que se especializa en
+dos direcciones, según cómo se lea un mapa de actualización $\varphi$ sobre las
+capas $\mathcal{N}_k(c)$. En la lectura \emph{dinámica}, $\varphi$ es una regla
+de evolución fija ponderada por el grado de impacto; iterarla en el tiempo da
+los \emph{autómatas de impacto sobre quivers} (AIQ), con sus reglas SI/SIS/SIR
+y su estructura categórica, desarrollados aparte
+\cite{zainea2026aiq,ibanez2025casimulations}. En la lectura
+\emph{representacional}, tomada aquí, $\varphi$ se \emph{aprende}: un espacio
+vectorial por vértice y un mapa lineal por flecha es una representación de $Q$
+(un $\kQ$-módulo, vía $\mathrm{Rep}(Q)\cong\kQ\text{-}\mathrm{Mod}$), y una GNN
+sobre $Q$ es tal representación con mapas aprendidos. Walk Attention es su
+instancia graduada.
+
+% =====================================================================
+\section{Walk Attention}\label{sec:model}
+% =====================================================================
+
+Definimos ahora la arquitectura, y empezamos por la observación que la motiva:
+\emph{el operador de recorrido ya es una atención}. Una capa de atención, en su
+forma general, fija una relación de \emph{soporte} $S$ de pares (objetivo,
+fuente) y calcula, para cada objetivo $j$, una combinación ponderada y
+normalizada de atributos transformados de las fuentes,
+\begin{equation}\label{eq:attn-generic}
+  \mathrm{out}_j \;=\; \sum_{i:\,(j,i)\in S}\alpha_{ji}\,Vx_i,
+  \qquad \alpha_{ji}\ge0,\quad \textstyle\sum_{i}\alpha_{ji}\;\text{acotada},
+\end{equation}
+y las arquitecturas difieren solo en dos elecciones: \emph{qué pares} contiene
+$S$ y \emph{de dónde salen los coeficientes} $\alpha$. La auto-atención de los
+Transformers \cite{vaswani2017attention} toma $S=$ todos los pares y aprende
+$\alpha$ de productos consulta--clave; GAT \cite{velickovic2017graph} toma $S=$
+las aristas y aprende $\alpha$. Compárese ahora con el operador de la
+Definición~\ref{def:walkop}: actuando sobre atributos calcula
+$(W^{(k)}H)_j=\sum_{i:(j,i)\in\mathcal{S}_k}\tfrac{n_k(i,j)}{Z_k}\,H_i$---
+\emph{exactamente la forma}~\eqref{eq:attn-generic}, con soporte la
+alcanzabilidad $\mathcal{S}_k$ y coeficientes fijados en las multiplicidades
+normalizadas. Agregar sobre recorridos de longitud $k$ no es, pues,
+``parecido'' a una atención: \emph{es} una atención cuyo soporte el álgebra de
+caminos determina exactamente (Proposición~\ref{prop:count}) y cuyos pesos
+están congelados. Esto dicta el diseño: conservar el soporte algebraico y
+reemplazar los pesos congelados de multiplicidad por pesos consulta--clave
+aprendidos---el resultado es Walk Attention, la actualización aprendida
+$\varphi$ del sustrato común de la Sección~\ref{sec:ground}.
+
+% ---------------------------------------------------------------------
+\subsection{La capa de Walk Attention}\label{sec:layer}
+% ---------------------------------------------------------------------
+
+Fijemos un alcance $k$ con soporte $\mathcal{S}_k$. Una capa de Walk Attention
+con $H$ cabezas de dimensión $C$ calcula consultas, claves y valores con mapas
+lineales, $Q^h=xW^h_Q$, $K^h=xW^h_K$, $V^h=xW^h_V$, y atiende \emph{solo sobre
+los pares alcanzables} $(j,i)\in\mathcal{S}_k$:
+\begin{equation}\label{eq:wa}
+  \ell^h_{ji} = \tfrac{1}{\sqrt{C}}\langle Q^h_j,K^h_i\rangle,\qquad
+  \alpha^h_{ji} = \softmax_{i:(j,i)\in\mathcal{S}_k}\ell^h_{ji},\qquad
+  z^h_j = \textstyle\sum_{i:(j,i)\in\mathcal{S}_k}\alpha^h_{ji}V^h_i.
+\end{equation}
+El softmax se toma, para cada objetivo $j$, exactamente sobre las fuentes que
+lo alcanzan por un recorrido de longitud $k$---un softmax \emph{segmentado}
+sobre el soporte, nunca sobre los $n$ nodos. Las salidas de las cabezas se
+concatenan y se añade un término ``raíz'' residual,
+$\mathrm{WA}_k(x)_j=\Vert_h z^h_j + x_jW_{\!\text{root}}$. Como~\eqref{eq:wa}
+solo toca pares de $\mathcal{S}_k$, la capa cuesta $O(|\mathcal{S}_k|HC)$ en
+tiempo y memoria, no $O(n^2)$; los soportes se precalculan una vez por grafo
+como los patrones de no-ceros de $\Adj^{\,k}$. La Figura~\ref{fig:layer}
+muestra el flujo de datos y el Algoritmo~\ref{alg:wa} resume una capa.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[
+  >={Stealth[round]}, node distance=6mm,
+  box/.style={draw,rounded corners=2pt,minimum height=7mm,inner sep=3pt,font=\small,fill=blue!4},
+  alg/.style={draw,rounded corners=2pt,minimum height=7mm,inner sep=3pt,font=\small,fill=green!6},
+  lbl/.style={font=\scriptsize,gray}]
+  \node[box] (x) {$x$};
+  \node[box,right=8mm of x] (q) {$Q=xW_Q$};
+  \node[box,below=2mm of q] (k) {$K=xW_K$};
+  \node[box,below=2mm of k] (v) {$V=xW_V$};
+  \node[alg,right=10mm of k] (att)
+    {$\displaystyle \alpha_{ji}=\softmax_{i:(j,i)\in\mathcal{S}_k}\!\frac{\langle Q_j,K_i\rangle}{\sqrt C}$};
+  \node[box,right=10mm of att] (agg) {$z_j=\sum_i \alpha_{ji}V_i$};
+  \node[box,right=8mm of agg] (out) {$\mathrm{WA}_k(x)$};
+  \node[alg,below=8mm of att,fill=green!10] (supp)
+    {soporte $\mathcal{S}_k=\{(j,i):(\Adj^{\,k})_{ij}>0\}$};
+  \draw[->] (x) -- (q.west);
+  \draw[->] (x) |- (k.west);
+  \draw[->] (x) |- (v.west);
+  \draw[->] (q.east) -- (att.north west);
+  \draw[->] (k.east) -- (att.west);
+  \draw[->] (att.east) -- (agg.west);
+  \draw[->] (v.east) -- ([yshift=-2mm]agg.west);
+  \draw[->] (agg) -- (out);
+  \draw[->,green!50!black] (supp.north) -- (att.south)
+    node[midway,right,lbl,text=green!50!black] {restringe los pares};
+  \draw[->,rounded corners] (x.north) -- ++(0,6mm) -| (out.north)
+    node[pos=0.25,above,lbl] {raíz (residual)};
+\end{tikzpicture}
+\caption{Una capa de Walk Attention a alcance $k$. Consultas, claves y valores
+son mapas lineales de los atributos; la atención se calcula \emph{solo} sobre
+los pares alcanzables $\mathcal{S}_k$ que provee el álgebra de caminos (el
+patrón de no-ceros de $\Adj^{\,k}$), se agrega y se suma un término raíz
+residual. La caja verde del soporte distingue a Walk Attention de la atención
+densa (todos los pares) y de la de un salto (aristas).}
+\label{fig:layer}
+\end{figure}
+
+\begin{example}\label{ex:layer}
+En el diamante del Ejemplo~\ref{ex:diamond} a alcance $k=2$ el soporte es el
+único par $\mathcal{S}_2=\{(4,1)\}$: el nodo $4$ atiende directamente al nodo
+$1$, el softmax sobre un singulete da $\alpha_{41}=1$, y
+$\mathrm{WA}_2(x)_4=Vx_1+x_4W_{\!\text{root}}$---los dos recorridos paralelos
+se vuelven una interacción \emph{directa}. Si se añade una segunda fuente $1'$
+con flechas hacia $2$ y $3$, el soporte pasa a
+$\mathcal{S}_2=\{(4,1),(4,1')\}$: el softmax pondera ahora las dos fuentes por
+el ajuste de sus claves con la consulta $Qx_4$, de modo que el nodo $4$ lee
+ambas fuentes a alcance $2$ directamente \emph{y elige entre ellas}---mientras
+que una red de un salto debe empujar ambas señales por los vértices compartidos
+$2,3$: la compresión misma que el over-squashing nombra.
+\end{example}
+
+Una red de Walk Attention de profundidad $L$ apila una capa por alcance
+$k=1,\dots,L$, de modo que capas sucesivas leen recorridos progresivamente más
+largos; cada capa va seguida de normalización de capa, una no linealidad
+\textsc{elu} y dropout, y un MLP final mapea la incrustación a las salidas. La
+normalización de capa importa en la práctica: sin ella la atención aprendida
+tiene alta varianza entre inicializaciones; con ella, junto a un warmup corto y
+recorte de gradiente, el entrenamiento converge de forma confiable
+(Sección~\ref{sec:exp}).
+
+\begin{algorithm}[t]
+\caption{Capa de Walk Attention a alcance $k$ (dispersa).}\label{alg:wa}
+\begin{algorithmic}[1]
+\Require atributos $x\in\RR^{n\times d_{\text{in}}}$; soporte
+  $\mathcal{S}_k=\{(j,i):(\Adj^{\,k})_{ij}>0\}$
+\State $Q,K,V \gets xW_Q,\,xW_K,\,xW_V$ \Comment{por cabeza; formas $n\times HC$}
+\For{cada $(j,i)\in\mathcal{S}_k$ y cabeza $h$}
+  \State $\ell^h_{ji}\gets \langle Q^h_j,K^h_i\rangle/\sqrt{C}$
+\EndFor
+\State $\alpha^h_{ji}\gets$ $\softmax$ segmentado sobre $\{i:(j,i)\in\mathcal{S}_k\}$
+\State $z^h_j\gets \sum_i \alpha^h_{ji}V^h_i$ \Comment{scatter-add hacia los objetivos}
+\State \Return $\bigl\Vert_h z^h \;+\; xW_{\!\text{root}}$
+\end{algorithmic}
+\end{algorithm}
+
+La Tabla~\ref{tab:relation} sitúa a Walk Attention entre los operadores
+relacionados según los dos ejes de~\eqref{eq:attn-generic}: GAT aprende pesos
+pero propaga por $L$ capas apiladas---el régimen del over-squashing; un graph
+Transformer paga $O(n^2)$ y descarta la estructura; el operador de recorrido
+tiene el soporte correcto pero no selecciona. Walk Attention ocupa la celda
+restante.
+
+\begin{table}[t]
+\centering
+\caption{Walk Attention frente a operadores de agregación relacionados, según
+los dos ejes de~\eqref{eq:attn-generic}: soporte y pesos.}
+\label{tab:relation}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Operador} & \textbf{Soporte} & \textbf{Pesos} & \textbf{Costo} \\
+\midrule
+GCN / paso de mensajes       & 1 salto      & fijos (grado) & $O(|Q_1|)$ \\
+Atención sobre grafos (GAT)  & 1 salto      & aprendidos    & $O(|Q_1|)$ \\
+Operador de recorrido $W^{(k)}$ & alcanzable por recorridos & fijos (multiplicidad) & $O(|\mathcal{S}_k|)$ \\
+Transformer de grafo         & todos los pares & aprendidos & $O(n^2)$ \\
+\textbf{Walk Attention (nuestra)} & \textbf{alcanzable por recorridos} & \textbf{aprendidos} & $O(|\mathcal{S}_k|)$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ---------------------------------------------------------------------
+\subsection{Un tratamiento formal sobre la familia de cuellos de botella}
+\label{sec:theory}
+% ---------------------------------------------------------------------
+
+Sobre la familia de cadenas con cuello de botella de la Sección~\ref{sec:exp},
+la separación entre el paso de mensajes de un salto y Walk Attention se puede
+\emph{demostrar}, no solo medir. La construcción: $K$ fuentes llevan una
+\emph{clave} one-hot---la asignación de claves es una permutación aleatoria
+uniforme $\pi$---y un \emph{valor} one-hot; siguen $d$ capas de cuello de
+botella $L_1,\dots,L_d$ de $M$ vértices intercambiables y sin atributos, con
+capas consecutivas totalmente conectadas; un objetivo lleva una \emph{consulta}
+one-hot $q$ y debe producir el valor de la fuente cuya clave es $q$ (etiqueta
+$\pi^{-1}(q)$, azar $1/K$). Las redes tienen la profundidad estándar $L=d+1$
+(una capa por salto, como en \cite{alon2021bottleneck}) y ancho oculto $w$.
+
+\begin{proposition}\label{prop:collapse}
+Para toda red de paso de mensajes cuya actualización
+$h_v'=U\bigl(h_v,\mathrm{AGG}\{h_u:u\to v\}\bigr)$ se comparte entre vértices:
+tras cada ronda, los $M$ vértices de cada capa de cuello de botella llevan
+estados idénticos. Por tanto toda la influencia de las fuentes sobre el
+objetivo pasa por un único estado $w$-dimensional por capa---mientras que
+$KM^{d}$ recorridos la transportan (Proposición~\ref{prop:count}).
+\end{proposition}
+
+\begin{proof}
+Inducción sobre la ronda: los vértices de una capa empiezan iguales (atributos
+cero) y comparten su multiconjunto de entrada (todas las fuentes para $L_1$,
+todo $L_{r-1}$ para $L_r$), así que $U$ y $\mathrm{AGG}$ compartidos los
+mantienen iguales. \qed
+\end{proof}
+
+\begin{proposition}\label{prop:blind}
+Si además los mensajes son lineales en el estado del emisor con coeficientes
+independientes del contenido---como en GCN y GIN---entonces, con $L=d+1$ capas,
+la salida del objetivo depende de las fuentes solo a través de $\sum_s x_s$,
+que es la misma para toda $\pi$: las claves one-hot de una permutación suman el
+vector de unos. La precisión esperada es exactamente $1/K$ para todo $d$, $w$ y
+parámetros.
+\end{proposition}
+
+\begin{proof}
+La información de las fuentes que entra a $L_1$ en la ronda $t$ necesita $d$
+saltos más, llegando al objetivo en la ronda $t+d\le d+1$ solo si $t\le1$; en
+la ronda $1$ el mensaje de la fuente $s$ es un mapa lineal fijo del atributo
+crudo $x_s$ con un coeficiente compartido (las fuentes son isomorfas en el
+grafo), así que el estado de $L_1$ es función de $\sum_s x_s$, cuyos bloques de
+clave y de valor son independientes de $\pi$. Dada $q$, la etiqueta
+$\pi^{-1}(q)$ es uniforme, así que toda predicción independiente de $\pi$
+acierta $1/K$. \qed
+\end{proof}
+
+\begin{proposition}\label{prop:wa}
+A alcance $k=d+1$ el soporte del objetivo es exactamente las $K$ fuentes (el
+grafo es graduado; Proposición~\ref{prop:fns}). Con $W_Q$ proyectando la
+casilla de consulta escalada por cualquier $\beta>0$, $W_K$ la casilla de
+clave, $W_V$ la casilla de valor y $W_{\!\text{root}}=0$, la salida
+$z_t=\sum_s\alpha_s e_{v(s)}$ de una sola capa de Walk Attention tiene su mayor
+entrada en el valor correcto, en toda instancia, para todos $d$ y $M$.
+\end{proposition}
+
+\begin{proof}
+El logit de la fuente $s$ es $\beta\,\mathbf{1}[\pi(s)=q]$, así que el softmax
+pone su mayor peso $e^{\beta}/(e^{\beta}+K-1)$ en la única coincidencia
+$s^\ast$; siendo los valores vectores distintos de la base, la mayor coordenada
+de $z_t$ es $\alpha_{s^\ast}$, en $v(s^\ast)=\pi^{-1}(q)$. \qed
+\end{proof}
+
+\begin{example}\label{ex:blind}
+Tómese $K=2$, $M=2$, $d=1$ y profundidad $L=2$. Las dos asignaciones de claves,
+$\pi=\mathrm{id}$ y el intercambio, producen la \emph{misma} suma de fuentes
+$\sum_s x_s$ (bloques de clave y de valor ambos $(1,1)$), así que por la
+Proposición~\ref{prop:blind} una GCN o GIN calcula salidas idénticas en las dos
+instancias---cuyas etiquetas difieren: precisión $1/2$, azar. Una capa de Walk
+Attention a alcance $2$ atiende sobre $\{s_1,s_2\}$ con logits
+$\beta\langle e_q,e_{\pi(s)}\rangle$, que distinguen las instancias desde la
+primera multiplicación y seleccionan la fuente coincidente
+(Proposición~\ref{prop:wa}).
+\end{example}
+
+\begin{remark}\label{rem:mechanisms}
+Las proposiciones delimitan los mecanismos observados en la
+Sección~\ref{sec:exp}. GAT escapa a la Proposición~\ref{prop:blind}---sus
+coeficientes de la primera ronda dependen del contenido---pero debe hacer pasar
+la asociación clave--valor por el canal de un solo vector de la
+Proposición~\ref{prop:collapse}, re-codificado $d+1$ veces: queda por encima
+del azar y se degrada con la profundidad. El operador de pesos fijos lee las
+fuentes directamente pero con pesos \emph{iguales} (todas las multiplicidades
+valen $M^d$), así que debe incrustar el multiconjunto completo en $w$
+dimensiones en vez de seleccionar: se estanca entre ambos. Walk Attention lee
+directamente \emph{y} selecciona (Proposición~\ref{prop:wa}), y resuelve la
+tarea.
+\end{remark}
+
+% =====================================================================
+\section{Experimentos}\label{sec:exp}
+% =====================================================================
+
+Evaluamos sobre una familia controlada con over-squashing severo y ajustable, y
+luego sobre dos benchmarks externos. Todo el código, las configuraciones y los
+registros se publican \cite{repo_walkattention}.
+
+\paragraph{Recuperación en cadena con cuello de botella.}
+Instanciamos la familia de la Sección~\ref{sec:theory} con $K{=}5$, $M{=}4$ y
+profundidades $d\in\{2,3\}$: la multiplicidad hacia el objetivo es $KM^d$
+(Proposición~\ref{prop:count}), mientras que el soporte más profundo consta
+solo de los $K$ pares fuente--objetivo ($5/196\approx2.6\%$ de los pares a
+$d{=}2$, $5/324\approx1.5\%$ a $d{=}3$). Todos los modelos usan ancho $16$,
+cuatro cabezas cuando corresponde, $d{+}1$ capas/alcances y AdamW con warmup de
+diez épocas, decaimiento coseno y recorte de gradiente; Walk Attention añade
+normalización de capa. Reportamos precisión de validación en el objetivo (la
+tarea sintética no tiene partición de prueba separada), media $\pm$ desviación
+sobre cinco semillas. La Tabla~\ref{tab:main} cae exactamente donde las
+Proposiciones~\ref{prop:collapse}--\ref{prop:wa} la sitúan
+(Observación~\ref{rem:mechanisms}): GCN y GIN quedan clavados en el azar y allí
+se quedan empíricamente; GAT se degrada abruptamente con la profundidad; el
+operador de recorrido cruza el cuello en un paso pero no puede seleccionar la
+fuente coincidente y se estanca; \textbf{Walk Attention resuelve la tarea
+exactamente} en ambas profundidades y todas las semillas. Sin normalización de
+capa ni warmup su precisión osciló entre $0.44$ y $1.00$ según la semilla; los
+estabilizadores eliminan la varianza por completo---un artefacto de
+optimización, no una propiedad del operador.
+
+\begin{table}[t]
+\centering
+\caption{Precisión en el objetivo (media $\pm$ desv.\ sobre 5 semillas) en la
+recuperación con cuello de botella, $K{=}5$, $M{=}4$; azar $1/K=0.20$; la
+respuesta está a $d{+}1$ saltos. GCN/GIN quedan en el azar como exige la
+Proposición~\ref{prop:blind} (el residuo es sesgo de mejor época).}
+\label{tab:main}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Model} & \textbf{depth $d=2$} & \textbf{depth $d=3$} \\
+\midrule
+GCN (one-hop, linear aggregation)  & $0.21\pm0.01$ & $0.22\pm0.01$ \\
+GIN (one-hop, linear aggregation)  & $0.21\pm0.01$ & $0.21\pm0.01$ \\
+GAT (one-hop attention)            & $0.45\pm0.22$ & $0.29\pm0.17$ \\
+Walk operator (fixed weights)      & $0.62\pm0.12$ & $0.50\pm0.12$ \\
+\textbf{Walk Attention (ours)}     & $\mathbf{1.000\pm0.000}$ & $\mathbf{1.000\pm0.000}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{RingTransfer.}
+Para confirmar el efecto en un benchmark independiente usamos
+\textsc{RingTransfer}
+\cite{digiovanni2023oversquashing}: un ciclo de $n$ nodos donde una fuente debe
+transmitir su etiqueta one-hot (cinco clases, azar $0.2$) al objetivo
+diametralmente opuesto, a $n/2$ saltos por los \emph{dos arcos} del anillo.
+Cada nodo tiene dos vecinos, así que el número de recorridos de longitud $n/2$
+que entran al objetivo---lo que una red de un salto debe comprimir tras $n/2$
+capas---crece como $2^{n/2}$, mientras solo los dos arcos portan la señal.
+Todos los modelos usan ancho $32$, la misma receta de optimización y $n/2$
+capas/alcances. La Tabla~\ref{tab:ring} reporta los resultados: los anillos
+pequeños son fáciles para todos; desde $n{=}14$ (distancia $7$) las líneas base
+de un salto se degradan y se vuelven muy dependientes de la semilla---en
+$n{=}18$ GAT cae a $0.29\pm0.19$ y GCN a $0.53\pm0.33$---mientras
+\textbf{Walk Attention se mantiene en $1.000\pm0.000$}. La brecha se amplía con
+el tamaño del anillo, esto es, con la severidad del over-squashing, como se
+predijo.
+
+\begin{table}[t]
+\centering
+\caption{Precisión en \textsc{RingTransfer} frente al tamaño $n$ (distancia
+$n/2$), media $\pm$ desv.\ sobre 5 semillas; azar $0.20$.}
+\label{tab:ring}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Model} & $n{=}6$ & $n{=}10$ & $n{=}14$ & $n{=}18$ \\
+\midrule
+GCN                    & $1.00\pm0.00$ & $1.00\pm0.00$ & $0.81\pm0.13$ & $0.53\pm0.33$ \\
+GAT                    & $1.00\pm0.00$ & $1.00\pm0.00$ & $0.69\pm0.29$ & $0.29\pm0.19$ \\
+\textbf{Walk Attention (ours)} & $\mathbf{1.00\pm0.00}$ & $\mathbf{1.00\pm0.00}$ & $\mathbf{1.00\pm0.00}$ & $\mathbf{1.00\pm0.00}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Colapsar recorridos perjudica.}
+El cociente $\kQ/I$ de la Sección~\ref{sec:algebra} sugiere un remedio
+alternativo: reemplazar las multiplicidades $n_k(i,j)$ por las dimensiones
+menores del cociente, deduplicando recorridos equivalentes antes de agregar.
+Comparamos ambos operadores en una ablación que cambia \emph{únicamente} el
+operador, con datos, arquitectura y receta de la Tabla~\ref{tab:main} fijos. La
+Tabla~\ref{tab:quotient} muestra al cociente claramente por debajo del operador
+crudo en ambas profundidades: colapsar recorridos paralelos descarta la
+multiplicidad de fuentes que la recuperación necesita. En este régimen los
+caminos redundantes son \emph{señal}, no ruido; la contribución del álgebra es
+el soporte, no la compresión. Si existe un régimen donde la compresión del
+cociente ayude---caminos paralelos genuinamente redundantes, o clases de
+caminos enrutadas a cabezas distintas---queda abierto.
+
+\begin{table}[t]
+\centering
+\caption{Deduplicar recorridos vía $\kQ/I$ \emph{perjudica}: media $\pm$ desv.\
+sobre 5 semillas, mismo protocolo de la Tabla~\ref{tab:main} (la fila del
+operador coincide).}
+\label{tab:quotient}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Operator} & \textbf{depth $d=2$} & \textbf{depth $d=3$} \\
+\midrule
+Quotient $\kQ/I$ (collapsed walks) & $0.39\pm0.04$ & $0.30\pm0.09$ \\
+Walk operator (raw walks)          & $\mathbf{0.62\pm0.12}$ & $\mathbf{0.50\pm0.12}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{LRGB Peptides-func.}
+Para evaluar con datos reales usamos Peptides-func \cite{dwivedi2022lrgb}
+($10{,}873/2{,}331/2{,}331$ grafos moleculares, mediana $138$ nodos;
+clasificación multietiqueta, Average Precision de prueba), con el mismo
+embedding de átomos, cuatro capas, ancho $80$, pooling de media y AdamW para
+todos los modelos; Walk Attention usa alcances $k=1,\dots,4$, cuyo soporte
+sigue disperso ($1$--$8\%$ de $n^2$ a alcance $3$). Tabla~\ref{tab:lrgb}: Walk
+Attention supera a GCN y es estadísticamente indistinguible de GAT
+($0.526\pm0.007$ frente a $0.526\pm0.004$ sobre cuatro semillas). Dos
+salvedades enmarcan la comparación. Primera, todos los modelos comparten un
+presupuesto deliberadamente pequeño, así que los números absolutos quedan por
+debajo de los publicados (GCN $0.593$ bajo el protocolo afinado de $500$k
+parámetros \cite{dwivedi2022lrgb}, mayores aún en re-evaluaciones
+\cite{tonshoff2023where}): la comparación es \emph{interna}, aislando el
+operador de agregación. Segunda, el empate no se debe a la ausencia de caminos
+paralelos (los péptidos contienen cientos de pares unidos por varios recorridos
+cortos) sino a que el over-squashing es \emph{leve} en estos grafos pequeños.
+La ventaja del soporte multi-salto es por tanto \emph{dependiente del régimen}:
+decisiva cuando el squashing es severo
+(Tablas~\ref{tab:main}--\ref{tab:ring}), modesta cuando es leve, a alrededor de
+$1.6\times$ el tiempo de pared de GAT---muy por debajo de la atención densa.
+
+\begin{table}[t]
+\centering
+\caption{LRGB Peptides-func, AP de prueba (media $\pm$ desv.\ sobre 4
+semillas), presupuesto pequeño compartido que aísla el operador; los resultados
+publicados bajo el protocolo estándar de $500$k son mayores para toda
+arquitectura \cite{dwivedi2022lrgb,tonshoff2023where}.}
+\label{tab:lrgb}
+\begin{tabular}{lc}
+\toprule
+\textbf{Model} & \textbf{test AP} \\
+\midrule
+GCN                          & $0.492\pm0.011$ \\
+GAT                          & $0.526\pm0.004$ \\
+Walk Attention (ours)        & $0.526\pm0.007$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% =====================================================================
+\section{Conclusión y Trabajo Futuro}\label{sec:conclusion}
+% =====================================================================
+
+Introdujimos Walk Attention, una arquitectura que mitiga el over-squashing
+atendiendo sobre un soporte multi-salto provisto por el álgebra de caminos del
+quiver subyacente. La Proposición~\ref{prop:count} da el soporte y sus
+multiplicidades exactamente; las
+Proposiciones~\ref{prop:collapse}--\ref{prop:wa} demuestran la separación en la
+familia de cuellos de botella---el paso de mensajes con primera agregación
+lineal queda en el azar para toda profundidad y ancho, mientras una capa de
+Walk Attention en el alcance adecuado es exacta---y los experimentos la
+confirman, con ventaja dependiente del régimen en \textsc{RingTransfer} y
+Peptides-func. Un resultado negativo complementario mostró que comprimir
+recorridos equivalentes vía el cociente es contraproducente cuando la
+multiplicidad porta señal: el papel del álgebra es determinar el soporte de la
+atención, no descartar información. La construcción es deliberadamente
+elemental y autocontenida, una puerta de entrada de la teoría de
+representaciones de quivers al aprendizaje de representaciones en grafos; es la
+lectura aprendida de un sustrato común cuya lectura dinámica es el marco AIQ
+\cite{zainea2026aiq}. Siguen varias direcciones.
+
+\begin{itemize}
+  \item \textbf{De los pesos aprendidos a la dinámica.} Inyectar los pesos de
+  atención aprendidos en un AIQ como regla de evolución guiada por datos, y
+  recíprocamente dejar que los análisis de estabilidad del AIQ interpreten lo
+  aprendido---para nosotros el puente más prometedor.
+  \item \textbf{Benchmarks con over-squashing severo.} Tareas reales de largo
+  alcance con cuellos de botella agudos, comparadas contra rewiring
+  \cite{topping2022understanding}, métodos multi-salto \cite{gutteridge2023drew}
+  y graph Transformers.
+  \item \textbf{Soportes con forma de cociente.} Usar $\kQ/I$ para
+  \emph{particionar} los recorridos en clases enrutadas a cabezas de atención
+  distintas, en lugar de comprimir; identificar qué relaciones $I$ sirven, y
+  aprenderlas de los datos, es un problema atractivo.
+  \item \textbf{Escalar el soporte.} Truncar, muestrear o aprender soportes
+  admisibles más dispersos en grafos densos, donde el soporte de alcance $k$
+  puede crecer.
+\end{itemize}
+
+\subsubsection*{Reproducibilidad.}
+Los generadores de grafos, los operadores de recorrido, la capa Walk Attention,
+las líneas base y los registros de experimentos se publican
+\cite{repo_walkattention}; los cálculos del álgebra usan la biblioteca abierta
+\texttt{aiq-quivers} \cite{repo_aiqquivers}.
+
+% =====================================================================
+\bibliographystyle{splncs04}
+\bibliography{walk_attention}
+% =====================================================================
+
+\end{document}
