@@ -47,12 +47,16 @@ whose graded components give an exact, algebraic description of multi-hop
 reachability. We use this structure to define a sparse, multi-hop attention: the
 path algebra supplies the attention \emph{support} (which vertices a node reaches
 by a length-$k$ walk) and the network learns the \emph{weights}. On bottleneck
-graphs with tunable over-squashing, Walk Attention reaches $1.000\pm0.000$
-accuracy over five seeds where one-hop graph attention collapses to chance and a
-fixed-weight aggregator only partially succeeds; it stays exact on the standard
-\textsc{RingTransfer} probe and is competitive on the real-world Peptides-func
-benchmark---an advantage that is decisive when over-squashing is severe and
-comparable to one-hop attention when it is mild. A negative result motivates the
+graphs with tunable over-squashing we prove the separation---message passing
+with linear aggregation is at exactly chance accuracy for every depth and
+width, while a single Walk Attention layer at the matching range solves the
+retrieval task exactly---and confirm it empirically: Walk Attention reaches
+$1.000\pm0.000$ accuracy over five seeds where one-hop graph attention degrades
+toward chance and a fixed-weight aggregator only partially succeeds; it stays
+exact on the standard \textsc{RingTransfer} probe and, under a shared small
+training budget, is comparable to one-hop attention on the real-world
+Peptides-func benchmark---its advantage is decisive when over-squashing is
+severe and modest when it is mild. A negative result motivates the
 design: using the path-algebra \emph{quotient} to collapse equivalent walks
 discards multiplicity the task needs and fails, so the algebra is valuable not for
 compression but as the object that \emph{defines the attention support}.
@@ -92,7 +96,7 @@ In this paper we take a different route, grounded in the representation theory o
 quivers. A \emph{quiver} is a directed graph, possibly with multiple arrows
 \cite{schiffler2014quiver,assem2006elements}, and its \emph{path algebra} $\kQ$
 has the directed walks of the quiver as a basis, with concatenation as
-multiplication. The graded piece $e_i \cdot \kQ_k \cdot e_j$ of this algebra has
+multiplication. The graded piece $e_j \cdot \kQ_k \cdot e_i$ of this algebra has
 a basis consisting of the directed walks of length~$k$ from vertex~$i$ to
 vertex~$j$; its dimension equals $(\Adj^k)_{ij}$, the corresponding entry of the
 $k$-th power of the adjacency matrix. The path algebra therefore provides an
@@ -123,13 +127,19 @@ automata-of-impact-over-quivers framework \cite{zainea2026aiq}.
   \item We define \textbf{Walk Attention} (Section~\ref{sec:model}): a learned
   multi-hop attention whose support is the path-algebra walk-reachability
   structure, and we relate it to message passing and to Transformer attention.
+  \item We \emph{prove} the separation on the bottleneck family
+  (Section~\ref{sec:theory}): with the standard one-layer-per-hop depth, any
+  message-passing network whose first aggregation is linear in the source
+  features (GCN, GIN) has exactly chance accuracy for every depth, width, and
+  parameter setting, whereas a single Walk Attention layer at the matching
+  range solves the retrieval task exactly.
   \item On a controlled bottleneck family with tunable over-squashing
   (Section~\ref{sec:exp}), Walk Attention attains $1.000\pm0.000$ accuracy over
-  five seeds where one-hop graph attention collapses to chance and a fixed-weight
-  multi-hop aggregator only partially succeeds; on the real Peptides-func
-  benchmark it is competitive with strong baselines, so its advantage is
-  regime-dependent (decisive under severe over-squashing, comparable to one-hop
-  attention when it is mild).
+  five seeds where one-hop graph attention degrades toward chance and a
+  fixed-weight multi-hop aggregator only partially succeeds; on the real
+  Peptides-func benchmark, under a shared small training budget, it is
+  comparable to one-hop attention, so its advantage is regime-dependent
+  (decisive under severe over-squashing, modest when it is mild).
   \item We report a \emph{negative} result that sharpens the design: collapsing
   equivalent walks via the path-algebra \emph{quotient} discards needed
   multiplicity and fails. The quotient's role is to \emph{determine} the support, not
@@ -160,6 +170,23 @@ Walk Attention is intermediate between the two: it is attention, but its support
 is the sparse multi-hop walk-reachability of the quiver rather than one hop or all
 pairs.
 
+\paragraph{Multi-hop aggregation and attention.}
+Aggregating beyond one hop is well explored: MixHop \cite{abu2019mixhop} and
+SIGN \cite{frasca2020sign} mix fixed powers of (normalised) adjacency operators,
+graph diffusion convolution \cite{gasteiger2019diffusion} rewires by a diffusion
+kernel, MAGNA \cite{wang2021magna} diffuses attention scores over multiple hops,
+shortest-path message passing aggregates over $k$-hop distance shells
+\cite{abboud2022shortest}, NAGphormer \cite{chen2023nagphormer} tokenises
+hop-wise aggregates for a Transformer, Graphormer \cite{ying2021graphormer}
+biases dense attention by shortest-path distance, and DRew
+\cite{gutteridge2023drew} rewires message passing dynamically with delay. Walk
+Attention differs in the object that defines the support: the graded piece of
+the path algebra---directed \emph{walks} with their multiplicity, not distance
+shells or diffusion weights---which makes the support exact
+(Proposition~\ref{prop:count}), exposes the quotient $\kQ/I$ as a design degree
+of freedom (Section~\ref{sec:exp}), and embeds the architecture in the
+representation theory of quivers (Section~\ref{sec:ground}).
+
 \paragraph{Path and walk structure.}
 Path-counting and powers of the adjacency matrix are classical, and the path
 algebra of a quiver is a standard object in representation theory
@@ -170,8 +197,10 @@ and applied problems by Moreno Ca\~nadas and collaborators
 impact-degree neighbourhood system and the automata-of-impact-over-quivers
 framework \cite{zainea2026aiq,ibanez2025casimulations}, which we take as the
 dynamical sibling of Walk Attention over the same algebraic substrate
-(Section~\ref{sec:ground}). To our knowledge, the use of the graded path algebra
-to define the \emph{support} of a learned multi-hop graph attention is new.
+(Section~\ref{sec:ground}). Attention over multi-hop supports is thus not new in
+itself; what is new, to our knowledge, is taking the support from the
+\emph{graded path algebra} of the quiver, with its multiplicities, its quotient,
+and its dynamical (automata) reading.
 
 \input{sections/algebra}
 \input{sections/model}

@@ -24,7 +24,8 @@ $n_{d+1}(\cdot,\text{target})\sim K\,M^{d}$
 (Proposition~\ref{prop:count}); a message-passing GNN must compress all of them
 into the target's fixed-width vector. The walk-reachability support, by contrast,
 remains sparse: at the deepest range it consists of only the $K$ source--target
-pairs, about $2\%$ of all node pairs in our configuration.
+pairs ($5/196\approx2.6\%$ of all node pairs at depth $2$ and
+$5/324\approx1.5\%$ at depth $3$ in our configuration).
 
 \paragraph{Task.}
 Each source carries a one-hot \emph{key} and a scalar \emph{payload}; the target
@@ -47,16 +48,21 @@ All models use hidden width $16$, four heads where applicable, and $d{+}1$
 layers/ranges. We train with AdamW, a ten-epoch linear learning-rate warmup
 followed by cosine decay, and gradient clipping; Walk Attention additionally uses
 layer normalisation after each layer. We report mean and standard deviation of
-target accuracy over five random seeds, at problem depths $d\in\{2,3\}$ with
+target accuracy on a held-out validation split (the synthetic task has no
+separate test set) over five random seeds, at problem depths $d\in\{2,3\}$ with
 $K=5$, $M=4$.
 
 % ---------------------------------------------------------------------
 \subsection{Main result}
 % ---------------------------------------------------------------------
 
-Table~\ref{tab:main} reports the results. One-hop GAT degrades to near chance
-($0.26$--$0.44$): a local operator cannot propagate the signal across the
-bottleneck under over-squashing. The fixed-weight walk operator reaches the
+Table~\ref{tab:main} reports the results, which land exactly where
+Propositions~\ref{prop:collapse}--\ref{prop:wa} put them
+(Remark~\ref{rem:mechanisms}). One-hop GAT degrades sharply with depth,
+approaching chance: a local operator cannot propagate the signal across the
+bottleneck under over-squashing. GCN and GIN, whose first aggregation is
+linear, are pinned at chance by Proposition~\ref{prop:blind}---and sit there
+empirically at every depth. The fixed-weight walk operator reaches the
 target---its multi-hop support spans the bottleneck in a single layer---but,
 weighting all reachable sources by multiplicity alone, it cannot select the
 matching source and plateaus at $0.50$--$0.62$. \textbf{Walk Attention solves the
@@ -68,13 +74,18 @@ target attend selectively to the relevant source.
 \centering
 \caption{Target accuracy (mean $\pm$ std over 5 seeds) on bottleneck-chain
 retrieval, $K{=}5$, $M{=}4$. Chance is $1/K=0.20$. Depth $d$ is the number of
-bottleneck layers; the answer lies $d{+}1$ hops away.}
+bottleneck layers; the answer lies $d{+}1$ hops away. GCN and GIN sit at
+chance, as Proposition~\ref{prop:blind} mandates (the residual
+$+0.01$--$0.02$ over $1/K$ is best-epoch selection on a finite validation
+split).}
 \label{tab:main}
 \begin{tabular}{lcc}
 \toprule
 \textbf{Model} & \textbf{depth $d=2$} & \textbf{depth $d=3$} \\
 \midrule
-GAT (one-hop attention)            & $0.44\pm0.12$ & $0.26\pm0.10$ \\
+GCN (one-hop, linear aggregation)  & $0.21\pm0.01$ & $0.22\pm0.01$ \\
+GIN (one-hop, linear aggregation)  & $0.21\pm0.01$ & $0.21\pm0.01$ \\
+GAT (one-hop attention)            & $0.45\pm0.22$ & $0.29\pm0.17$ \\
 Walk operator (fixed weights)      & $0.62\pm0.12$ & $0.50\pm0.12$ \\
 \textbf{Walk Attention (ours)}     & $\mathbf{1.000\pm0.000}$ & $\mathbf{1.000\pm0.000}$ \\
 \bottomrule
@@ -99,32 +110,36 @@ The bottleneck family is our own construction. To confirm the effect on an
 transmit its one-hot label to the diametrically opposite target. The
 parallel-path structure is explicit: the source reaches the target along the
 \emph{two arcs} of the ring, two paths of equal length $n/2$. Over-squashing is
-severe and tunable, since the number of length-$(n/2)$ walks into the target
-grows as $4^{\,n/2}$ with the ring size. The task requires $n/2$ hops, so a
-one-hop model requires $n/2$ layers. We use five classes (chance $0.2$), the same
-width and training procedure as above, and $n/2$ layers/ranges for all models.
+severe and tunable: every node has two neighbours, so the number of
+length-$(n/2)$ walks entering the target---the messages a one-hop network must
+compress after $n/2$ layers---grows as $2^{\,n/2}$ with the ring size, while
+only the two arc walks carry the signal. The task requires $n/2$ hops, so a
+one-hop model requires $n/2$ layers. We use five classes (chance $0.2$), hidden
+width $32$, the same optimiser recipe as above (AdamW, linear warmup, cosine
+decay, gradient clipping), and $n/2$ layers/ranges for all models.
 
 Table~\ref{tab:ring} reports the results. On small rings ($n\le 10$, distance
 $\le 5$) every model succeeds, as the squashing is not yet severe. From $n=14$
-(distance $7$) onward the one-hop baselines degrade---GCN and GAT fall to
-$0.25$--$0.60$---while \textbf{Walk Attention remains at $1.000$ throughout}: its
-multi-hop support aggregates the source directly along either arc, and the
-learned weights identify the labelled source. The gap widens with ring size,
-i.e.\ with the severity of over-squashing, as predicted.
+(distance $7$) onward the one-hop baselines degrade and become highly
+seed-dependent---at $n=18$ GAT falls to $0.29\pm0.19$ and GCN to
+$0.53\pm0.33$---while \textbf{Walk Attention remains at $1.000\pm0.000$
+throughout}: its multi-hop support aggregates the source directly along either
+arc, and the learned weights identify the labelled source. The gap widens with
+ring size, i.e.\ with the severity of over-squashing, as predicted.
 
 \begin{table}[t]
 \centering
-\caption{\textsc{RingTransfer} accuracy vs.\ ring size $n$ (distance $n/2$);
-chance $=0.20$. One-hop GCN/GAT collapse as the ring---and thus the
-over-squashing---grows, while Walk Attention stays exact.}
+\caption{\textsc{RingTransfer} accuracy vs.\ ring size $n$ (distance $n/2$),
+mean $\pm$ std over 5 seeds; chance $=0.20$. One-hop GCN/GAT collapse as the
+ring---and thus the over-squashing---grows, while Walk Attention stays exact.}
 \label{tab:ring}
 \begin{tabular}{lcccc}
 \toprule
 \textbf{Model} & $n{=}6$ & $n{=}10$ & $n{=}14$ & $n{=}18$ \\
 \midrule
-GCN                    & $1.00$ & $1.00$ & $0.25$ & $0.59$ \\
-GAT                    & $1.00$ & $1.00$ & $0.43$ & $0.60$ \\
-\textbf{Walk Attention (ours)} & $\mathbf{1.00}$ & $\mathbf{1.00}$ & $\mathbf{1.00}$ & $\mathbf{1.00}$ \\
+GCN                    & $1.00\pm0.00$ & $1.00\pm0.00$ & $0.81\pm0.13$ & $0.53\pm0.33$ \\
+GAT                    & $1.00\pm0.00$ & $1.00\pm0.00$ & $0.69\pm0.29$ & $0.29\pm0.19$ \\
+\textbf{Walk Attention (ours)} & $\mathbf{1.00\pm0.00}$ & $\mathbf{1.00\pm0.00}$ & $\mathbf{1.00\pm0.00}$ & $\mathbf{1.00\pm0.00}$ \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -138,28 +153,27 @@ alternative remedy: replace the walk multiplicities $n_k(i,j)$ by the smaller
 quotient dimensions $\dim(e_j(\kQ/I)_k e_i)$, de-duplicating equivalent walks
 before aggregation. We implemented this (the fixed-weight operator built from the
 quotient dimensions) and compared it to the unquotiented walk operator on the
-same task, in a separate controlled ablation that changes \emph{only} the
-operator (quotient vs.\ raw) and holds everything else fixed. As
-Table~\ref{tab:quotient} shows, \textbf{the quotient operator underperforms the
-raw one}: collapsing parallel walks discards the source multiplicity that the
-retrieval task needs. In this regime redundant paths are \emph{signal}, not
+same task, in a controlled ablation that changes \emph{only} the operator
+(quotient vs.\ raw) and holds everything else---data, architecture, and the
+optimiser recipe of Table~\ref{tab:main}---fixed. As Table~\ref{tab:quotient}
+shows, \textbf{the quotient operator falls clearly below the raw one at both
+depths}. Collapsing parallel walks discards the source multiplicity that the
+retrieval task needs: in this regime redundant paths are \emph{signal}, not
 noise, and removing them removes information.
 
 \begin{table}[t]
 \centering
 \caption{De-duplicating walks via the quotient $\kQ/I$ \emph{hurts}: target
-accuracy (mean over 3 seeds), bottleneck retrieval. This is a separate ablation
-(3 seeds, without the stabilisers of Table~\ref{tab:main}) that isolates the
-operator change, so the walk-operator column is not directly comparable to
-Table~\ref{tab:main}; what matters here is the within-row gap: the quotient
-operator is consistently below the unquotiented one.}
+accuracy (mean $\pm$ std over 5 seeds), bottleneck retrieval, under the same
+protocol as Table~\ref{tab:main} (the walk-operator row coincides with it). The
+quotient operator is clearly below the unquotiented one at both depths.}
 \label{tab:quotient}
 \begin{tabular}{lcc}
 \toprule
 \textbf{Operator} & \textbf{depth $d=2$} & \textbf{depth $d=3$} \\
 \midrule
-Quotient $\kQ/I$ (collapsed walks) & $0.47$ & $0.52$ \\
-Walk operator (raw walks)          & $\mathbf{0.64}$ & $\mathbf{0.53}$ \\
+Quotient $\kQ/I$ (collapsed walks) & $0.39\pm0.04$ & $0.30\pm0.09$ \\
+Walk operator (raw walks)          & $\mathbf{0.62\pm0.12}$ & $\mathbf{0.50\pm0.12}$ \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -186,9 +200,17 @@ pooling and AdamW for every model; Walk Attention uses ranges $k=1,\dots,4$ with
 the walk-reachability support of each molecule. On these graphs the support stays
 sparse ($1$--$8\%$ of $n^2$ at range $3$), so the method remains cheap.
 
-Table~\ref{tab:lrgb} reports test AP. \textbf{Walk Attention is competitive with
-the strong baselines but does not surpass them here}: it exceeds GCN and is
-statistically indistinguishable from GAT. The result is not explained by an
+Table~\ref{tab:lrgb} reports test AP. \textbf{Walk Attention is comparable to
+the one-hop baselines but does not surpass them here}: it exceeds GCN and is
+statistically indistinguishable from GAT ($0.526\pm0.007$ vs.\ $0.526\pm0.004$
+over four seeds). Two caveats frame this comparison. First, all models share a
+deliberately small budget (four layers, width $80$, no positional encodings, a
+short schedule), so our absolute numbers are below published results for this
+benchmark---the LRGB paper reports GCN at $0.593$ under its tuned
+$500$k-parameter protocol \cite{dwivedi2022lrgb}, and subsequent re-evaluations
+are higher still \cite{tonshoff2023where}; the comparison is therefore
+\emph{internal}, isolating the aggregation operator under an identical protocol,
+not a claim against the state of the art. Second, the result is not explained by an
 absence of parallel paths: peptide graphs contain rings and branches, and a
 typical molecule has hundreds of vertex pairs joined by $\ge 2$ walks of length
 $\le 4$ (which the quotient ideal would collapse). Rather, the over-squashing is
@@ -199,22 +221,26 @@ is decisive under severe over-squashing yields little benefit when the squashing
 is mild. Walk Attention's advantage is therefore \emph{regime-dependent}---large
 when the squashing is severe (Tables~\ref{tab:main} and~\ref{tab:ring}), and
 comparable to one-hop attention when it is mild---while on real data the operator
-continues to train stably and remains computationally cheap.
+continues to train stably at moderate cost (about $1.6\times$ the wall-clock of
+one-hop GAT, averaged over seeds, far below dense all-pairs attention).
 
 \begin{table}[t]
 \centering
-\caption{LRGB Peptides-func, test Average Precision (higher is better). Walk
-Attention is competitive with GAT and above GCN; on this mild-over-squashing
-benchmark the multi-hop support yields no decisive gain (contrast
-Table~\ref{tab:main}).}
+\caption{LRGB Peptides-func, test Average Precision (mean $\pm$ std over 4
+seeds; higher is better), under a shared small budget (four layers, width $80$,
+no positional encodings) that isolates the aggregation operator; published
+results under the standard tuned $500$k-parameter protocol are higher for every
+architecture \cite{dwivedi2022lrgb,tonshoff2023where}. Walk Attention ties GAT
+and exceeds GCN; on this mild-over-squashing benchmark the multi-hop support
+yields no decisive gain (contrast Table~\ref{tab:main}).}
 \label{tab:lrgb}
 \begin{tabular}{lc}
 \toprule
 \textbf{Model} & \textbf{test AP} \\
 \midrule
-GCN                          & $0.484$ \\
-GAT                          & $\mathbf{0.527}$ \\
-Walk Attention (ours)        & $0.522$ \\
+GCN                          & $0.492\pm0.011$ \\
+GAT                          & $0.526\pm0.004$ \\
+Walk Attention (ours)        & $0.526\pm0.007$ \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -225,7 +251,8 @@ Walk Attention (ours)        & $0.522$ \\
 
 Walk Attention operates on the walk-reachability support, whose size is the
 number of nonzero entries of $\Adj^{\,k}$. On the bottleneck family this is a
-small fraction of $n^2$ (about $2\%$ at the deepest range), so the layer is far
+small fraction of $n^2$ ($1.5$--$2.6\%$ at the deepest range, depending on the
+depth), so the layer is far
 cheaper than a dense graph Transformer while retaining its long range. The
 supports are precomputed once per graph topology and cached, so the path-algebra
 computation does not enter the training loop.

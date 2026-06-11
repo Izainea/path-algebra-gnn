@@ -132,12 +132,39 @@ $\mathcal{N}_k(c)=A_k(c)\setminus A_{k-1}(c)$ collects the nodes at impact degre
 exactly $k$.
 \end{definition}
 
-The FNS is the combinatorial object that the walk operators act on: the
-range-$k$ support $\mathcal{S}_k$ of Definition~\ref{def:walkop} is precisely the
-relation $\{(c,i): i\in A_k(c)\setminus A_{k-1}(c)\}$, so stacking ranges
-$k=1,2,\dots$ walks the embedding outward through the layers of the FNS. The
-multiplicity $n_k(i,c)$ records \emph{how many} length-$k$ paths populate that
-layer---the textured, algebraic refinement of the scalar impact degree.
+The FNS is the combinatorial object that the walk operators of
+Definition~\ref{def:walkop} act on. The precise relation between its layers and
+walk-reachability is the following.
+
+\begin{proposition}[FNS layers vs.\ walk reachability]\label{prop:fns}
+For $k\ge1$ let $\mathcal{S}_k=\{(c,i):(\Adj^{\,k})_{ic}>0\}$ be the pairs
+joined by a length-$k$ walk $i\walk c$. Then
+\[
+  \{(c,i): i\in \mathcal{N}_k(c)\} \;\subseteq\; \mathcal{S}_k ,
+\]
+and the inclusion is strict in general: a length-$k$ walk may also reach nodes
+at impact degree $<k$. If $Q$ is \emph{graded}---there is
+$\rho\colon Q_0\to\mathbb{Z}$ with $\rho(t(\alpha))=\rho(s(\alpha))+1$ for every
+arrow $\alpha$---then equality holds for every $k$.
+\end{proposition}
+
+\begin{proof}
+If $i\in\mathcal{N}_k(c)$ then $g(i,c)=k$ and a shortest path is a length-$k$
+walk, so $(\Adj^{\,k})_{ic}>0$. Strictness: in the quiver $1\to2\to3$ with an
+extra arrow $1\to3$ one has $(\Adj^{2})_{13}>0$ yet $g(1,3)=1$. If $Q$ is
+graded, every walk $i\walk c$ has length $\rho(c)-\rho(i)$; a length-$k$ walk
+forces $\rho(c)-\rho(i)=k$, so every walk---in particular a shortest
+path---has length $k$, giving $g(i,c)=k$ and $i\in\mathcal{N}_k(c)$. \qed
+\end{proof}
+
+The benchmark graphs of Section~\ref{sec:exp} are graded (the layer index is
+such a $\rho$), so there the supports coincide with the FNS layers; on graphs
+with cycles, such as the ring, $\mathcal{S}_k$ strictly contains the layer
+relation. Stacking ranges $k=1,2,\dots$ therefore walks the embedding outward
+through the layers of the FNS, revisiting earlier layers where the topology
+permits. The multiplicity $n_k(i,c)$ records \emph{how many} length-$k$ paths
+populate each layer---the textured, algebraic refinement of the scalar impact
+degree.
 
 % ---------------------------------------------------------------------
 \subsection{An explicit example}

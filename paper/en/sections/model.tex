@@ -44,7 +44,7 @@ averaged in the final layer) and a residual ``root'' term is added:
 Because \eqref{eq:logit}--\eqref{eq:agg} only ever touch the pairs in
 $\mathcal{S}_k$, the layer costs $O(|\mathcal{S}_k|\,H\,C)$ time and memory, not
 $O(n^2)$. The support is precomputed once per graph from
-Proposition~\ref{prop:count} (the nonzero pattern of $\Adj^{\,g}$).
+Proposition~\ref{prop:count} (the nonzero pattern of $\Adj^{\,k}$).
 Figure~\ref{fig:layer} summarises the data flow.
 
 \begin{figure}[t]
@@ -65,7 +65,7 @@ Figure~\ref{fig:layer} summarises the data flow.
   \node[box,right=8mm of agg] (out) {$\mathrm{WA}_k(x)$};
   % support callout
   \node[alg,below=8mm of att,fill=green!10] (supp)
-    {support $\mathcal{S}_k=\{(j,i):(\Adj^{\,g})_{ij}>0\}$};
+    {support $\mathcal{S}_k=\{(j,i):(\Adj^{\,k})_{ij}>0\}$};
   \draw[->] (x) -- (q.west);
   \draw[->] (x) |- (k.west);
   \draw[->] (x) |- (v.west);
@@ -82,7 +82,7 @@ Figure~\ref{fig:layer} summarises the data flow.
 \caption{One Walk Attention layer at range $k$. Queries, keys and values are
 linear maps of the node features; attention is computed \emph{only} over the
 walk-reachable pairs $\mathcal{S}_k$ supplied by the path algebra (the nonzero
-pattern of $\Adj^{\,g}$), then aggregated and added to a residual root term. The
+pattern of $\Adj^{\,k}$), then aggregated and added to a residual root term. The
 green support box is what distinguishes Walk Attention from dense ($\mathcal{S}_k
 =$ all pairs) and one-hop ($\mathcal{S}_k = $ edges) attention.}
 \label{fig:layer}
@@ -122,7 +122,7 @@ Algorithm~\ref{alg:wa} summarises one layer.
 \caption{Walk Attention layer at range $k$ (sparse).}\label{alg:wa}
 \begin{algorithmic}[1]
 \Require features $x\in\RR^{n\times d_{\text{in}}}$; support
-  $\mathcal{S}_k=\{(j,i):(\Adj^{\,g})_{ij}>0\}$
+  $\mathcal{S}_k=\{(j,i):(\Adj^{\,k})_{ij}>0\}$
 \State $Q,K,V \gets xW_Q,\,xW_K,\,xW_V$ \Comment{per head; shapes $n\times HC$}
 \For{each $(j,i)\in\mathcal{S}_k$ and head $h$}
   \State $\ell^h_{ji}\gets \langle Q^h_j,K^h_i\rangle/\sqrt{C}$
@@ -166,3 +166,93 @@ Graph Transformer           & all pairs  & learned        & $O(n^2)$ \\
 \bottomrule
 \end{tabular}
 \end{table}
+
+% ---------------------------------------------------------------------
+\subsection{A formal account on the bottleneck family}\label{sec:theory}
+% ---------------------------------------------------------------------
+
+On the bottleneck-chain family used in Section~\ref{sec:exp} the separation
+between one-hop message passing and Walk Attention can be \emph{proved}, not
+only measured. Recall the construction: $K$ source vertices carry a one-hot
+\emph{key}---the assignment of keys to sources is a uniformly random
+permutation $\pi$---and a one-hot \emph{value}; $d$ bottleneck layers
+$L_1,\dots,L_d$ of $M$ interchangeable, featureless vertices follow,
+consecutive layers fully connected; a target vertex carries a one-hot
+\emph{query} $q$ and must output the value of the source whose key equals $q$
+(label $\pi^{-1}(q)$, chance $1/K$). Throughout, networks have the standard
+depth $L=d+1$---one layer per hop, as in the \textsc{NeighborsMatch} protocol
+\cite{alon2021bottleneck} and in our experiments---and hidden width $w$.
+
+\begin{proposition}[Layer collapse]\label{prop:collapse}
+For any message-passing network on this graph whose update
+$h_v' = U\bigl(h_v,\mathrm{AGG}\{h_u : u\to v\}\bigr)$ uses the same $U$ and
+$\mathrm{AGG}$ at every vertex: after every round, all $M$ vertices of each
+bottleneck layer carry identical states. Consequently the entire influence of
+the sources on the target passes through a single $w$-dimensional state per
+layer---while the number of length-$(d{+}1)$ walks carrying it is $K M^{d}$
+(Proposition~\ref{prop:count}).
+\end{proposition}
+
+\begin{proof}
+Induction on the round. Vertices of a bottleneck layer start with identical
+(zero) features, and two vertices of the same layer have the same in-multiset
+of neighbours (all sources for $L_1$; all of $L_{r-1}$ for $L_r$), whose states
+are equal by induction; shared $U,\mathrm{AGG}$ produce equal updates. \qed
+\end{proof}
+
+\begin{proposition}[Linear first aggregation is permutation-blind]
+\label{prop:blind}
+Assume in addition that messages are linear in the sender's state with
+coefficients independent of feature content---as in GCN (degree-normalised
+linear messages) and GIN (sum of neighbour states). Then with $L=d+1$ layers
+the target's output depends on the sources only through $\sum_{s}x_s$, which is
+the \emph{same for every} $\pi$: the key slots of a permutation sum to the
+all-ones vector. The expected accuracy is therefore exactly $1/K$, for every
+depth $d$, width $w$, and choice of parameters.
+\end{proposition}
+
+\begin{proof}
+In-neighbours of the target are $L_d$ (and itself); unrolling, the target's
+state after round $d{+}1$ depends on the sources only through the state of
+$L_1$ after round~$1$: source information entering $L_1$ at round $t$ needs $d$
+further hops to reach the target, arriving at round $t+d\le d+1$ only if
+$t\le1$. At round $1$ the message from source $s$ is a fixed linear map of the
+raw feature $x_s$, with one shared coefficient (all sources are isomorphic in
+the graph), so the state of $L_1$ is a function of $\sum_s x_s$. With keys
+$e_{\pi(s)}$, the key block of $\sum_s x_s$ equals $\sum_s e_{\pi(s)}
+=(1,\dots,1)$ for every $\pi$, and the value block is likewise
+$\pi$-independent; hence the output is independent of $\pi$. Given the query
+$q$, the label $\pi^{-1}(q)$ is uniform on $\{1,\dots,K\}$, so any
+$\pi$-independent prediction has expected accuracy $1/K$. \qed
+\end{proof}
+
+\begin{proposition}[One Walk Attention layer suffices]\label{prop:wa}
+At range $k=d{+}1$ the support of the target is exactly the set of $K$ sources
+(the graph is graded; Proposition~\ref{prop:fns}). Choose $W_Q$ to project the
+query slot scaled by any $\beta>0$, $W_K$ the key slot, $W_V$ the value slot,
+and $W_{\!\text{root}}=0$. Then the Walk Attention output at the target is
+$z_t=\sum_s \alpha_s\,e_{v(s)}$ whose largest entry sits at the coordinate of
+the correct value, on \emph{every} instance and for all $d$ and $M$.
+\end{proposition}
+
+\begin{proof}
+The logit of source $s$ is $\beta\langle e_q, e_{\pi(s)}\rangle
+=\beta\,\mathbf{1}[\pi(s)=q]$, so the softmax over the $K$ reachable sources
+puts weight $e^{\beta}/(e^{\beta}+K-1)$ on the unique matching source $s^\ast$
+and equal smaller weight on the rest. The values $e_{v(s)}$ are distinct basis
+vectors, so the largest coordinate of $z_t$ is $\alpha_{s^\ast}$, at the
+coordinate $v(s^\ast)=\pi^{-1}(q)$, the label. \qed
+\end{proof}
+
+\begin{remark}\label{rem:mechanisms}
+The propositions delimit the mechanisms seen in Section~\ref{sec:exp}. GAT
+escapes Proposition~\ref{prop:blind}---its first-round coefficients depend on
+source content---but must still thread the key--value association through the
+single-vector channel of Proposition~\ref{prop:collapse}, re-encoded $d{+}1$
+times: empirically it sits above chance and degrades with depth. The
+fixed-weight walk operator reads the sources directly but with \emph{equal}
+weights (all multiplicities equal $M^{d}$), so it must embed the whole
+key--value multiset in $w$ dimensions rather than select one source: it
+plateaus in between. Walk Attention both reads directly and selects
+(Proposition~\ref{prop:wa}), and solves the task.
+\end{remark}

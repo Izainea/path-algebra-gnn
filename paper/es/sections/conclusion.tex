@@ -7,12 +7,17 @@ over-squashing en redes neuronales de grafos atendiendo sobre un soporte
 multi-salto del álgebra de caminos del quiver subyacente. El álgebra graduada
 da, vía la Proposición~\ref{prop:count}, qué pares de nodos conectan caminos de
 longitud-$k$ y con qué multiplicidad; con ello definimos una atención dispersa
-de soporte algebraico y pesos aprendidos. Sobre un benchmark ajustable resolvió
+de soporte algebraico y pesos aprendidos. Sobre la familia de cuellos de
+botella la separación queda demostrada (Sección~\ref{sec:theory}): el paso de
+mensajes con primera agregación lineal queda exactamente en el azar para toda
+profundidad y ancho, mientras que una sola capa de Walk Attention en el alcance
+adecuado resuelve la tarea exactamente. Sobre un benchmark ajustable resolvió
 exactamente una recuperación de largo alcance ($1.000\pm0.000$ sobre cinco
-semillas) donde la atención de un salto colapsó al azar y un agregador
-multi-salto de pesos fijos solo tuvo éxito parcial; en Peptides-func fue
-competitivo con líneas base fuertes. Su ventaja depende del régimen: decisiva
-bajo over-squashing severo y comparable a un salto cuando es leve. Un resultado
+semillas) donde la atención de un salto se degradó hacia el azar y un agregador
+multi-salto de pesos fijos solo tuvo éxito parcial; en Peptides-func, bajo un
+presupuesto de entrenamiento pequeño compartido, fue comparable a la atención de
+un salto. Su ventaja depende del régimen: decisiva
+bajo over-squashing severo y modesta cuando es leve. Un resultado
 negativo mostró que comprimir caminos equivalentes con el \emph{cociente} es
 contraproducente cuando la multiplicidad porta señal: el papel del álgebra es
 determinar el soporte, no descartarla.
@@ -38,8 +43,8 @@ impacto sobre quivers \cite{zainea2026aiq}. Siguen varias direcciones.
   \item \textbf{Benchmarks con over-squashing severo.} Peptides-func es leve y el
   soporte multi-salto no es decisivo. El siguiente paso es buscar tareas reales de
   largo alcance con cuellos de botella agudos---donde la ventaja debería
-  transferirse---y compararlo con rewiring \cite{topping2022understanding} y graph
-  Transformers.
+  transferirse---y compararlo con rewiring \cite{topping2022understanding},
+  métodos multi-salto \cite{gutteridge2023drew} y graph Transformers.
   \item \textbf{Soportes con forma de cociente.} El cociente $\kQ/I$, en lugar de
   comprimir la señal, puede \emph{particionar} los caminos en clases de
   equivalencia y enrutar clases distintas a cabezas distintas. Aprender qué $I$

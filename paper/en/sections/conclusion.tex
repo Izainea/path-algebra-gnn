@@ -8,11 +8,16 @@ supplied by the path algebra of the underlying quiver. The graded path algebra
 gives, through Proposition~\ref{prop:count}, an exact account of which node pairs
 are connected by length-$k$ walks and with what multiplicity; we use this to
 define a sparse attention whose support is algebraically determined and whose
-weights are learned. On a tunable bottleneck benchmark, Walk Attention solved a
+weights are learned. On the bottleneck family the separation is proved
+(Section~\ref{sec:theory}): message passing with linear first aggregation is at
+exactly chance accuracy for every depth and width, while a single Walk
+Attention layer at the matching range solves the task exactly. On a tunable
+bottleneck benchmark, Walk Attention solved a
 long-range retrieval task exactly ($1.000\pm0.000$ over five seeds) where a
-one-hop attention network collapsed to chance and a fixed-weight multi-hop
-aggregator only partially succeeded; on the real Peptides-func benchmark it was
-competitive with strong baselines while remaining sparse and stable. Its
+one-hop attention network degraded toward chance and a fixed-weight multi-hop
+aggregator only partially succeeded; on the real Peptides-func benchmark, under
+a shared small training budget, it was comparable to one-hop attention while
+remaining sparse and stable. Its
 advantage is regime-dependent---decisive when over-squashing is severe and
 comparable to one-hop attention when it is mild. A complementary negative result
 showed that using the path-algebra \emph{quotient} to compress equivalent walks
@@ -43,8 +48,8 @@ two is itself a direction. Several others follow naturally.
   case where the multi-hop support is not decisive. Identifying real long-range
   tasks whose graphs do contain acute bottlenecks---where the synthetic advantage
   is expected to carry over---and comparing against rewiring
-  \cite{topping2022understanding} and graph-Transformer baselines, is the natural
-  next step.
+  \cite{topping2022understanding}, multi-hop \cite{gutteridge2023drew} and
+  graph-Transformer baselines, is the natural next step.
   \item \textbf{Quotient-shaped supports.} The quotient $\kQ/I$, rather than
   compressing the signal, can \emph{partition} walks into equivalence classes;
   routing distinct classes to distinct attention heads would let the algebra

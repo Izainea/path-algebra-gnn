@@ -133,13 +133,42 @@ vecindades} (SFV) de $c$, y la capa $\mathcal{N}_k(c)=A_k(c)\setminus A_{k-1}(c)
 reúne los nodos a grado de impacto exactamente $k$.
 \end{definition}
 
-El SFV es el objeto combinatorio sobre el que actúan los operadores de recorrido:
-el soporte de alcance $k$, $\mathcal{S}_k$, de la Definición~\ref{def:walkop} es
-precisamente la relación $\{(c,i): i\in A_k(c)\setminus A_{k-1}(c)\}$, de modo que
-apilar los alcances $k=1,2,\dots$ recorre la incrustación hacia afuera a través de
-las capas del SFV. La multiplicidad $n_k(i,c)$ registra \emph{cuántos} caminos de
-longitud $k$ pueblan esa capa---el refinamiento algebraico y texturado del grado
-de impacto escalar.
+El SFV es el objeto combinatorio sobre el que actúan los operadores de recorrido
+de la Definición~\ref{def:walkop}. La relación precisa entre sus capas y la
+alcanzabilidad por recorridos es la siguiente.
+
+\begin{proposition}[Capas del SFV frente a alcanzabilidad por recorridos]
+\label{prop:fns}
+Para $k\ge1$ sea $\mathcal{S}_k=\{(c,i):(\Adj^{\,k})_{ic}>0\}$ el conjunto de
+pares unidos por un recorrido de longitud $k$, $i\walk c$. Entonces
+\[
+  \{(c,i): i\in \mathcal{N}_k(c)\} \;\subseteq\; \mathcal{S}_k ,
+\]
+y la inclusión es estricta en general: un recorrido de longitud $k$ puede
+alcanzar también nodos a grado de impacto $<k$. Si $Q$ es \emph{graduado}---existe
+$\rho\colon Q_0\to\mathbb{Z}$ con $\rho(t(\alpha))=\rho(s(\alpha))+1$ para toda
+flecha $\alpha$---entonces vale la igualdad para todo $k$.
+\end{proposition}
+
+\begin{proof}
+Si $i\in\mathcal{N}_k(c)$ entonces $g(i,c)=k$ y un camino más corto es un
+recorrido de longitud $k$, así que $(\Adj^{\,k})_{ic}>0$. Estrictez: en el
+quiver $1\to2\to3$ con una flecha adicional $1\to3$ se tiene
+$(\Adj^{2})_{13}>0$ y sin embargo $g(1,3)=1$. Si $Q$ es graduado, todo
+recorrido $i\walk c$ tiene longitud $\rho(c)-\rho(i)$; un recorrido de longitud
+$k$ fuerza $\rho(c)-\rho(i)=k$, de modo que todo recorrido---en particular uno
+más corto---tiene longitud $k$, lo que da $g(i,c)=k$ e
+$i\in\mathcal{N}_k(c)$. \qed
+\end{proof}
+
+Los grafos del benchmark de la Sección~\ref{sec:exp} son graduados (el índice de
+capa es un tal $\rho$), así que allí los soportes coinciden con las capas del
+SFV; en grafos con ciclos, como el anillo, $\mathcal{S}_k$ contiene
+estrictamente la relación de capas. Apilar los alcances $k=1,2,\dots$ recorre
+por tanto la incrustación hacia afuera a través de las capas del SFV,
+revisitando capas anteriores donde la topología lo permite. La multiplicidad
+$n_k(i,c)$ registra \emph{cuántos} caminos de longitud $k$ pueblan cada
+capa---el refinamiento algebraico y texturado del grado de impacto escalar.
 
 % ---------------------------------------------------------------------
 \subsection{Un ejemplo explícito}

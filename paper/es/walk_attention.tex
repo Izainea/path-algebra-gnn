@@ -50,12 +50,17 @@ exacta y algebraica de la alcanzabilidad multi-salto. Usamos esta estructura par
 definir una atenci\'on dispersa y multi-salto: el \'algebra provee el \emph{soporte}
 de la atenci\'on (qu\'e v\'ertices alcanza un nodo por un camino de longitud~$k$) y
 la red aprende los \emph{pesos}. En una familia de cuellos de botella con
-over-squashing ajustable, Walk Attention alcanza $1.000\pm0.000$ de precisi\'on
-sobre cinco semillas donde una atenci\'on de grafos de un salto colapsa al azar y
-un agregador de pesos fijos solo tiene \'exito parcial; se mantiene exacta en la
-prueba est\'andar \textsc{RingTransfer} y es competitiva en el benchmark real
-Peptides-func---una ventaja decisiva cuando el over-squashing es severo y
-comparable a la atenci\'on de un salto cuando es leve. Un resultado negativo motiva
+over-squashing ajustable demostramos la separaci\'on---el paso de mensajes con
+agregaci\'on lineal queda exactamente en el azar para toda profundidad y todo
+ancho, mientras que una sola capa de Walk Attention en el alcance adecuado
+resuelve la tarea de recuperaci\'on exactamente---y la confirmamos
+emp\'iricamente: Walk Attention alcanza $1.000\pm0.000$ de precisi\'on
+sobre cinco semillas donde una atenci\'on de grafos de un salto se degrada hacia
+el azar y un agregador de pesos fijos solo tiene \'exito parcial; se mantiene
+exacta en la prueba est\'andar \textsc{RingTransfer} y, bajo un presupuesto de
+entrenamiento peque\~no compartido, es comparable a la atenci\'on de un salto en
+el benchmark real Peptides-func---su ventaja es decisiva cuando el over-squashing
+es severo y modesta cuando es leve. Un resultado negativo motiva
 el dise\~no: usar el \emph{cociente} del \'algebra para colapsar caminos
 equivalentes descarta la multiplicidad que la tarea necesita y falla, de modo que
 el \'algebra es valiosa no para comprimir sino como el objeto que \emph{define el
@@ -99,7 +104,7 @@ representaciones de quivers. Un \emph{quiver} es un grafo dirigido, posiblemente
 con flechas m\'ultiples \cite{schiffler2014quiver,assem2006elements}, y su
 \emph{\'algebra de caminos} $\kQ$ tiene como base los caminos dirigidos del quiver,
 con la concatenaci\'on como multiplicaci\'on. La pieza graduada
-$e_i \cdot \kQ_k \cdot e_j$ de esta \'algebra tiene como base los caminos dirigidos
+$e_j \cdot \kQ_k \cdot e_i$ de esta \'algebra tiene como base los caminos dirigidos
 de longitud~$k$ del v\'ertice~$i$ al v\'ertice~$j$; su dimensi\'on es igual a
 $(\Adj^k)_{ij}$, la entrada correspondiente de la $k$-\'esima potencia de la matriz
 de adyacencia. El \'algebra de caminos provee, por tanto, una \emph{descripci\'on
@@ -133,13 +138,21 @@ de aut\'omatas de impacto sobre quivers \cite{zainea2026aiq}.
   atenci\'on multi-salto aprendida cuyo soporte es la estructura de alcanzabilidad
   por walks del \'algebra de caminos, y la relacionamos con el paso de mensajes y
   con la atenci\'on de los Transformers.
+  \item \emph{Demostramos} la separaci\'on sobre la familia de cuellos de
+  botella (Secci\'on~\ref{sec:theory}): con la profundidad est\'andar de una
+  capa por salto, toda red de paso de mensajes cuya primera agregaci\'on es
+  lineal en los atributos de las fuentes (GCN, GIN) tiene precisi\'on
+  exactamente igual al azar para toda profundidad, ancho y elecci\'on de
+  par\'ametros, mientras que una sola capa de Walk Attention en el alcance
+  adecuado resuelve la tarea de recuperaci\'on exactamente.
   \item En una familia controlada de cuellos de botella con over-squashing
   ajustable (Secci\'on~\ref{sec:exp}), Walk Attention alcanza una precisi\'on de
   $1.000\pm0.000$ sobre cinco semillas donde la atenci\'on de grafos de un salto
-  colapsa al azar y un agregador multi-salto de pesos fijos solo tiene \'exito
-  parcial; en el benchmark real Peptides-func es competitiva con l\'ineas base
-  fuertes, por lo que su ventaja es dependiente del r\'egimen (decisiva bajo
-  over-squashing severo, comparable a la atenci\'on de un salto cuando es leve).
+  se degrada hacia el azar y un agregador multi-salto de pesos fijos solo tiene
+  \'exito parcial; en el benchmark real Peptides-func, bajo un presupuesto de
+  entrenamiento peque\~no compartido, es comparable a la atenci\'on de un salto,
+  por lo que su ventaja es dependiente del r\'egimen (decisiva bajo
+  over-squashing severo, modesta cuando es leve).
   \item Reportamos un resultado \emph{negativo} que afina el dise\~no: colapsar
   caminos equivalentes mediante el \emph{cociente} del \'algebra de caminos
   descarta la multiplicidad necesaria y falla. El papel del cociente es
@@ -171,6 +184,24 @@ posicionales/estructurales para reinyectar la topolog\'ia. Walk Attention es
 intermedia: es atenci\'on, pero su soporte es la alcanzabilidad dispersa
 multi-salto por walks del quiver, no un salto ni todos los pares.
 
+\paragraph{Agregaci\'on y atenci\'on multi-salto.}
+Agregar m\'as all\'a de un salto est\'a bien explorado: MixHop \cite{abu2019mixhop}
+y SIGN \cite{frasca2020sign} mezclan potencias fijas de operadores de adyacencia
+(normalizados), la convoluci\'on por difusi\'on de grafos
+\cite{gasteiger2019diffusion} recablea mediante un n\'ucleo de difusi\'on, MAGNA
+\cite{wang2021magna} difunde los puntajes de atenci\'on sobre varios saltos, el
+paso de mensajes por caminos m\'as cortos agrega sobre capas de distancia $k$
+\cite{abboud2022shortest}, NAGphormer \cite{chen2023nagphormer} tokeniza
+agregados por salto para un Transformer, Graphormer \cite{ying2021graphormer}
+sesga la atenci\'on densa por la distancia de camino m\'as corto, y DRew
+\cite{gutteridge2023drew} recablea el paso de mensajes din\'amicamente con
+retardo. Walk Attention difiere en el objeto que define el soporte: la pieza
+graduada del \'algebra de caminos---\emph{walks} dirigidos con su multiplicidad,
+no capas de distancia ni pesos de difusi\'on---lo que hace el soporte exacto
+(Proposici\'on~\ref{prop:count}), expone el cociente $\kQ/I$ como grado de
+libertad de dise\~no (Secci\'on~\ref{sec:exp}) e inserta la arquitectura en la
+teor\'ia de representaciones de quivers (Secci\'on~\ref{sec:ground}).
+
 \paragraph{Estructura de caminos y walks.}
 El conteo de caminos y las potencias de la matriz de adyacencia son cl\'asicos, y
 el \'algebra de caminos de un quiver es est\'andar en la teor\'ia de
@@ -181,9 +212,10 @@ problemas combinatorios y aplicados por Moreno Ca\~nadas y colaboradores
 el sistema de vecindades por grado de impacto y el marco de aut\'omatas de impacto
 sobre quivers \cite{zainea2026aiq,ibanez2025casimulations}, que tomamos como el
 hermano din\'amico de Walk Attention sobre el mismo sustrato algebraico
-(Secci\'on~\ref{sec:ground}). Hasta donde sabemos, usar el \'algebra
-de caminos graduada para definir el \emph{soporte} de una atenci\'on de grafos
-multi-salto aprendida es nuevo.
+(Secci\'on~\ref{sec:ground}). La atenci\'on sobre soportes multi-salto no es,
+pues, nueva en s\'i misma; lo nuevo, hasta donde sabemos, es tomar el soporte del
+\emph{\'algebra de caminos graduada} del quiver, con sus multiplicidades, su
+cociente y su lectura din\'amica (de aut\'omatas).
 
 \input{sections/algebra}
 \input{sections/model}

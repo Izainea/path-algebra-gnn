@@ -167,3 +167,102 @@ Transformer de grafo           & todos los pares  & aprendidos        & $O(n^2)$
 \bottomrule
 \end{tabular}
 \end{table}
+
+% ---------------------------------------------------------------------
+\subsection{Un tratamiento formal sobre la familia de cuellos de botella}
+\label{sec:theory}
+% ---------------------------------------------------------------------
+
+Sobre la familia de cadenas con cuello de botella de la Sección~\ref{sec:exp},
+la separación entre el paso de mensajes de un salto y Walk Attention se puede
+\emph{demostrar}, no solo medir. Recordemos la construcción: $K$ vértices
+fuente llevan una \emph{clave} one-hot---la asignación de claves a fuentes es
+una permutación aleatoria uniforme $\pi$---y un \emph{valor} one-hot; siguen
+$d$ capas de cuello de botella $L_1,\dots,L_d$ de $M$ vértices intercambiables
+y sin atributos, con capas consecutivas totalmente conectadas; un vértice
+objetivo lleva una \emph{consulta} one-hot $q$ y debe producir el valor de la
+fuente cuya clave es $q$ (etiqueta $\pi^{-1}(q)$, azar $1/K$). En todo lo que
+sigue las redes tienen la profundidad estándar $L=d+1$---una capa por salto,
+como en el protocolo de \textsc{NeighborsMatch} \cite{alon2021bottleneck} y en
+nuestros experimentos---y ancho oculto $w$.
+
+\begin{proposition}[Colapso de capas]\label{prop:collapse}
+Para toda red de paso de mensajes sobre este grafo cuya actualización
+$h_v' = U\bigl(h_v,\mathrm{AGG}\{h_u : u\to v\}\bigr)$ usa los mismos $U$ y
+$\mathrm{AGG}$ en cada vértice: tras cada ronda, los $M$ vértices de cada capa
+de cuello de botella llevan estados idénticos. En consecuencia, toda la
+influencia de las fuentes sobre el objetivo pasa por un único estado
+$w$-dimensional por capa---mientras que el número de recorridos de longitud
+$(d{+}1)$ que la transportan es $K M^{d}$ (Proposición~\ref{prop:count}).
+\end{proposition}
+
+\begin{proof}
+Inducción sobre la ronda. Los vértices de una capa de cuello de botella
+comienzan con atributos idénticos (cero), y dos vértices de la misma capa
+tienen el mismo multiconjunto de vecinos de entrada (todas las fuentes para
+$L_1$; todo $L_{r-1}$ para $L_r$), cuyos estados son iguales por inducción;
+$U$ y $\mathrm{AGG}$ compartidos producen actualizaciones iguales. \qed
+\end{proof}
+
+\begin{proposition}[La primera agregación lineal es ciega a la permutación]
+\label{prop:blind}
+Supóngase además que los mensajes son lineales en el estado del emisor con
+coeficientes independientes del contenido---como en GCN (mensajes lineales
+normalizados por grado) y GIN (suma de los estados vecinos). Entonces, con
+$L=d+1$ capas, la salida del objetivo depende de las fuentes solo a través de
+$\sum_{s}x_s$, que es \emph{la misma para toda} $\pi$: las casillas de clave de
+una permutación suman el vector de unos. La precisión esperada es por tanto
+exactamente $1/K$, para toda profundidad $d$, todo ancho $w$ y toda elección de
+parámetros.
+\end{proposition}
+
+\begin{proof}
+Los vecinos de entrada del objetivo son $L_d$ (y él mismo); desenrollando, el
+estado del objetivo tras la ronda $d{+}1$ depende de las fuentes solo a través
+del estado de $L_1$ tras la ronda~$1$: la información de las fuentes que entra
+a $L_1$ en la ronda $t$ necesita $d$ saltos más para llegar al objetivo, y
+llega en la ronda $t+d\le d+1$ solo si $t\le1$. En la ronda $1$ el mensaje de
+la fuente $s$ es una aplicación lineal fija del atributo crudo $x_s$, con un
+único coeficiente compartido (las fuentes son isomorfas en el grafo), así que
+el estado de $L_1$ es función de $\sum_s x_s$. Con claves $e_{\pi(s)}$, el
+bloque de claves de $\sum_s x_s$ es $\sum_s e_{\pi(s)}=(1,\dots,1)$ para toda
+$\pi$, y el bloque de valores es igualmente independiente de $\pi$; la salida
+es por tanto independiente de $\pi$. Dada la consulta $q$, la etiqueta
+$\pi^{-1}(q)$ es uniforme en $\{1,\dots,K\}$, de modo que toda predicción
+independiente de $\pi$ tiene precisión esperada $1/K$. \qed
+\end{proof}
+
+\begin{proposition}[Una sola capa de Walk Attention basta]\label{prop:wa}
+En el alcance $k=d{+}1$ el soporte del objetivo es exactamente el conjunto de
+las $K$ fuentes (el grafo es graduado; Proposición~\ref{prop:fns}). Elíjase
+$W_Q$ proyectando la casilla de consulta escalada por cualquier $\beta>0$,
+$W_K$ la casilla de clave, $W_V$ la casilla de valor, y $W_{\!\text{root}}=0$.
+Entonces la salida de Walk Attention en el objetivo es
+$z_t=\sum_s \alpha_s\,e_{v(s)}$, cuya mayor entrada está en la coordenada del
+valor correcto, en \emph{toda} instancia y para todos $d$ y $M$.
+\end{proposition}
+
+\begin{proof}
+El logit de la fuente $s$ es $\beta\langle e_q, e_{\pi(s)}\rangle
+=\beta\,\mathbf{1}[\pi(s)=q]$, así que el softmax sobre las $K$ fuentes
+alcanzables pone peso $e^{\beta}/(e^{\beta}+K-1)$ en la única fuente
+coincidente $s^\ast$ y pesos iguales y menores en el resto. Los valores
+$e_{v(s)}$ son vectores de la base, distintos, de modo que la mayor coordenada
+de $z_t$ es $\alpha_{s^\ast}$, en la coordenada $v(s^\ast)=\pi^{-1}(q)$, la
+etiqueta. \qed
+\end{proof}
+
+\begin{remark}\label{rem:mechanisms}
+Las proposiciones delimitan los mecanismos observados en la
+Sección~\ref{sec:exp}. GAT escapa a la Proposición~\ref{prop:blind}---sus
+coeficientes de la primera ronda dependen del contenido de la fuente---pero
+aún debe hacer pasar la asociación clave--valor por el canal de un solo vector
+de la Proposición~\ref{prop:collapse}, re-codificado $d{+}1$ veces:
+empíricamente queda por encima del azar y se degrada con la profundidad. El
+operador de caminos de pesos fijos lee las fuentes directamente pero con pesos
+\emph{iguales} (todas las multiplicidades valen $M^{d}$), así que debe
+incrustar el multiconjunto clave--valor completo en $w$ dimensiones en lugar
+de seleccionar una fuente: se estanca entre ambos. Walk Attention lee
+directamente \emph{y} selecciona (Proposición~\ref{prop:wa}), y resuelve la
+tarea.
+\end{remark}
