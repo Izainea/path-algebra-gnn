@@ -150,15 +150,17 @@ mitigation_overquashing/
 │   ├── 03_diagnostic.ipynb          # fallback claim
 │   ├── 04_bottleneck_oversquashing.ipynb  # walk-operator vs kQ/I-collapse (collapse loses)
 │   ├── 05_walk_attention.ipynb      # HEADLINE: learned path-masked attention wins (1.000)
-│   ├── en/                  # tutorial series in English (P0→P5, ≥3 figures each)
-│   └── es/                  # serie de tutoriales en español (P0→P5, ≥3 figuras c/u)
+│   ├── en/walk_attention_tutorial.ipynb   # single theory-first tutorial (6 parts, 24 hand-drawn figures)
+│   ├── es/walk_attention_tutorial.ipynb   # same tutorial in Spanish
+│   └── figs-theory/{en,es}/  # 24 hand-drawn theoretical SVGs per language
 └── results/                 # figures + tables (gitignored; .gitkeep tracked)
 ```
 
-**New to the idea?** Start with the runnable tutorial series — [`notebooks/en/`](notebooks/en/) (English) or
-[`notebooks/es/`](notebooks/es/) (Spanish). Six short notebooks (P0→P5), each with at least three figures,
-building the intuition from over-squashing (P1) to "the walk operator is attention" (P4) to a live three-model
-comparison (P5). Both series share the verified plotting helpers in `oversquash.viz`, so the figures match.
+**New to the idea?** Read the single runnable tutorial — [`notebooks/en/`](notebooks/en/walk_attention_tutorial.ipynb)
+(English) or [`notebooks/es/`](notebooks/es/walk_attention_tutorial.ipynb) (Spanish). Six parts, each with
+hand-drawn theoretical figures explaining the concepts and worked examples, plus `aiq-quivers` / `networkx`
+code — from over-squashing (Part 1) to "the walk operator is attention" (Part 4) to the three-model proof
+(Part 5).
 
 ## Experiment tracking (MLflow)
 
