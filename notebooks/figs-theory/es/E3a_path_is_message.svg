@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="820" height="420" viewBox="0 0 820 420" font-family="'Segoe UI',Helvetica,Arial,sans-serif">
+  <defs>
+    <marker id="arB" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#3b82f6"/></marker>
+    <marker id="arA" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#f59e0b"/></marker>
+    <marker id="arR" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#dc2626"/></marker>
+    <marker id="arP" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#7c3aed"/></marker>
+    <style>.t{font-size:21px;font-weight:700;fill:#0f172a}.s{font-size:13px;fill:#475569}.lbl{font-size:14px;font-weight:600;fill:#1e293b}.nd{font-size:13px;font-weight:700;fill:#fff}.math{font-family:'Cambria Math','Times New Roman',serif;font-style:italic}.cap{font-size:14px;font-weight:600;fill:#1e293b}</style>
+  </defs>
+  <rect width="820" height="420" fill="#ffffff"/>
+  <text x="34" y="40" class="t">Cada camino entrega un mensaje</text>
+
+  <!-- ============ PATHS PANEL ============ -->
+  <!-- source i -->
+  <circle cx="90" cy="200" r="20" fill="#3b82f6"/>
+  <text x="90" y="205" text-anchor="middle" class="nd math">i</text>
+  <text x="90" y="248" text-anchor="middle" class="s">fuente</text>
+
+  <!-- target j -->
+  <circle cx="470" cy="200" r="20" fill="#10b981"/>
+  <text x="470" y="205" text-anchor="middle" class="nd math">j</text>
+  <text x="470" y="248" text-anchor="middle" class="s">objetivo</text>
+
+  <!-- middle nodes for 4 length-3 paths (each path: i -> m1 -> m2 -> j) -->
+  <!-- Path 1 (blue) top -->
+  <circle cx="217" cy="92" r="13" fill="#94a3b8"/>
+  <circle cx="343" cy="92" r="13" fill="#94a3b8"/>
+  <path d="M108,188 L204,100" stroke="#3b82f6" stroke-width="2.4" fill="none" marker-end="url(#arB)"/>
+  <path d="M230,92 L330,92" stroke="#3b82f6" stroke-width="2.4" fill="none" marker-end="url(#arB)"/>
+  <path d="M356,100 L452,188" stroke="#3b82f6" stroke-width="2.4" fill="none" marker-end="url(#arB)"/>
+
+  <!-- Path 2 (amber) upper-mid -->
+  <circle cx="217" cy="155" r="13" fill="#94a3b8"/>
+  <circle cx="343" cy="155" r="13" fill="#94a3b8"/>
+  <path d="M110,192 L205,158" stroke="#f59e0b" stroke-width="2.4" fill="none" marker-end="url(#arA)"/>
+  <path d="M230,155 L330,155" stroke="#f59e0b" stroke-width="2.4" fill="none" marker-end="url(#arA)"/>
+  <path d="M356,158 L451,192" stroke="#f59e0b" stroke-width="2.4" fill="none" marker-end="url(#arA)"/>
+
+  <!-- Path 3 (red) lower-mid -->
+  <circle cx="217" cy="245" r="13" fill="#94a3b8"/>
+  <circle cx="343" cy="245" r="13" fill="#94a3b8"/>
+  <path d="M110,208 L205,242" stroke="#dc2626" stroke-width="2.4" fill="none" marker-end="url(#arR)"/>
+  <path d="M230,245 L330,245" stroke="#dc2626" stroke-width="2.4" fill="none" marker-end="url(#arR)"/>
+  <path d="M356,242 L451,208" stroke="#dc2626" stroke-width="2.4" fill="none" marker-end="url(#arR)"/>
+
+  <!-- Path 4 (purple) bottom -->
+  <circle cx="217" cy="308" r="13" fill="#94a3b8"/>
+  <circle cx="343" cy="308" r="13" fill="#94a3b8"/>
+  <path d="M108,212 L204,300" stroke="#7c3aed" stroke-width="2.4" fill="none" marker-end="url(#arP)"/>
+  <path d="M230,308 L330,308" stroke="#7c3aed" stroke-width="2.4" fill="none" marker-end="url(#arP)"/>
+  <path d="M356,300 L452,212" stroke="#7c3aed" stroke-width="2.4" fill="none" marker-end="url(#arP)"/>
+
+  <text x="280" y="74" text-anchor="middle" class="lbl">4 caminos distintos de longitud 3 <tspan class="math">i ⇝ j</tspan></text>
+
+  <!-- ============ DELIVERY PANEL ============ -->
+  <!-- arrow from j to the vector -->
+  <path d="M494,200 L552,200" stroke="#334155" stroke-width="2" fill="none" marker-end="url(#arB)"/>
+
+  <!-- vector h_j stack -->
+  <text x="690" y="100" text-anchor="middle" class="lbl"><tspan class="math">h</tspan><tspan class="math" baseline-shift="sub" font-size="11">j</tspan>  recibe 4 sobres</text>
+
+  <!-- envelope helper: each row = one colored message arriving -->
+  <!-- env 1 blue -->
+  <rect x="600" y="120" width="180" height="34" rx="8" fill="#eff6ff" stroke="#bfdbfe"/>
+  <rect x="612" y="129" width="22" height="16" rx="2" fill="#fff" stroke="#3b82f6" stroke-width="1.6"/>
+  <path d="M612,129 L623,138 L634,129" fill="none" stroke="#3b82f6" stroke-width="1.4"/>
+  <text x="648" y="142" class="s">copia de <tspan class="math">i</tspan> vía camino 1</text>
+
+  <!-- env 2 amber -->
+  <rect x="600" y="160" width="180" height="34" rx="8" fill="#fffbeb" stroke="#fde68a"/>
+  <rect x="612" y="169" width="22" height="16" rx="2" fill="#fff" stroke="#f59e0b" stroke-width="1.6"/>
+  <path d="M612,169 L623,178 L634,169" fill="none" stroke="#f59e0b" stroke-width="1.4"/>
+  <text x="648" y="182" class="s">copia de <tspan class="math">i</tspan> vía camino 2</text>
+
+  <!-- env 3 red -->
+  <rect x="600" y="200" width="180" height="34" rx="8" fill="#fef2f2" stroke="#fecaca"/>
+  <rect x="612" y="209" width="22" height="16" rx="2" fill="#fff" stroke="#dc2626" stroke-width="1.6"/>
+  <path d="M612,209 L623,218 L634,209" fill="none" stroke="#dc2626" stroke-width="1.4"/>
+  <text x="648" y="222" class="s">copia de <tspan class="math">i</tspan> vía camino 3</text>
+
+  <!-- env 4 purple -->
+  <rect x="600" y="240" width="180" height="34" rx="8" fill="#faf5ff" stroke="#d8b4fe"/>
+  <rect x="612" y="249" width="22" height="16" rx="2" fill="#fff" stroke="#7c3aed" stroke-width="1.6"/>
+  <path d="M612,249 L623,258 L634,249" fill="none" stroke="#7c3aed" stroke-width="1.4"/>
+  <text x="648" y="262" class="s">copia de <tspan class="math">i</tspan> vía camino 4</text>
+
+  <!-- caption -->
+  <text x="690" y="298" text-anchor="middle" class="cap">4 caminos = 4 copias del mensaje de <tspan class="math">i</tspan> llegan a <tspan class="math">j</tspan></text>
+
+  <!-- ============ BOTTOM STRIP ============ -->
+  <rect x="34" y="332" width="752" height="56" rx="10" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="58" y="357" class="lbl"><tspan class="math">n</tspan><tspan class="math" baseline-shift="sub" font-size="11">g</tspan><tspan class="math">(i, j)</tspan>  =  número de caminos de longitud <tspan class="math">g</tspan> de <tspan class="math">i</tspan> a <tspan class="math">j</tspan></text>
+  <text x="58" y="378" class="s">cuántas copias de la información de <tspan class="math">i</tspan> se acumulan en <tspan class="math">j</tspan> tras <tspan class="math">g</tspan> capas (aquí <tspan class="math">g</tspan> = 3, <tspan class="math">n</tspan><tspan class="math" baseline-shift="sub" font-size="10">3</tspan><tspan class="math">(i, j)</tspan> = 4).</text>
+</svg>

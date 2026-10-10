@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="820" height="430" viewBox="0 0 820 430" font-family="'Segoe UI',Helvetica,Arial,sans-serif">
+  <defs>
+    <marker id="aP" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#7c3aed"/></marker>
+    <marker id="aB" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#2563eb"/></marker>
+    <marker id="aG" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#059669"/></marker>
+    <style>
+      .t{font-size:21px;font-weight:700;fill:#0f172a}
+      .s{font-size:13px;fill:#475569}
+      .lbl{font-size:14px;font-weight:600;fill:#1e293b}
+      .nd{font-size:13px;font-weight:700;fill:#fff}
+      .math{font-family:'Cambria Math','Times New Roman',serif;font-style:italic}
+      .rel{font-size:16px;font-weight:700;fill:#0f172a}
+    </style>
+  </defs>
+  <rect width="820" height="430" fill="#ffffff"/>
+  <text x="34" y="40" class="t">The quotient <tspan class="math">kQ/I</tspan>: declaring two paths equal</text>
+
+  <!-- BEFORE: two distinct paths -->
+  <text x="90" y="86" class="lbl">In kQ : two distinct paths</text>
+  <g>
+    <line x1="72" y1="170" x2="138" y2="130" stroke="#7c3aed" stroke-width="2.4" marker-end="url(#aP)"/>
+    <line x1="72" y1="190" x2="138" y2="230" stroke="#2563eb" stroke-width="2.4" marker-end="url(#aB)"/>
+    <line x1="172" y1="130" x2="238" y2="170" stroke="#7c3aed" stroke-width="2.4" marker-end="url(#aP)"/>
+    <line x1="172" y1="230" x2="238" y2="190" stroke="#2563eb" stroke-width="2.4" marker-end="url(#aB)"/>
+    <circle cx="60" cy="180" r="15" fill="#334155"/><text x="60" y="185" text-anchor="middle" class="nd">1</text>
+    <circle cx="155" cy="122" r="13" fill="#94a3b8"/><text x="155" y="127" text-anchor="middle" class="nd">2</text>
+    <circle cx="155" cy="238" r="13" fill="#94a3b8"/><text x="155" y="243" text-anchor="middle" class="nd">3</text>
+    <circle cx="250" cy="180" r="15" fill="#334155"/><text x="250" y="185" text-anchor="middle" class="nd">4</text>
+  </g>
+  <text x="60" y="290" class="math" fill="#7c3aed" font-weight="700">β₁α₁</text>
+  <text x="180" y="290" class="math" fill="#2563eb" font-weight="700">β₂α₂</text>
+  <text x="60" y="312" class="s math">dim(e₄ · kQ₂ · e₁) = 2</text>
+
+  <!-- the relation arrow -->
+  <text x="320" y="170" class="rel">impose</text>
+  <text x="320" y="196" class="math rel" fill="#b91c1c">β₁α₁ ≡ β₂α₂</text>
+  <line x1="312" y1="210" x2="430" y2="210" stroke="#334155" stroke-width="2" marker-end="url(#aG)"/>
+  <text x="318" y="232" class="s">generate the ideal I</text>
+
+  <!-- AFTER: one class -->
+  <text x="520" y="86" class="lbl">In kQ/I : one merged class</text>
+  <g>
+    <line x1="510" y1="180" x2="600" y2="155" stroke="#059669" stroke-width="3.4" marker-end="url(#aG)"/>
+    <line x1="510" y1="180" x2="600" y2="205" stroke="#059669" stroke-width="3.4" marker-end="url(#aG)" opacity="0.4"/>
+    <circle cx="498" cy="180" r="15" fill="#334155"/><text x="498" y="185" text-anchor="middle" class="nd">1</text>
+    <circle cx="615" cy="180" r="15" fill="#334155"/><text x="615" y="185" text-anchor="middle" class="nd">4</text>
+  </g>
+  <text x="540" y="280" class="math" fill="#059669" font-weight="700">[ β₁α₁ ] = [ β₂α₂ ]</text>
+  <text x="540" y="304" class="s math">dim(e₄ · (kQ/I)₂ · e₁) = 1</text>
+
+  <!-- bottom note -->
+  <rect x="34" y="340" width="752" height="72" rx="10" fill="#fffbeb" stroke="#fde68a"/>
+  <text x="52" y="368" class="lbl">The quotient lowers the multiplicity:  <tspan class="math" font-weight="700">dim(e_j (kQ/I)_g e_i) ≤ n_g(i,j).</tspan></text>
+  <text x="52" y="394" class="s">Tempting as an over-squashing fix — but collapsing parallel paths can erase signal. See P3 / the experiments.</text>
+</svg>

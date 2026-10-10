@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="820" height="430" viewBox="0 0 820 430" font-family="'Segoe UI',Helvetica,Arial,sans-serif">
+  <defs>
+    <marker id="arG" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#10b981"/></marker>
+    <style>.t{font-size:21px;font-weight:700;fill:#0f172a}.s{font-size:13px;fill:#475569}.lbl{font-size:14px;font-weight:600;fill:#1e293b}.nd{font-size:13px;font-weight:700;fill:#fff}.math{font-family:'Cambria Math','Times New Roman',serif;font-style:italic}.cell{font-size:14px;font-weight:700;fill:#0f172a}.cap{font-size:11px;fill:#64748b}.axis{font-size:13px;font-weight:700;fill:#334155}</style>
+  </defs>
+  <rect width="820" height="430" fill="#ffffff"/>
+  <text x="34" y="40" class="t">Two axes: support and weights</text>
+
+  <!-- Column axis label (weights) -->
+  <text x="500" y="78" text-anchor="middle" class="axis">weights  →</text>
+  <text x="370" y="100" text-anchor="middle" class="cell">fixed</text>
+  <text x="630" y="100" text-anchor="middle" class="cell">learned</text>
+
+  <!-- Row axis label (support) -->
+  <text x="60" y="240" class="axis" transform="rotate(-90 60 240)">support  ↓</text>
+  <text x="170" y="170" text-anchor="middle" class="cell">1-hop</text>
+  <text x="170" y="300" text-anchor="middle" class="cell">multi-hop</text>
+
+  <!-- Row 1, Col fixed: neutral baseline -->
+  <rect x="240" y="115" width="260" height="100" rx="10" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="370" y="148" text-anchor="middle" class="cell" fill="#475569">GCN</text>
+  <text x="370" y="170" text-anchor="middle" class="cap">degree-normalized average</text>
+  <text x="370" y="187" text-anchor="middle" class="cap">over immediate neighbors</text>
+  <text x="370" y="204" text-anchor="middle" class="cap">no far reach, no selection</text>
+
+  <!-- Row 1, Col learned: GAT -->
+  <rect x="510" y="115" width="260" height="100" rx="10" fill="#eff6ff" stroke="#bfdbfe"/>
+  <text x="630" y="148" text-anchor="middle" class="cell" fill="#1d4ed8">GAT</text>
+  <text x="630" y="170" text-anchor="middle" class="cap">attention <tspan class="math">α</tspan><tspan baseline-shift="sub" font-size="10">ij</tspan> over neighbors</text>
+  <text x="630" y="187" text-anchor="middle" class="cap">learns whom to weigh,</text>
+  <text x="630" y="204" text-anchor="middle" class="cap">but still only 1-hop reach</text>
+
+  <!-- Row 2, Col fixed: Walk operator -->
+  <rect x="240" y="245" width="260" height="100" rx="10" fill="#fffbeb" stroke="#fde68a"/>
+  <text x="370" y="278" text-anchor="middle" class="cell" fill="#b45309">Walk operator</text>
+  <text x="370" y="300" text-anchor="middle" class="cap">powers <tspan class="math">A</tspan><tspan baseline-shift="super" font-size="10">k</tspan> / paths in <tspan class="math">kQ</tspan></text>
+  <text x="370" y="317" text-anchor="middle" class="cap">reaches far via length-k walks,</text>
+  <text x="370" y="334" text-anchor="middle" class="cap">but weights are fixed</text>
+
+  <!-- Row 2, Col learned: Walk Attention (HIGHLIGHT) -->
+  <rect x="510" y="245" width="260" height="100" rx="10" fill="#ecfdf5" stroke="#10b981" stroke-width="2.5"/>
+  <text x="630" y="278" text-anchor="middle" class="cell" fill="#047857">Walk Attention ★</text>
+  <text x="630" y="300" text-anchor="middle" class="cap">learned weights on length-k walks</text>
+  <text x="630" y="317" text-anchor="middle" class="cap">far reach AND selection,</text>
+  <text x="630" y="334" text-anchor="middle" class="cap">at sparse (path-restricted) cost</text>
+
+  <!-- Graph Transformer noted separately -->
+  <rect x="510" y="358" width="260" height="32" rx="8" fill="#faf5ff" stroke="#d8b4fe"/>
+  <text x="630" y="378" text-anchor="middle" class="cap" fill="#6d28d9">(all-pairs, learned) = Graph Transformer — dense, O(n²)</text>
+
+  <!-- Bottom caption strip -->
+  <rect x="34" y="358" width="456" height="58" rx="8" fill="#ecfdf5" stroke="#6ee7b7"/>
+  <text x="50" y="378" class="s">Reaching far needs <tspan font-weight="700" fill="#b45309">multi-hop support</tspan>; selecting needs</text>
+  <text x="50" y="396" class="s"><tspan font-weight="700" fill="#1d4ed8">learned weights</tspan>. Only <tspan font-weight="700" fill="#047857">Walk Attention</tspan> has both</text>
+  <text x="50" y="412" class="s">(at sparse cost).</text>
+</svg>

@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="820" height="430" viewBox="0 0 820 430" font-family="'Segoe UI',Helvetica,Arial,sans-serif">
+  <defs>
+    <marker id="a" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#475569"/></marker>
+    <style>
+      .t{font-size:21px;font-weight:700;fill:#0f172a}
+      .s{font-size:13px;fill:#475569}
+      .lbl{font-size:14px;font-weight:600;fill:#1e293b}
+      .nd{font-size:15px;font-weight:700;fill:#fff}
+      .math{font-family:'Cambria Math','Times New Roman',serif;font-style:italic}
+      .tag{font-size:13px;font-weight:700}
+      .box{fill:#f8fafc;stroke:#e2e8f0}
+    </style>
+  </defs>
+  <rect width="820" height="430" fill="#ffffff"/>
+  <text x="34" y="40" class="t">Anatomía de un quiver  <tspan class="math">Q = (Q₀, Q₁, s, t)</tspan></text>
+
+  <g>
+    <path d="M118,150 C 200,120 260,120 332,148" fill="none" stroke="#2563eb" stroke-width="2.4" marker-end="url(#a)"/>
+    <path d="M118,170 C 200,200 260,200 332,172" fill="none" stroke="#2563eb" stroke-width="2.4" marker-end="url(#a)"/>
+    <line x1="360" y1="160" x2="488" y2="160" stroke="#475569" stroke-width="2.4" marker-end="url(#a)"/>
+    <path d="M508,144 C 540,100 580,100 540,148" fill="none" stroke="#475569" stroke-width="2.2" marker-end="url(#a)"/>
+    <circle cx="100" cy="160" r="20" fill="#334155"/><text x="100" y="165" text-anchor="middle" class="nd">1</text>
+    <circle cx="345" cy="160" r="20" fill="#334155"/><text x="345" y="165" text-anchor="middle" class="nd">2</text>
+    <circle cx="510" cy="160" r="20" fill="#334155"/><text x="510" y="165" text-anchor="middle" class="nd">3</text>
+    <text x="215" y="120" class="s" fill="#2563eb">a</text>
+    <text x="215" y="212" class="s" fill="#2563eb">a′</text>
+    <text x="420" y="150" class="s">b</text>
+    <text x="556" y="108" class="s">c</text>
+  </g>
+
+  <text x="60" y="250" class="tag" fill="#334155">Q₀ = { 1, 2, 3 }</text>
+  <text x="60" y="270" class="s">los vértices (entidades)</text>
+
+  <text x="300" y="250" class="tag" fill="#2563eb">Q₁ = { a, a′, b, c }</text>
+  <text x="300" y="270" class="s">las flechas (relaciones dirigidas)</text>
+
+  <text x="560" y="250" class="tag" fill="#475569">s, t : Q₁ → Q₀</text>
+  <text x="560" y="270" class="s">fuente y objetivo de cada flecha</text>
+
+  <rect x="34" y="300" width="752" height="106" rx="10" class="box"/>
+  <text x="52" y="328" class="lbl">Un quiver es un grafo dirigido que permite:</text>
+  <text x="52" y="356" class="s">•  <tspan font-weight="700" fill="#2563eb">flechas múltiples</tspan> entre el mismo par (aquí a, a′ : 1 → 2) — registran la <tspan class="math">multiplicidad</tspan>.</text>
+  <text x="52" y="380" class="s">•  <tspan font-weight="700">lazos</tspan> (aquí c : 3 → 3).   Escribimos α : i → j cuando s(α)=i y t(α)=j.</text>
+  <text x="52" y="400" class="s" fill="#7c3aed" font-weight="600">Para nosotros: vértices = nodos del grafo, flechas = aristas dirigidas, multiplicidad = caminos paralelos.</text>
+</svg>

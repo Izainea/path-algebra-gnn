@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="820" height="420" viewBox="0 0 820 420" font-family="'Segoe UI',Helvetica,Arial,sans-serif">
+  <defs>
+    <style>
+      .t{font-size:21px;font-weight:700;fill:#0f172a}
+      .s{font-size:13px;fill:#475569}
+      .lbl{font-size:14px;font-weight:600;fill:#1e293b}
+      .math{font-family:'Cambria Math','Times New Roman',serif;font-style:italic}
+      .tag{font-size:13px;font-weight:700}
+    </style>
+  </defs>
+  <rect width="820" height="420" fill="#ffffff"/>
+  <text x="34" y="40" class="t">The path algebra makes attention sparse</text>
+  <text x="34" y="64" class="s">The attention support is the nonzero pattern of <tspan class="math">Aᵍ</tspan>. Standard attention fills the whole square.</text>
+
+  <!-- LEFT: dense 6x6 -->
+  <text x="100" y="104" class="lbl">All-pairs (Transformer)</text>
+  <g>
+    <rect x="80" y="118" width="180" height="180" fill="#fee2e2" stroke="#fca5a5"/>
+    <g fill="#ef4444" opacity="0.55">
+      <rect x="81" y="119" width="28" height="28"/><rect x="111" y="119" width="28" height="28"/><rect x="141" y="119" width="28" height="28"/><rect x="171" y="119" width="28" height="28"/><rect x="201" y="119" width="28" height="28"/><rect x="231" y="119" width="28" height="28"/>
+      <rect x="81" y="149" width="28" height="28"/><rect x="111" y="149" width="28" height="28"/><rect x="141" y="149" width="28" height="28"/><rect x="171" y="149" width="28" height="28"/><rect x="201" y="149" width="28" height="28"/><rect x="231" y="149" width="28" height="28"/>
+      <rect x="81" y="179" width="28" height="28"/><rect x="111" y="179" width="28" height="28"/><rect x="141" y="179" width="28" height="28"/><rect x="171" y="179" width="28" height="28"/><rect x="201" y="179" width="28" height="28"/><rect x="231" y="179" width="28" height="28"/>
+      <rect x="81" y="209" width="28" height="28"/><rect x="111" y="209" width="28" height="28"/><rect x="141" y="209" width="28" height="28"/><rect x="171" y="209" width="28" height="28"/><rect x="201" y="209" width="28" height="28"/><rect x="231" y="209" width="28" height="28"/>
+      <rect x="81" y="239" width="28" height="28"/><rect x="111" y="239" width="28" height="28"/><rect x="141" y="239" width="28" height="28"/><rect x="171" y="239" width="28" height="28"/><rect x="201" y="239" width="28" height="28"/><rect x="231" y="239" width="28" height="28"/>
+      <rect x="81" y="269" width="28" height="28"/><rect x="111" y="269" width="28" height="28"/><rect x="141" y="269" width="28" height="28"/><rect x="171" y="269" width="28" height="28"/><rect x="201" y="269" width="28" height="28"/><rect x="231" y="269" width="28" height="28"/>
+    </g>
+  </g>
+  <text x="170" y="324" text-anchor="middle" class="tag" fill="#b91c1c">N² entries — 100%</text>
+  <text x="170" y="346" text-anchor="middle" class="s">O(n²), structure ignored</text>
+
+  <text x="408" y="220" text-anchor="middle" font-size="30" fill="#94a3b8">→</text>
+
+  <!-- RIGHT: sparse 6x6 -->
+  <text x="560" y="104" class="lbl">Walk-reachable (Walk Attention)</text>
+  <g>
+    <rect x="540" y="118" width="180" height="180" fill="#ecfdf5" stroke="#6ee7b7"/>
+    <g fill="#10b981" opacity="0.85">
+      <rect x="571" y="119" width="28" height="28"/>
+      <rect x="631" y="149" width="28" height="28"/>
+      <rect x="541" y="179" width="28" height="28"/>
+      <rect x="691" y="209" width="28" height="28"/>
+      <rect x="601" y="239" width="28" height="28"/>
+      <rect x="541" y="269" width="28" height="28"/>
+    </g>
+  </g>
+  <text x="630" y="324" text-anchor="middle" class="tag" fill="#047857">only Aᵍ &gt; 0 — about 2%</text>
+  <text x="630" y="346" text-anchor="middle" class="s">O(|support|), multi-hop reach</text>
+
+  <text x="410" y="392" text-anchor="middle" class="lbl" fill="#7c3aed">Global reach (multi-hop) at a tiny fraction of the cost — the algebra picks the pairs.</text>
+</svg>

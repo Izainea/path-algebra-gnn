@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="820" height="440" viewBox="0 0 820 440" font-family="'Segoe UI',Helvetica,Arial,sans-serif">
+  <defs>
+    <style>
+      .t{font-size:21px;font-weight:700;fill:#0f172a}
+      .s{font-size:13px;fill:#475569}
+      .lbl{font-size:14px;font-weight:600;fill:#1e293b}
+      .math{font-family:'Cambria Math','Times New Roman',serif;font-style:italic}
+      .big{font-size:18px;font-weight:700}
+    </style>
+  </defs>
+  <rect width="820" height="440" fill="#ffffff"/>
+  <text x="34" y="40" class="t">The walk operator <tspan class="math">is</tspan> attention</text>
+
+  <!-- LEFT: transformer attention -->
+  <rect x="34" y="64" width="360" height="150" rx="10" fill="#eef2ff" stroke="#c7d2fe"/>
+  <text x="52" y="90" class="lbl">Transformer attention</text>
+  <text x="52" y="124" class="big math" fill="#4338ca">h_j = Σ_i  α_ji · v_i</text>
+  <text x="52" y="152" class="s">support: <tspan font-weight="700">all pairs</tspan>   ·   weights: <tspan font-weight="700">learned</tspan> (q·k)</text>
+  <text x="52" y="178" class="s">global reach, but O(n²) and ignores graph structure</text>
+  <text x="52" y="200" class="s">unless topology is re-injected by encodings.</text>
+
+  <!-- RIGHT: walk aggregation -->
+  <rect x="426" y="64" width="360" height="150" rx="10" fill="#ecfdf5" stroke="#6ee7b7"/>
+  <text x="444" y="90" class="lbl">Walk aggregation (range g)</text>
+  <text x="444" y="124" class="big math" fill="#047857">h_j = Σ_i  W_ji · h_i</text>
+  <text x="444" y="152" class="s">support: <tspan font-weight="700">walk-reachable</tspan> (i ⇝ j of length g)</text>
+  <text x="444" y="178" class="s">the path algebra supplies exactly which (i,j)</text>
+  <text x="444" y="200" class="s">are connected — the nonzero pattern of Aᵍ.</text>
+
+  <!-- the unifying statement -->
+  <text x="410" y="248" text-anchor="middle" class="big" fill="#334155">same shape — a weighted sum over sources</text>
+
+  <rect x="34" y="266" width="752" height="146" rx="12" fill="#f8fafc" stroke="#cbd5e1"/>
+  <text x="52" y="294" class="lbl">Walk Attention = take the support from the algebra, learn the weights:</text>
+  <text x="52" y="332" class="big math" fill="#7c3aed">α_ji = softmax over { i : (i ⇝ j, length g) } ( q_j · k_i )</text>
+  <text x="52" y="366" class="s">•  the algebra says <tspan font-weight="700">WHO</tspan> can attend to whom across many hops (a sparse mask)</text>
+  <text x="52" y="390" class="s">•  attention learns <tspan font-weight="700">HOW MUCH</tspan> each source matters — so it can <tspan font-weight="700">select</tspan>, not just reach.</text>
+</svg>
