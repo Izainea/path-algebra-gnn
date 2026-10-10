@@ -41,11 +41,10 @@ def bottleneck_scores(edge_index: np.ndarray, num_nodes: int,
     """
     over_squashing_diagnostic, Quiver = _import_aiq_gnn()
     vertices = list(range(num_nodes))
-    arrows = {
-        f"a{a}": (int(u), int(v))
-        for a, (u, v) in enumerate(zip(edge_index[0].tolist(),
-                                       edge_index[1].tolist()))
-    }
+    # aiq.Quiver wants arrows as a list of (name, source, target) triples.
+    arrows = [(f"a{a}", int(u), int(v))
+              for a, (u, v) in enumerate(zip(edge_index[0].tolist(),
+                                             edge_index[1].tolist()))]
     quiver = Quiver(vertices, arrows)
     return over_squashing_diagnostic(quiver, max_depth, hidden_dim)
 
