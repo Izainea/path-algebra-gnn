@@ -29,4 +29,5 @@ __all__ = [
     "data_bottleneck",
     "train",
     "mlflow_runner",
+    "viz",
 ]
