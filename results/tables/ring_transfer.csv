@@ -1,0 +1,13 @@
+ring,distance,model,acc
+6,3,gcn,1.0
+6,3,gat,1.0
+6,3,walkattn,1.0
+10,5,gcn,1.0
+10,5,gat,1.0
+10,5,walkattn,1.0
+14,7,gcn,0.248
+14,7,gat,0.431
+14,7,walkattn,1.0
+18,9,gcn,0.594
+18,9,gat,0.596
+18,9,walkattn,1.0
