@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="400" viewBox="0 0 760 400" font-family="'Segoe UI',Helvetica,Arial,sans-serif">
+  <defs>
+    <marker id="e" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#475569"/></marker>
+    <style>
+      .t{font-size:20px;font-weight:700;fill:#0f172a}
+      .s{font-size:13px;fill:#475569}
+      .h{font-size:15px;font-weight:700}
+      .n{font-size:12px;font-weight:700;fill:#fff}
+      .w{font-size:12px;font-weight:700}
+      .res{font-size:13px;font-weight:700}
+    </style>
+  </defs>
+  <rect width="760" height="400" fill="#ffffff"/>
+  <text x="30" y="34" class="t">Same paths, two ways to weight them</text>
+  <text x="30" y="56" class="s">Los mismos caminos, dos formas de ponderarlos</text>
+
+  <!-- LEFT: walkraw fixed -->
+  <text x="50" y="98" class="h" fill="#b45309">walkraw — fixed weights</text>
+  <text x="50" y="116" class="s">pesos fijos = path count (all equal)</text>
+  <!-- 3 sources -> target with equal thick arrows -->
+  <circle cx="70" cy="160" r="16" fill="#60a5fa"/><text x="70" y="165" text-anchor="middle" class="n">s₁</text>
+  <circle cx="70" cy="210" r="16" fill="#60a5fa"/><text x="70" y="215" text-anchor="middle" class="n">s₂</text>
+  <circle cx="70" cy="260" r="16" fill="#60a5fa"/><text x="70" y="265" text-anchor="middle" class="n">s₃</text>
+  <circle cx="290" cy="210" r="20" fill="#34d399"/><text x="290" y="215" text-anchor="middle" class="n">t</text>
+  <g stroke="#f59e0b" fill="none" marker-end="url(#e)">
+    <line x1="86" y1="160" x2="270" y2="205" stroke-width="6"/>
+    <line x1="86" y1="210" x2="270" y2="210" stroke-width="6"/>
+    <line x1="86" y1="260" x2="270" y2="215" stroke-width="6"/>
+  </g>
+  <text x="150" y="150" class="w" fill="#b45309">0.33</text>
+  <text x="150" y="200" class="w" fill="#b45309">0.33</text>
+  <text x="150" y="285" class="w" fill="#b45309">0.33</text>
+  <rect x="40" y="300" width="280" height="56" rx="8" fill="#fffbeb" stroke="#fde68a"/>
+  <text x="54" y="322" class="s">All sources weighted the same →</text>
+  <text x="54" y="340" class="res" fill="#b45309">can't tell WHICH source has the answer.</text>
+
+  <!-- RIGHT: WalkAttention learned -->
+  <text x="440" y="98" class="h" fill="#047857">WalkAttention — learned weights</text>
+  <text x="440" y="116" class="s">pesos aprendidos (query·key)</text>
+  <circle cx="460" cy="160" r="16" fill="#60a5fa"/><text x="460" y="165" text-anchor="middle" class="n">s₁</text>
+  <circle cx="460" cy="210" r="16" fill="#60a5fa"/><text x="460" y="215" text-anchor="middle" class="n">s₂</text>
+  <circle cx="460" cy="260" r="16" fill="#60a5fa"/><text x="460" y="265" text-anchor="middle" class="n">s₃</text>
+  <circle cx="680" cy="210" r="20" fill="#34d399"/><text x="680" y="215" text-anchor="middle" class="n">t</text>
+  <!-- s2 holds the answer: thick; others thin -->
+  <g stroke="#10b981" fill="none" marker-end="url(#e)">
+    <line x1="476" y1="160" x2="660" y2="205" stroke-width="1.5"/>
+    <line x1="476" y1="210" x2="660" y2="210" stroke-width="9"/>
+    <line x1="476" y1="260" x2="660" y2="215" stroke-width="1.5"/>
+  </g>
+  <text x="545" y="150" class="w" fill="#9ca3af">0.04</text>
+  <text x="545" y="198" class="w" fill="#047857">0.92</text>
+  <text x="545" y="285" class="w" fill="#9ca3af">0.04</text>
+  <rect x="430" y="300" width="300" height="56" rx="8" fill="#ecfdf5" stroke="#6ee7b7"/>
+  <text x="444" y="322" class="s">Learns to focus on the right source →</text>
+  <text x="444" y="340" class="res" fill="#047857">SELECTS the answer. Solves the task.</text>
+
+  <!-- center divider -->
+  <line x1="380" y1="90" x2="380" y2="360" stroke="#e2e8f0" stroke-width="1.5" stroke-dasharray="4 4"/>
+</svg>

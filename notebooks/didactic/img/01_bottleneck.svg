@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="380" viewBox="0 0 760 380" font-family="'Segoe UI',Helvetica,Arial,sans-serif">
+  <defs>
+    <marker id="a" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#94a3b8"/></marker>
+    <marker id="ar" markerWidth="11" markerHeight="11" refX="8" refY="3.5" orient="auto"><path d="M0,0 L8,3.5 L0,7 Z" fill="#dc2626"/></marker>
+    <style>
+      .t{font-size:20px;font-weight:700;fill:#0f172a}
+      .s{font-size:13px;fill:#475569}
+      .lab{font-size:13px;font-weight:600}
+      .n{font-size:12px;font-weight:700;fill:#1e293b}
+      .warn{font-size:13px;font-weight:700;fill:#b91c1c}
+    </style>
+  </defs>
+  <rect width="760" height="380" fill="#ffffff"/>
+  <text x="30" y="34" class="t">Over-squashing: a bottleneck crushes distant information</text>
+  <text x="30" y="56" class="s">El over-squashing: un cuello de botella aplasta la información distante</text>
+
+  <!-- edges -->
+  <g stroke="#cbd5e1" stroke-width="1.6" fill="none" marker-end="url(#a)">
+    <line x1="120" y1="120" x2="300" y2="170"/><line x1="120" y1="170" x2="300" y2="180"/>
+    <line x1="120" y1="220" x2="300" y2="190"/><line x1="120" y1="270" x2="300" y2="200"/>
+    <line x1="340" y1="185" x2="560" y2="195"/>
+    <line x1="120" y1="120" x2="300" y2="190"/><line x1="120" y1="270" x2="300" y2="170"/>
+  </g>
+  <!-- middle to target (the single squashed channel) -->
+  <line x1="340" y1="185" x2="600" y2="195" stroke="#fca5a5" stroke-width="6" fill="none" marker-end="url(#ar)" opacity="0.6"/>
+
+  <!-- sources -->
+  <g>
+    <circle cx="110" cy="120" r="20" fill="#60a5fa" stroke="#2563eb"/><text x="110" y="125" text-anchor="middle" class="n" fill="#fff">s₁</text>
+    <circle cx="110" cy="170" r="20" fill="#60a5fa" stroke="#2563eb"/><text x="110" y="175" text-anchor="middle" class="n" fill="#fff">s₂</text>
+    <circle cx="110" cy="220" r="20" fill="#60a5fa" stroke="#2563eb"/><text x="110" y="225" text-anchor="middle" class="n" fill="#fff">s₃</text>
+    <circle cx="110" cy="270" r="20" fill="#60a5fa" stroke="#2563eb"/><text x="110" y="275" text-anchor="middle" class="n" fill="#fff">s₄</text>
+  </g>
+  <text x="110" y="318" text-anchor="middle" class="lab" fill="#2563eb">sources / fuentes</text>
+  <text x="110" y="336" text-anchor="middle" class="s">each holds a fact</text>
+
+  <!-- bottleneck middle -->
+  <g>
+    <circle cx="320" cy="170" r="17" fill="#fbbf24" stroke="#d97706"/>
+    <circle cx="320" cy="200" r="17" fill="#fbbf24" stroke="#d97706"/>
+  </g>
+  <text x="320" y="250" text-anchor="middle" class="lab" fill="#b45309">bottleneck</text>
+  <text x="320" y="268" text-anchor="middle" class="s">cuello de botella</text>
+  <text x="320" y="286" text-anchor="middle" class="s">(narrow / estrecho)</text>
+
+  <!-- target -->
+  <circle cx="600" cy="195" r="24" fill="#34d399" stroke="#059669"/>
+  <text x="600" y="200" text-anchor="middle" class="n" fill="#fff">t</text>
+  <text x="600" y="240" text-anchor="middle" class="lab" fill="#059669">target / objetivo</text>
+  <text x="600" y="258" text-anchor="middle" class="s">must recover the fact</text>
+
+  <!-- squash annotation -->
+  <rect x="430" y="95" width="300" height="64" rx="10" fill="#fef2f2" stroke="#fecaca"/>
+  <text x="445" y="118" class="warn">All paths funnel through the bottleneck →</text>
+  <text x="445" y="136" class="s">many messages squashed into one fixed vector.</text>
+  <text x="445" y="152" class="s">Muchos mensajes apretados en un solo vector.</text>
+</svg>
